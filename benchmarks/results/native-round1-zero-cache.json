@@ -1,0 +1,13 @@
+{
+  "protocol": "onyx.native-optimization.v1",
+  "round": 1,
+  "change": "Cache Q4 grouped zero-point tensors by scale shape",
+  "baseline_seconds_median": 42.302455666,
+  "candidate_seconds_median": 42.625247625,
+  "speedup": 0.9924272121105361,
+  "all_outputs_identical": true,
+  "baseline_peak_bytes": 3422896128,
+  "candidate_peak_bytes": 3413082112,
+  "decision": "accepted-neutral-performance",
+  "summary": "artifacts/benchmarks/onyx-native-h3/round1-zero-cache.json"
+}

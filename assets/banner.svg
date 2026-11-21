@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360" role="img" aria-label="Onyx Infer — native image generation for Apple Silicon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0c10"/>
+      <stop offset="0.55" stop-color="#0e1118"/>
+      <stop offset="1" stop-color="#131722"/>
+    </linearGradient>
+    <linearGradient id="gem" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff7a6e"/>
+      <stop offset="0.45" stop-color="#e5484d"/>
+      <stop offset="1" stop-color="#8f1220"/>
+    </linearGradient>
+    <linearGradient id="gemdeep" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c22a35"/>
+      <stop offset="1" stop-color="#5d0a14"/>
+    </linearGradient>
+    <linearGradient id="title" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#c9d2e3"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.78" cy="0.42" r="0.55">
+      <stop offset="0" stop-color="#e5484d" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#e5484d" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="360" fill="url(#bg)"/>
+  <rect width="1200" height="360" fill="url(#glow)"/>
+
+  <!-- faint background facets -->
+  <g stroke="#2a3140" stroke-width="1" opacity="0.28" fill="none">
+    <polygon points="300,36 420,86 390,204 240,214 196,96"/>
+    <polygon points="700,320 820,300 860,210"/>
+    <polygon points="80,300 190,262 160,336"/>
+  </g>
+
+  <!-- main gem -->
+  <g>
+    <polygon points="960,44 1078,112 1078,248 960,316 842,248 842,112" fill="url(#gem)"/>
+    <polygon points="960,44 1078,112 960,180 842,112" fill="#ff8f83" opacity="0.55"/>
+    <polygon points="1078,112 1078,248 960,180" fill="url(#gemdeep)" opacity="0.85"/>
+    <polygon points="1078,248 960,316 960,180" fill="#7c1220" opacity="0.9"/>
+    <polygon points="960,316 842,248 960,180" fill="#a51a26" opacity="0.8"/>
+    <polygon points="842,248 842,112 960,180" fill="#d93840" opacity="0.75"/>
+    <polygon points="960,44 960,180 842,112" fill="#ffb0a6" opacity="0.35"/>
+    <g stroke="#0a0c10" stroke-opacity="0.35" stroke-width="2" fill="none">
+      <polygon points="960,44 1078,112 1078,248 960,316 842,248 842,112"/>
+      <path d="M960 44 L960 316 M842 112 L1078 248 M1078 112 L842 248"/>
+    </g>
+    <polygon points="900,72 1000,90 940,140 880,116" fill="#ffffff" opacity="0.14"/>
+    <!-- satellite shards -->
+    <polygon points="1130,84 1172,64 1186,108 1152,124" fill="url(#gem)" opacity="0.85"/>
+    <polygon points="800,306 836,286 826,330 796,336" fill="url(#gemdeep)" opacity="0.8"/>
+  </g>
+
+  <!-- wordmark -->
+  <text x="90" y="146" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="64" font-weight="800" letter-spacing="7" fill="url(#title)">ONYX INFER</text>
+  <rect x="92" y="178" width="58" height="5" rx="2.5" fill="url(#gem)"/>
+  <text x="90" y="226" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="26" fill="#9aa3b2">Native image generation for Apple Silicon</text>
+  <text x="90" y="272" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="17" fill="#5f6b7e">C++20 · Metal 4 · MPSGraph · replayable onyx.*.v1 protocols</text>
+  <text x="90" y="322" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14" fill="#3f4857">github.com/phantom5125/onyx-infer-open</text>
+</svg>

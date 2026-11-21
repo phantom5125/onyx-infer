@@ -1,0 +1,133 @@
+syntax = "proto3";
+
+package onyx.job.v1;
+
+import "onyx/common/v1/types.proto";
+
+option cc_enable_arenas = true;
+
+message ModelRef {
+  string model_id = 1;
+  string source_revision = 2;
+  bytes manifest_digest = 3;
+  string recipe_id = 4;
+}
+
+message SessionConfig {
+  string artifact_directory = 1;
+  string device_id = 2;
+  optional uint64 memory_budget_bytes = 3;
+  bool enable_trace = 4;
+}
+
+message PrepareOptions {
+  string preferred_backend = 1;
+  bool allow_plan_cache = 2;
+  bool allow_shader_cache = 3;
+}
+
+message PreparedModel {
+  ModelRef model = 1;
+  repeated string capabilities = 2;
+  uint64 estimated_peak_memory_bytes = 3;
+  string plan_id = 4;
+}
+
+message OutputSpec {
+  enum Format {
+    FORMAT_UNSPECIFIED = 0;
+    PNG = 1;
+    JPEG = 2;
+    WEBP = 3;
+  }
+  Format format = 1;
+  string color_space = 2;
+  optional uint32 compression = 3;
+}
+
+message ExecutionHints {
+  string backend = 1;
+  string plan_id = 2;
+  optional uint64 timeout_ns = 3;
+  bool allow_plan_cache = 4;
+  bool allow_shader_cache = 5;
+}
+
+message GenerateRequest {
+  string protocol = 1;
+  string request_id = 2;
+  ModelRef model = 3;
+  string prompt = 4;
+  onyx.common.v1.ImageSize size = 5;
+  optional uint64 seed = 6;
+  repeated onyx.common.v1.ArtifactRef references = 7;
+  uint32 image_count = 8;
+  OutputSpec output = 9;
+  ExecutionHints execution = 10;
+  map<string, string> client_metadata = 11;
+}
+
+message Job {
+  string job_id = 1;
+  string request_id = 2;
+  string run_id = 3;
+}
+
+message CancelRequest {
+  string job_id = 1;
+  string reason = 2;
+}
+
+message Accepted {
+  string job_id = 1;
+}
+
+message StageStarted {
+  onyx.common.v1.StageIdentity identity = 1;
+}
+
+message Progress {
+  onyx.common.v1.StageIdentity identity = 1;
+  uint64 completed = 2;
+  uint64 total = 3;
+  string unit = 4;
+}
+
+message MetricEvent {
+  onyx.common.v1.Metric metric = 1;
+}
+
+message ArtifactReady {
+  onyx.common.v1.ArtifactRef artifact = 1;
+  string role = 2;
+}
+
+message Completed {
+  onyx.common.v1.ArtifactRef run_record = 1;
+}
+
+message Failed {
+  onyx.common.v1.Error error = 1;
+}
+
+message Cancelled {
+  string reason = 1;
+}
+
+message RunEvent {
+  string run_id = 1;
+  string request_id = 2;
+  uint64 sequence = 3;
+  uint64 monotonic_time_ns = 4;
+  optional int64 wall_time_unix_ns = 5;
+  oneof payload {
+    Accepted accepted = 10;
+    StageStarted stage_started = 11;
+    Progress progress = 12;
+    MetricEvent metric = 13;
+    ArtifactReady artifact_ready = 14;
+    Completed completed = 15;
+    Failed failed = 16;
+    Cancelled cancelled = 17;
+  }
+}

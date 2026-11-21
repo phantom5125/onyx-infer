@@ -1,0 +1,11 @@
+.build/
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+artifacts/
+external/
+.DS_Store
+
+# In-repo development worktrees
+.worktrees/

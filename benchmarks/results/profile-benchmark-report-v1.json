@@ -1,0 +1,415 @@
+{
+  "protocol": "onyx.profile-report.v1",
+  "generated_at": "2026-11-18T18:26:13.296492+00:00",
+  "git": {
+    "source_revision": "40420aaae01490c55b1fab97b8135cc5dd3515d2",
+    "source_dirty": true
+  },
+  "target": {
+    "target_id": "mac17-14-m5-max-36gb",
+    "model_identifier": "Mac17,14",
+    "chip": "Apple M5 Max",
+    "cpu_cores": 18,
+    "gpu_cores": 32,
+    "physical_memory_bytes": 38654705664,
+    "recommended_gpu_working_set_bytes": 30150672384,
+    "max_metal_buffer_bytes": 22613000192,
+    "unified_memory": true,
+    "metal": "Metal 4",
+    "macos_version": "27.0",
+    "macos_build": "26A425",
+    "clang_version": "Apple clang 21.0.0 (clang-2100.4.1.1)",
+    "metal_compiler_version": "32023.921 (metalfe-32023.921.6)",
+    "metal_target": "air64-apple-darwin27.0.0"
+  },
+  "profiles": {
+    "registry": "config/profiles/profiles.v1.json",
+    "registry_sha256": "d78e589b50a5877bab4bff969bc03fab9277125d005dbe838370830bf4441d79",
+    "registry_valid": true
+  },
+  "profile_stage_matrix": {
+    "scope": "vae-stage",
+    "scope_note": "VAE-only measurements with unquantized FP32 source weights.",
+    "git": {
+      "source_revision": "40420aaae01490c55b1fab97b8135cc5dd3515d2",
+      "source_dirty": true
+    },
+    "native_binary_sha256": "89e5b312bd9a481277893a5590f81d29bd48a2920dabfb1c3a66bcb472cc8cfa",
+    "interleaved": true,
+    "groups": {
+      "max-quality@1024x1024": {
+        "samples": 3,
+        "stage_seconds_median": 6.301303,
+        "peak_process_bytes_max": 1697054720,
+        "output_sha256": [
+          "550e75e260a9dc28dc9a97cf6389619a133d10aad2424457f1ee5547ef2fef4d"
+        ],
+        "min_samples_required": 3
+      },
+      "max-quality@4096x4096": {
+        "samples": 3,
+        "stage_seconds_median": 85.231421,
+        "peak_process_bytes_max": 2012381184,
+        "output_sha256": [
+          "a4794bf87c686ecee59be746eed20d2af702ccd5c5f335b5d315f5804f6aa30f"
+        ],
+        "min_samples_required": 3
+      },
+      "memory-min@1024x1024": {
+        "samples": 3,
+        "stage_seconds_median": 10.25239,
+        "peak_process_bytes_max": 1689681920,
+        "output_sha256": [
+          "550e75e260a9dc28dc9a97cf6389619a133d10aad2424457f1ee5547ef2fef4d"
+        ],
+        "min_samples_required": 3
+      },
+      "memory-min@4096x4096": {
+        "samples": 3,
+        "stage_seconds_median": 155.280872,
+        "peak_process_bytes_max": 1908506624,
+        "output_sha256": [
+          "a4794bf87c686ecee59be746eed20d2af702ccd5c5f335b5d315f5804f6aa30f"
+        ],
+        "min_samples_required": 3
+      },
+      "speed-focus@1024x1024": {
+        "samples": 3,
+        "stage_seconds_median": 5.552902,
+        "peak_process_bytes_max": 1697005568,
+        "output_sha256": [
+          "550e75e260a9dc28dc9a97cf6389619a133d10aad2424457f1ee5547ef2fef4d"
+        ],
+        "min_samples_required": 3
+      },
+      "speed-focus@4096x4096": {
+        "samples": 3,
+        "stage_seconds_median": 97.395984,
+        "peak_process_bytes_max": 2012725248,
+        "output_sha256": [
+          "a4794bf87c686ecee59be746eed20d2af702ccd5c5f335b5d315f5804f6aa30f"
+        ],
+        "min_samples_required": 3
+      }
+    },
+    "gate_status": "inconclusive",
+    "gate_checks": [],
+    "comparative": {
+      "gate": "must_be_fastest_within",
+      "profile": "speed-focus",
+      "verdict": "inconclusive",
+      "reason": "median exceeds the fastest comparison by 14%, within observed dispersion 41%; thermal/noise-dominated comparison",
+      "per_size": [
+        {
+          "profile": "speed-focus",
+          "size": "1024x1024",
+          "median_seconds": 5.552902,
+          "other_medians_seconds": {
+            "memory-min": 10.25239,
+            "max-quality": 6.301303
+          },
+          "margin_ratio": 0.03,
+          "observed_dispersion": 0.2598806945166738,
+          "gap_ratio": -0.11876924502757613,
+          "verdict": "accepted",
+          "reason": "median is the fastest or within the declared noise margin"
+        },
+        {
+          "profile": "speed-focus",
+          "size": "4096x4096",
+          "median_seconds": 97.395984,
+          "other_medians_seconds": {
+            "memory-min": 155.280872,
+            "max-quality": 85.231421
+          },
+          "margin_ratio": 0.03,
+          "observed_dispersion": 0.4064386536509815,
+          "gap_ratio": 0.14272392572218173,
+          "verdict": "inconclusive",
+          "reason": "median exceeds the fastest comparison by 14%, within observed dispersion 41%; thermal/noise-dominated comparison"
+        }
+      ]
+    }
+  },
+  "end_to_end_history": {
+    "rounds": [
+      {
+        "source": "benchmarks/results/native-baseline-v1.json",
+        "protocol": "onyx.native-baseline.v1",
+        "label": "native-baseline",
+        "seconds": 43.072885333,
+        "peak_bytes": 3423223808
+      },
+      {
+        "source": "benchmarks/results/native-round1-zero-cache.json",
+        "protocol": "onyx.native-optimization.v1",
+        "round": 1,
+        "change": "Cache Q4 grouped zero-point tensors by scale shape",
+        "candidate_seconds_median": 42.625247625,
+        "speedup_vs_baseline": 0.9924272121105361,
+        "candidate_peak_bytes_max": 3413082112,
+        "all_outputs_identical": true,
+        "decision": "accepted-neutral-performance"
+      },
+      {
+        "source": "benchmarks/results/native-round2-direct-pread.json",
+        "protocol": "onyx.native-optimization.v1",
+        "round": 2,
+        "change": "Read weights directly into MTLBuffer contents without NSData staging",
+        "candidate_seconds_median": 38.744257334,
+        "speedup_vs_baseline": 1.091838083288733,
+        "candidate_peak_bytes_max": 1824456704,
+        "all_outputs_identical": true,
+        "decision": "accepted"
+      },
+      {
+        "source": "benchmarks/results/native-round3-cpu-modulation.json",
+        "protocol": "onyx.native-optimization.v1",
+        "round": 3,
+        "change": "Pack per-token BF16 modulation in shared CPU memory instead of separate GPU gather and reshape graphs",
+        "candidate_seconds_median": 37.496992041,
+        "speedup_vs_baseline": 1.033263076,
+        "candidate_peak_bytes_max": 1824505856,
+        "all_outputs_identical": true,
+        "decision": "accepted"
+      },
+      {
+        "source": "benchmarks/results/native-round4-fused-attention-views.json",
+        "protocol": "onyx.native-optimization.v1",
+        "round": 4,
+        "change": "Fuse DiT QKV layout transforms, Q/K RMSNorm, RoPE and SDPA; use native MPSNDArray offset views for contiguous reshape and leading-axis slices; address modulation steps directly in CPU memory",
+        "candidate_seconds_median": 34.650940667,
+        "speedup_vs_baseline": 1.082134895,
+        "candidate_peak_bytes_max": 1997750272,
+        "all_outputs_identical": true,
+        "decision": "accepted"
+      }
+    ],
+    "v1_stability": {
+      "source": "benchmarks/results/native-v1-stability.json",
+      "native_1024": {
+        "baseline_seconds_median": 42.302455666,
+        "round1_seconds_median": 42.625247625,
+        "round2_seconds_median": 38.744257334,
+        "round2_peak_bytes": 1824456704,
+        "all_outputs_identical": true,
+        "stages": {
+          "text": 3.87046375,
+          "dit": 29.903386584,
+          "vae": 4.816074584
+        }
+      },
+      "native_4096": {
+        "seconds": 329.607656666,
+        "peak_bytes": 2144190464,
+        "run_record": "/Users/daocheng/workspace/onyx-infer/artifacts/benchmarks/onyx-native-h3/h3-teapot-4096-seed42-v1/e560ab05-e589-4a69-8c62-7dc408f17a82/run.pb"
+      },
+      "community_comparison": {
+        "community_w8a8_seconds_median": 23.612049416,
+        "native_over_community_time_ratio": 1.640868043743213,
+        "scope": "Same 1024 teapot request; different quantization and execution implementations"
+      }
+    }
+  },
+  "operator_reference": {
+    "primary_metric": "wall_median_ms after one warmup; process-local steady state",
+    "scope_warning": "Operator results are not end-to-end image-generation results and do not demonstrate final image quality.",
+    "comparisons": [
+      {
+        "case_id": "h3-linear-m1024-n5376-k5376",
+        "shape": {
+          "m": 1024,
+          "n": 5376,
+          "k": 5376,
+          "group_size": 64
+        },
+        "onyx_wall_median_ms": 28.118667,
+        "mlx_wall_median_ms": 1.7080419999999998,
+        "onyx_over_mlx_time_ratio": 16.462514973285202
+      },
+      {
+        "case_id": "h3-qkv-m1024-n21504-k5376",
+        "shape": {
+          "m": 1024,
+          "n": 21504,
+          "k": 5376,
+          "group_size": 64
+        },
+        "onyx_wall_median_ms": 109.772708,
+        "mlx_wall_median_ms": 5.475854000000001,
+        "onyx_over_mlx_time_ratio": 20.046682764003563
+      },
+      {
+        "case_id": "h3-text-q0-qproj-m69",
+        "shape": {
+          "m": 69,
+          "n": 8192,
+          "k": 5120,
+          "group_size": 64
+        },
+        "onyx_wall_median_ms": 3.289417,
+        "mlx_wall_median_ms": 0.7731669999999999,
+        "onyx_over_mlx_time_ratio": 4.254471543663917
+      }
+    ]
+  },
+  "kernel_variants": {
+    "primary_metric": "wall_median_ms",
+    "results": [
+      {
+        "case_id": "h3-text-q0-qproj-m69",
+        "baseline_variant": "tile16",
+        "candidate_variant": "tile32",
+        "baseline_wall_median_ms": 3.289417,
+        "candidate_wall_median_ms": 2.444041,
+        "speedup": 1.3458927243855565,
+        "candidate_max_abs_error": 0.000191092491
+      },
+      {
+        "case_id": "h3-qkv-m1024-n21504-k5376",
+        "baseline_variant": "tile16",
+        "candidate_variant": "tile32",
+        "baseline_wall_median_ms": 109.772708,
+        "candidate_wall_median_ms": 65.648208,
+        "speedup": 1.672135635446439,
+        "candidate_max_abs_error": 0.00146913528
+      }
+    ]
+  },
+  "community_comparison": {
+    "scope": "Same prompt, seed, dimensions and source weights. Community uses W8A8; reference uses W8A16. This is not a native Onyx W4 performance result or an absolute quality evaluation.",
+    "community": {
+      "implementation": "Anionex/h3-image-mlx W8A8 resident",
+      "precision": null,
+      "seconds_median": 23.612049416,
+      "seconds_p95": 24.491148125,
+      "measured_runs": 3
+    },
+    "onyx_native": {
+      "seconds": 38.744257334,
+      "peak_bytes": 1823784960,
+      "stages": {
+        "text": 3.87046375,
+        "dit": 29.903386584,
+        "vae": 4.816074584
+      }
+    },
+    "native_over_community_time_ratio": 1.640868043743213,
+    "native_image_similarity": {
+      "reference": "/Users/daocheng/workspace/onyx-infer/artifacts/benchmarks/community-h3/h3-teapot-1024-seed42-v1/c7430d5a-8f81-477e-abdf-0226eff6b433/output.png",
+      "candidate": "/Users/daocheng/workspace/onyx-infer/artifacts/benchmarks/onyx-native-h3/h3-teapot-1024-seed42-v1/faa2652d-32e1-427c-85f0-11ef2c4d3714/output.png",
+      "shape": [
+        1024,
+        1024,
+        3
+      ],
+      "mae": 0.14185506105422974,
+      "rmse": 0.20669130119932147,
+      "psnr_db": 13.693556013717396,
+      "pixel_identical": false,
+      "pixel_correlation": 0.6664913764968301,
+      "scope": "Similarity between two implementations, not an absolute image-quality score"
+    }
+  },
+  "quality_evidence": {
+    "text_reference_correlation": 0.9999987306604403,
+    "vae_reference_pixel_correlation": 0.9999928910617746,
+    "adaln_timestep_fix": {
+      "before_min_part_correlation": 0.555527406008017,
+      "after_final_correlation": 0.999996356616229
+    },
+    "layout_fixes": {
+      "timestep_required_order": "[cos,sin]",
+      "qkv_required_layout": "[q/k/v][head][128]"
+    },
+    "quality_scope": "Native 1024 teapot generation passed; VAE and text have separate numerical references"
+  },
+  "recent_runs": {
+    "source_root": "artifacts/benchmarks/onyx-native-h3",
+    "groups": {
+      "h3-teapot-1024-seed42-v1": {
+        "runs": 48,
+        "seconds_median": 42.4922218125,
+        "seconds_min": 12.380049416,
+        "seconds_max": 71.770341083,
+        "peak_bytes_max": 3583295488,
+        "plan_ids": [
+          "local-e2e",
+          "native.cpu.gather.v1",
+          "native.executable.cache.v1",
+          "native.fused-attention.v1",
+          "native.fused.v1",
+          "native.mlp.prefetch.v1",
+          "native.modulation.parts.v1",
+          "native.mpsgraph.q4.stream.v1",
+          "native.prefetch.v1",
+          "native.q4.direct-pread.v2",
+          "native.q4.resident.v1",
+          "native.q4.zero-cache.v1",
+          "native.vae.batch4.v1",
+          "native.zero-copy-views.v1"
+        ]
+      },
+      "h3-teapot-4096-seed42-v1": {
+        "runs": 1,
+        "seconds_median": 329.607656666,
+        "seconds_min": 329.607656666,
+        "seconds_max": 329.607656666,
+        "peak_bytes_max": 2144190464,
+        "plan_ids": [
+          "native.q4.direct-pread.v2"
+        ]
+      },
+      "studio-1024x1024-s42-20261117154347": {
+        "runs": 1,
+        "seconds_median": 50.76861325,
+        "seconds_min": 50.76861325,
+        "seconds_max": 50.76861325,
+        "peak_bytes_max": 1928609792,
+        "plan_ids": [
+          "native.mpsgraph.q4.stream.v1"
+        ]
+      },
+      "studio-1024x1024-s42-20261117160725": {
+        "runs": 1,
+        "seconds_median": 57.017674209,
+        "seconds_min": 57.017674209,
+        "seconds_max": 57.017674209,
+        "peak_bytes_max": 1905049600,
+        "plan_ids": [
+          "native.mpsgraph.q4.stream.v1"
+        ]
+      },
+      "studio-1024x1024-s7-20261117143704": {
+        "runs": 1,
+        "seconds_median": 49.83822125,
+        "seconds_min": 49.83822125,
+        "seconds_max": 49.83822125,
+        "peak_bytes_max": 1794981888,
+        "plan_ids": [
+          "native.mpsgraph.q4.stream.v1"
+        ]
+      },
+      "studio-1024x1024-s7-20261117143814": {
+        "runs": 1,
+        "seconds_median": 46.191862667,
+        "seconds_min": 46.191862667,
+        "seconds_max": 46.191862667,
+        "peak_bytes_max": 1905901568,
+        "plan_ids": [
+          "native.mpsgraph.q4.stream.v1"
+        ]
+      },
+      "studio-1024x1024-s7-20261117143926": {
+        "runs": 1,
+        "seconds_median": 46.256602333,
+        "seconds_min": 46.256602333,
+        "seconds_max": 46.256602333,
+        "peak_bytes_max": 1873592320,
+        "plan_ids": [
+          "native.mpsgraph.q4.stream.v1"
+        ]
+      }
+    }
+  }
+}

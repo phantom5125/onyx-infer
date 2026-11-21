@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package onyx.loop.v1;
+
+import "onyx/common/v1/types.proto";
+import "onyx/job/v1/job.proto";
+
+option cc_enable_arenas = true;
+
+message BenchmarkCase {
+  string protocol = 1;
+  string case_id = 2;
+  onyx.job.v1.GenerateRequest request = 3;
+  uint32 warmups = 4;
+  uint32 measured_runs = 5;
+  uint32 cold_cache_runs = 6;
+  bool interleave_candidates = 7;
+  string target_id = 8;
+  string primary_metric = 9;
+  string correctness_suite_id = 10;
+  uint64 max_experiments = 11;
+  uint64 max_wall_time_ns = 12;
+}
+
+message Candidate {
+  string candidate_id = 1;
+  string case_id = 2;
+  string base_source_revision = 3;
+  bytes patch_sha256 = 4;
+  string scope = 5;
+  string build_configuration_digest = 6;
+  string plan_id = 7;
+  repeated string kernel_variant_ids = 8;
+  string proposer = 9;
+}
+
+message Experiment {
+  string experiment_id = 1;
+  string case_id = 2;
+  Candidate candidate = 3;
+  repeated onyx.common.v1.ArtifactRef run_records = 4;
+  repeated onyx.common.v1.ArtifactRef raw_logs = 5;
+  string environment_digest = 6;
+}
+
+message Comparison {
+  string metric = 1;
+  double baseline_median = 2;
+  double candidate_median = 3;
+  double baseline_p95 = 4;
+  double candidate_p95 = 5;
+  double speed_ratio = 6;
+  bool statistically_inconclusive = 7;
+}
+
+message Evaluation {
+  string evaluation_id = 1;
+  string experiment_id = 2;
+  bool correctness_passed = 3;
+  bool quality_passed = 4;
+  bool memory_passed = 5;
+  repeated Comparison comparisons = 6;
+  repeated string reasons = 7;
+  onyx.common.v1.ArtifactRef report = 8;
+  Decision decision = 9;
+}
+
+enum Decision {
+  DECISION_UNSPECIFIED = 0;
+  DECISION_ACCEPTED = 1;
+  DECISION_REJECTED = 2;
+  DECISION_INCONCLUSIVE = 3;
+}

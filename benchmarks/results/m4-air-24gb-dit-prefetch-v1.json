@@ -1,0 +1,456 @@
+{
+  "target": "config/targets/m4-air-24gb.json",
+  "power_source": "Now drawing from 'Battery Power'",
+  "benchmark_start_utc": "2026-11-21T16:11:25Z",
+  "setup": {
+    "build": "CMake Release, ONYX_ENABLE_MLX=OFF, SDK 26.4, Metal compiler 32023.850.10",
+    "release_native_source_revision": "619e797e7cb608edee0664959a4e78f4a9b3beb1",
+    "prefetch_source_revision": "4ae97da3dbb0ae9c9c211f20a4b0693faa14b03b",
+    "release_native_binary_sha256": "eb5ee2cbf9f6684edc277035d6c42402f014ed4453c8e9885cedf59543664692",
+    "prefetch_native_binary_sha256": "ecc88423ba08afec72d4ec8a06616661bb561412e8a4b07adea3a78bc92ed695",
+    "model_source_revision": "df334556f585a596a710cf4f7ce3a567c0738ee5",
+    "request_file": "benchmarks/requests/teapot-1024.json",
+    "profile": "max-quality",
+    "sampling_evaluations": 6,
+    "seed": 42,
+    "cache_conditions": "One warmup per mode. Fresh subprocess for each sample. OS caches left in place.",
+    "measured_order": [
+      "old-1",
+      "off-1",
+      "on-1",
+      "off-2",
+      "on-2",
+      "old-2",
+      "on-3",
+      "old-3",
+      "off-3"
+    ]
+  },
+  "teapot_png_sha256": "109eab604a0af55e3e4b7f00284be1cda30fb8121f84c79f6a49230544c60386",
+  "samples": {
+    "old-warmup": {
+      "run_id": "45008fce-28fc-422e-9464-7f986f04a05e",
+      "revision": "4ae97da3dbb0ae9c9c211f20a4b0693faa14b03b",
+      "source_dirty": false,
+      "source_tree_sha256": "Xbk5fL7JYuWAVqVL74FwBnBviP3jwKYhU0IUgPCfwfk=",
+      "plan_id": "native.mpsgraph.q4.stream.v1",
+      "seconds": 166.339128125,
+      "stage_seconds": {
+        "text": 10.287578041,
+        "dit": 135.9647195,
+        "vae": 19.829903167
+      },
+      "process_rss_peak_bytes": 1718222848,
+      "physical_footprint_peak_bytes": 0,
+      "swap_used_before_bytes": 13568573,
+      "swap_used_after_bytes": 13568573,
+      "dit_metal_allocated_GiB_at_step_end": [
+        2.69,
+        2.69,
+        2.69,
+        2.69,
+        2.69,
+        2.69
+      ],
+      "dit_weight_read_bytes": 85656876608,
+      "dit_weight_read_calls": 2752,
+      "prefetch": false,
+      "prefetch_wait_seconds": 0,
+      "png_sha256": "109eab604a0af55e3e4b7f00284be1cda30fb8121f84c79f6a49230544c60386"
+    },
+    "off-warmup": {
+      "run_id": "4ebea142-cdfe-4a20-9e6b-55027531d42b",
+      "revision": "4ae97da3dbb0ae9c9c211f20a4b0693faa14b03b",
+      "source_dirty": false,
+      "source_tree_sha256": "Xbk5fL7JYuWAVqVL74FwBnBviP3jwKYhU0IUgPCfwfk=",
+      "plan_id": "native.mpsgraph.q4.stream.v1",
+      "seconds": 169.199763541,
+      "stage_seconds": {
+        "text": 11.654402459,
+        "dit": 137.335196583,
+        "vae": 20.028116125
+      },
+      "process_rss_peak_bytes": 1922007040,
+      "physical_footprint_peak_bytes": 0,
+      "swap_used_before_bytes": 13568573,
+      "swap_used_after_bytes": 13568573,
+      "dit_metal_allocated_GiB_at_step_end": [
+        2.69,
+        2.69,
+        2.69,
+        2.69,
+        2.54,
+        2.54
+      ],
+      "dit_weight_read_bytes": 85656876608,
+      "dit_weight_read_calls": 2752,
+      "prefetch": false,
+      "prefetch_wait_seconds": 0.0,
+      "png_sha256": "109eab604a0af55e3e4b7f00284be1cda30fb8121f84c79f6a49230544c60386"
+    },
+    "on-warmup": {
+      "run_id": "ebb442e9-d91b-4156-9165-97de3f5ebf3a",
+      "revision": "4ae97da3dbb0ae9c9c211f20a4b0693faa14b03b",
+      "source_dirty": false,
+      "source_tree_sha256": "Xbk5fL7JYuWAVqVL74FwBnBviP3jwKYhU0IUgPCfwfk=",
+      "plan_id": "native.mpsgraph.q4.prefetch.v1",
+      "seconds": 154.707387833,
+      "stage_seconds": {
+        "text": 9.761252459,
+        "dit": 124.519431,
+        "vae": 20.235627208
+      },
+      "process_rss_peak_bytes": 1921941504,
+      "physical_footprint_peak_bytes": 0,
+      "swap_used_before_bytes": 13568573,
+      "swap_used_after_bytes": 13568573,
+      "dit_metal_allocated_GiB_at_step_end": [
+        2.69,
+        2.69,
+        2.69,
+        2.69,
+        2.69,
+        2.69
+      ],
+      "dit_weight_read_bytes": 85656876608,
+      "dit_weight_read_calls": 2752,
+      "prefetch": true,
+      "prefetch_wait_seconds": 0.000287,
+      "png_sha256": "109eab604a0af55e3e4b7f00284be1cda30fb8121f84c79f6a49230544c60386"
+    },
+    "old-1": {
+      "run_id": "63c88521-48ab-4965-8e44-500799ca1dd0",
+      "revision": "4ae97da3dbb0ae9c9c211f20a4b0693faa14b03b",
+      "source_dirty": false,
+      "source_tree_sha256": "Xbk5fL7JYuWAVqVL74FwBnBviP3jwKYhU0IUgPCfwfk=",
+      "plan_id": "native.mpsgraph.q4.stream.v1",
+      "seconds": 174.975677791,
+      "stage_seconds": {
+        "text": 9.896404417,
+        "dit": 142.456543958,
+        "vae": 22.428096042
+      },
+      "process_rss_peak_bytes": 1911144448,
+      "physical_footprint_peak_bytes": 0,
+      "swap_used_before_bytes": 13568573,
+      "swap_used_after_bytes": 13568573,
+      "dit_metal_allocated_GiB_at_step_end": [
+        2.69,
+        2.69,
+        2.69,
+        2.69,
+        2.69,
+        2.69
+      ],
+      "dit_weight_read_bytes": 85656876608,
+      "dit_weight_read_calls": 2752,
+      "prefetch": false,
+      "prefetch_wait_seconds": 0,
+      "png_sha256": "109eab604a0af55e3e4b7f00284be1cda30fb8121f84c79f6a49230544c60386"
+    },
+    "off-1": {
+      "run_id": "02b9a05a-01a2-4528-a700-254e00ebdaf9",
+      "revision": "4ae97da3dbb0ae9c9c211f20a4b0693faa14b03b",
+      "source_dirty": false,
+      "source_tree_sha256": "Xbk5fL7JYuWAVqVL74FwBnBviP3jwKYhU0IUgPCfwfk=",
+      "plan_id": "native.mpsgraph.q4.stream.v1",
+      "seconds": 179.541209167,
+      "stage_seconds": {
+        "text": 10.735984084,
+        "dit": 148.796498083,
+        "vae": 19.803267792
+      },
+      "process_rss_peak_bytes": 1922023424,
+      "physical_footprint_peak_bytes": 0,
+      "swap_used_before_bytes": 13568573,
+      "swap_used_after_bytes": 13568573,
+      "dit_metal_allocated_GiB_at_step_end": [
+        2.69,
+        2.69,
+        2.69,
+        2.69,
+        2.54,
+        2.54
+      ],
+      "dit_weight_read_bytes": 85656876608,
+      "dit_weight_read_calls": 2752,
+      "prefetch": false,
+      "prefetch_wait_seconds": 0.0,
+      "png_sha256": "109eab604a0af55e3e4b7f00284be1cda30fb8121f84c79f6a49230544c60386"
+    },
+    "on-1": {
+      "run_id": "58a05a3a-c9dc-4493-b075-3232934cb4e6",
+      "revision": "4ae97da3dbb0ae9c9c211f20a4b0693faa14b03b",
+      "source_dirty": false,
+      "source_tree_sha256": "Xbk5fL7JYuWAVqVL74FwBnBviP3jwKYhU0IUgPCfwfk=",
+      "plan_id": "native.mpsgraph.q4.prefetch.v1",
+      "seconds": 177.228178334,
+      "stage_seconds": {
+        "text": 10.732953042,
+        "dit": 145.167145,
+        "vae": 21.124814
+      },
+      "process_rss_peak_bytes": 1717665792,
+      "physical_footprint_peak_bytes": 0,
+      "swap_used_before_bytes": 13568573,
+      "swap_used_after_bytes": 13568573,
+      "dit_metal_allocated_GiB_at_step_end": [
+        2.69,
+        2.69,
+        2.69,
+        2.69,
+        2.69,
+        2.69
+      ],
+      "dit_weight_read_bytes": 85656876608,
+      "dit_weight_read_calls": 2752,
+      "prefetch": true,
+      "prefetch_wait_seconds": 0.000436,
+      "png_sha256": "109eab604a0af55e3e4b7f00284be1cda30fb8121f84c79f6a49230544c60386"
+    },
+    "off-2": {
+      "run_id": "cbb608e6-2813-4366-a858-0882e0add4be",
+      "revision": "4ae97da3dbb0ae9c9c211f20a4b0693faa14b03b",
+      "source_dirty": false,
+      "source_tree_sha256": "Xbk5fL7JYuWAVqVL74FwBnBviP3jwKYhU0IUgPCfwfk=",
+      "plan_id": "native.mpsgraph.q4.stream.v1",
+      "seconds": 196.465860834,
+      "stage_seconds": {
+        "text": 10.845889917,
+        "dit": 165.715280458,
+        "vae": 19.706566125
+      },
+      "process_rss_peak_bytes": 1922252800,
+      "physical_footprint_peak_bytes": 0,
+      "swap_used_before_bytes": 13568573,
+      "swap_used_after_bytes": 13568573,
+      "dit_metal_allocated_GiB_at_step_end": [
+        2.69,
+        2.97,
+        2.54,
+        2.54,
+        2.54,
+        1.97
+      ],
+      "dit_weight_read_bytes": 85656876608,
+      "dit_weight_read_calls": 2752,
+      "prefetch": false,
+      "prefetch_wait_seconds": 0.0,
+      "png_sha256": "109eab604a0af55e3e4b7f00284be1cda30fb8121f84c79f6a49230544c60386"
+    },
+    "on-2": {
+      "run_id": "a7853092-ccf9-45f5-bd17-7acc291476f3",
+      "revision": "4ae97da3dbb0ae9c9c211f20a4b0693faa14b03b",
+      "source_dirty": false,
+      "source_tree_sha256": "Xbk5fL7JYuWAVqVL74FwBnBviP3jwKYhU0IUgPCfwfk=",
+      "plan_id": "native.mpsgraph.q4.prefetch.v1",
+      "seconds": 184.614593208,
+      "stage_seconds": {
+        "text": 10.405697875,
+        "dit": 155.138493041,
+        "vae": 18.859997208
+      },
+      "process_rss_peak_bytes": 1717534720,
+      "physical_footprint_peak_bytes": 0,
+      "swap_used_before_bytes": 13568573,
+      "swap_used_after_bytes": 13568573,
+      "dit_metal_allocated_GiB_at_step_end": [
+        2.69,
+        2.69,
+        2.69,
+        2.69,
+        2.69,
+        2.69
+      ],
+      "dit_weight_read_bytes": 85656876608,
+      "dit_weight_read_calls": 2752,
+      "prefetch": true,
+      "prefetch_wait_seconds": 0.000441,
+      "png_sha256": "109eab604a0af55e3e4b7f00284be1cda30fb8121f84c79f6a49230544c60386"
+    },
+    "old-2": {
+      "run_id": "6b7aa10a-be43-4a21-a0d5-0291b0654e39",
+      "revision": "4ae97da3dbb0ae9c9c211f20a4b0693faa14b03b",
+      "source_dirty": false,
+      "source_tree_sha256": "Xbk5fL7JYuWAVqVL74FwBnBviP3jwKYhU0IUgPCfwfk=",
+      "plan_id": "native.mpsgraph.q4.stream.v1",
+      "seconds": 192.189881959,
+      "stage_seconds": {
+        "text": 10.926690292,
+        "dit": 161.333106292,
+        "vae": 19.72471025
+      },
+      "process_rss_peak_bytes": 1862795264,
+      "physical_footprint_peak_bytes": 0,
+      "swap_used_before_bytes": 13568573,
+      "swap_used_after_bytes": 13568573,
+      "dit_metal_allocated_GiB_at_step_end": [
+        2.69,
+        2.69,
+        2.97,
+        2.54,
+        2.54,
+        2.97
+      ],
+      "dit_weight_read_bytes": 85656876608,
+      "dit_weight_read_calls": 2752,
+      "prefetch": false,
+      "prefetch_wait_seconds": 0,
+      "png_sha256": "109eab604a0af55e3e4b7f00284be1cda30fb8121f84c79f6a49230544c60386"
+    },
+    "on-3": {
+      "run_id": "f6f98240-79fa-4af8-b685-aabd566bea37",
+      "revision": "4ae97da3dbb0ae9c9c211f20a4b0693faa14b03b",
+      "source_dirty": false,
+      "source_tree_sha256": "Xbk5fL7JYuWAVqVL74FwBnBviP3jwKYhU0IUgPCfwfk=",
+      "plan_id": "native.mpsgraph.q4.prefetch.v1",
+      "seconds": 159.5351155,
+      "stage_seconds": {
+        "text": 9.550370458,
+        "dit": 130.118252958,
+        "vae": 19.671612208
+      },
+      "process_rss_peak_bytes": 1921695744,
+      "physical_footprint_peak_bytes": 0,
+      "swap_used_before_bytes": 13568573,
+      "swap_used_after_bytes": 13568573,
+      "dit_metal_allocated_GiB_at_step_end": [
+        2.69,
+        2.69,
+        2.69,
+        2.69,
+        2.69,
+        2.69
+      ],
+      "dit_weight_read_bytes": 85656876608,
+      "dit_weight_read_calls": 2752,
+      "prefetch": true,
+      "prefetch_wait_seconds": 0.000327,
+      "png_sha256": "109eab604a0af55e3e4b7f00284be1cda30fb8121f84c79f6a49230544c60386"
+    },
+    "old-3": {
+      "run_id": "96bbac74-4658-4df3-8c2f-34f1fa08dfed",
+      "revision": "4ae97da3dbb0ae9c9c211f20a4b0693faa14b03b",
+      "source_dirty": false,
+      "source_tree_sha256": "Xbk5fL7JYuWAVqVL74FwBnBviP3jwKYhU0IUgPCfwfk=",
+      "plan_id": "native.mpsgraph.q4.stream.v1",
+      "seconds": 173.256661042,
+      "stage_seconds": {
+        "text": 9.59202625,
+        "dit": 143.481570917,
+        "vae": 19.992116541
+      },
+      "process_rss_peak_bytes": 1922007040,
+      "physical_footprint_peak_bytes": 0,
+      "swap_used_before_bytes": 13568573,
+      "swap_used_after_bytes": 13568573,
+      "dit_metal_allocated_GiB_at_step_end": [
+        2.69,
+        2.69,
+        2.69,
+        2.69,
+        2.69,
+        2.69
+      ],
+      "dit_weight_read_bytes": 85656876608,
+      "dit_weight_read_calls": 2752,
+      "prefetch": false,
+      "prefetch_wait_seconds": 0,
+      "png_sha256": "109eab604a0af55e3e4b7f00284be1cda30fb8121f84c79f6a49230544c60386"
+    },
+    "off-3": {
+      "run_id": "c4537973-a942-4828-974e-d6c9609eaffb",
+      "revision": "4ae97da3dbb0ae9c9c211f20a4b0693faa14b03b",
+      "source_dirty": false,
+      "source_tree_sha256": "Xbk5fL7JYuWAVqVL74FwBnBviP3jwKYhU0IUgPCfwfk=",
+      "plan_id": "native.mpsgraph.q4.stream.v1",
+      "seconds": 171.716515333,
+      "stage_seconds": {
+        "text": 9.553844542,
+        "dit": 142.1599785,
+        "vae": 19.811551
+      },
+      "process_rss_peak_bytes": 1921908736,
+      "physical_footprint_peak_bytes": 0,
+      "swap_used_before_bytes": 13568573,
+      "swap_used_after_bytes": 13568573,
+      "dit_metal_allocated_GiB_at_step_end": [
+        2.69,
+        2.69,
+        2.69,
+        2.69,
+        2.69,
+        2.69
+      ],
+      "dit_weight_read_bytes": 85656876608,
+      "dit_weight_read_calls": 2752,
+      "prefetch": false,
+      "prefetch_wait_seconds": 0.0,
+      "png_sha256": "109eab604a0af55e3e4b7f00284be1cda30fb8121f84c79f6a49230544c60386"
+    }
+  },
+  "summary": {
+    "old": {
+      "label": "0.3.1 release",
+      "seconds_median": 174.975677791,
+      "stage_seconds_median": {
+        "text": 9.896404417,
+        "dit": 143.481570917,
+        "vae": 19.992116541
+      },
+      "peak_process_rss_bytes_max": 1922007040
+    },
+    "off": {
+      "label": "Prefetch branch, disabled",
+      "seconds_median": 179.541209167,
+      "stage_seconds_median": {
+        "text": 10.735984084,
+        "dit": 148.796498083,
+        "vae": 19.803267792
+      },
+      "peak_process_rss_bytes_max": 1922252800
+    },
+    "on": {
+      "label": "Prefetch branch, enabled",
+      "seconds_median": 177.228178334,
+      "stage_seconds_median": {
+        "text": 10.405697875,
+        "dit": 145.167145,
+        "vae": 19.671612208
+      },
+      "peak_process_rss_bytes_max": 1921695744
+    }
+  },
+  "quality_pairs": {
+    "text-baseline-moka-pot": {
+      "request_file": "benchmarks/requests/text-baseline-moka-pot.json",
+      "normalization": "Replace typographic double quotes with ASCII double quotes.",
+      "prompt": "Turn the octagonal moka pot into a classic engineering blueprint poster. Use a dark-blue background with a light grid, and render all graphics as white line drawings with a slightly weathered grain. Center the uppercase title \"MOKA POT\" at the top. Arrange an exploded view of the components vertically on the left: lid with small Bakelite knob, upper chamber with handle, stainless-steel filter screen, rubber gasket, funnel filter basket, and lower chamber with safety pressure-release valve. Place a larger cross-section at the upper right showing the internal water path and coffee chamber, and smaller top and side views at the lower right. Include dimension lines, leader lines, and letter labels throughout. Portrait 3:4, with a technical-drawing layout.",
+      "baseline_png_sha256": "2d9f505702666c35e39e2811326c6ddd69668e662525a478efab2e81adff1b90",
+      "prefetch_png_sha256": "2d9f505702666c35e39e2811326c6ddd69668e662525a478efab2e81adff1b90",
+      "visual_observation": "The MOKA POT title is legible."
+    },
+    "text-baseline-jet-engine": {
+      "request_file": "benchmarks/requests/text-baseline-jet-engine.json",
+      "normalization": "Replace typographic double quotes with ASCII double quotes.",
+      "prompt": "Turn the jet engine into a high-precision exploded structural rendering. Use a solid dark-gray background and an oblique overhead isometric view, with components floating apart along a diagonal axis from the upper right to the lower left: intake cowling, compressor blade discs, combustion chamber, turbine discs, central shaft, and exhaust nozzle in sequence. Divide the engine casing into curved panels suspended around the main shaft; distribute the electronic control box, fuel pump, accessory gears, fuel lines, and copper-colored wiring harness on either side. Use cool gray, silver, and matte white for the outer shell and casing, with warm gold and bronze for the turbine core and shaft. Keep components aligned and evenly spaced, with soft studio lighting and realistic metallic reflections. Connect major components to both sides of the image with thin white leader lines and label them in Chinese: \"进气罩,\" \"压气机叶片盘,\" \"燃烧室,\" \"涡轮盘,\" \"中心主轴,\" \"尾喷管,\" \"机匣外壳,\" \"电子控制单元,\" \"燃油泵,\" \"附件齿轮箱,\" and \"燃油管路\" (intake cowling, compressor blade discs, combustion chamber, turbine discs, central shaft, exhaust nozzle, engine casing, electronic control unit, fuel pump, accessory gearbox, and fuel lines, respectively). Use small, simple white sans-serif text in two neat columns, with leader lines that neither cross nor obscure components. Portrait 2:3, with no branding.",
+      "baseline_png_sha256": "45a5967e5773fe88ecbb9cf35f183ff573e1e2aebfdb5a181ea05df0deef24e7",
+      "prefetch_png_sha256": "45a5967e5773fe88ecbb9cf35f183ff573e1e2aebfdb5a181ea05df0deef24e7",
+      "visual_observation": "Both outputs have the same errors in dense Chinese labels."
+    }
+  },
+  "power_context": "Battery power at start and end (100% to 82%). macOS recorded no thermal or performance warnings.",
+  "earlier_ac_comparison": {
+    "samples_seconds": {
+      "off": [
+        166.417671,
+        173.180328625
+      ],
+      "on": [
+        156.351043875,
+        161.143653958
+      ]
+    },
+    "note": "Exploratory comparison, two measured runs per mode. Same W4 package, native binary, case and sampling settings."
+  }
+}

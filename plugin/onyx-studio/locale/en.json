@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Onyx Studio",
+    "description": "Generate images with the local onyx-infer engine and inspect run bottlenecks, model structure, quantization, and hardware utilization. Import a whole book (TXT/MD/EPUB) into a local illustrated reader that alternates text pages with engine-rendered illustration pages; agents can generate and illustrate in bulk through the onyx_generate / onyx_analyze / onyx_book tools. Entry points: full-page workbench, sidebar panel entry, and a right-sidebar tab.",
+    "detail": "docs/DETAIL.md"
+  }
+}

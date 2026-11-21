@@ -1,0 +1,27 @@
+{
+  "protocol": "onyx.model-layout-fixes.v1",
+  "case_id": "h3-original-layout-fixes-v1",
+  "timestep": {
+    "required_order": "[cos,sin]",
+    "min_adaln_part_correlation": 0.9999803810638349
+  },
+  "qkv": {
+    "original_layout": "[head][q/k/v][128]",
+    "required_layout": "[q/k/v][head][128]",
+    "head_interleaved_to_contiguous_exact": true,
+    "mismatched_rows_after": 0
+  },
+  "prepare_text_after_fix": {
+    "shape": [
+      69,
+      5376
+    ],
+    "correlation": 0.9999999999999998,
+    "rmse": 0.0,
+    "original_std": 2.3898322582244873,
+    "community_std": 2.3898322582244873,
+    "original_mean": -0.04338868707418442,
+    "community_mean": -0.04338868707418442
+  },
+  "scope": "Exact original-versus-community layout validation; final image quality is evaluated separately"
+}

@@ -1,0 +1,33 @@
+{
+  "protocol": "onyx.stage-comparison.v1",
+  "case_id": "h3-dit-256-random-conditioning-seed42-v1",
+  "target_id": "mac17-14-m5-max-36gb",
+  "input": "69x5120 deterministic random BF16 conditioning; not a text-encoder output",
+  "sampler": "six-step PDD; identical NumPy PCG64 seed 42",
+  "reference": {
+    "implementation": "Onyx independent MLX W8A16 reference",
+    "seconds": 39.02978412504308,
+    "peak_mlx_bytes": 21815135300
+  },
+  "community": {
+    "implementation": "Anionex/h3-image-mlx W8A8",
+    "revision": "eccdf321cf009e7c636253f7a3a477f076b8314c",
+    "seconds": 24.834334957879037,
+    "peak_mlx_bytes": 19559564024
+  },
+  "latent_comparison": {
+    "shape": [
+      24,
+      16,
+      16
+    ],
+    "rmse": 0.046619180174497205,
+    "mae": 0.034342434257268906,
+    "max_abs": 0.44298458099365234,
+    "reference_std": 1.3003824949264526,
+    "community_std": 1.302643060684204,
+    "correlation": 0.9993601355075821,
+    "scope": "Same random conditioning, seed and weights; Onyx reference W8A16 versus community W8A8"
+  },
+  "scope": "Semantic and numeric stage validation; not end-to-end quality or the native C++ Metal backend"
+}

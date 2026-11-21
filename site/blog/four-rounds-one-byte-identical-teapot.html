@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Four rounds, one byte-identical teapot — Onyx Infer</title>
+<meta name="description" content="42.30 s → 34.65 s across four optimization rounds on the same 1024 px teapot request — with every accepted change proving byte-identical output. Round 1 made things slower, and we published that too.">
+<link rel="icon" type="image/svg+xml" href="../assets/onyx-mark.svg">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<nav class="nav"><div class="nav-inner">
+  <a class="brand" href="../index.html"><svg viewBox="0 0 64 64" width="26" height="26" aria-hidden="true"><defs><linearGradient id="ma" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7a6e"/><stop offset="0.5" stop-color="#e5484d"/><stop offset="1" stop-color="#8f1220"/></linearGradient></defs><polygon points="32,4 56,18 56,46 32,60 8,46 8,18" fill="#131722" stroke="url(#ma)" stroke-width="3"/><polygon points="32,18 44,25 44,39 32,46 20,39 20,25" fill="url(#ma)" opacity="0.85"/></svg><span class="word">ONYX <b>INFER</b></span></a>
+  <div class="nav-links">
+    <a href="../index.html#engine">Engine</a>
+    <a href="../index.html#benchmarks">Benchmarks</a>
+    <a href="../blog/index.html">Blog</a>
+    <a class="gh" href="https://github.com/phantom5125/onyx-infer-open" target="_blank" rel="noopener">GitHub &#8599;</a>
+  </div>
+</div></nav>
+
+<main class="article article-wrap">
+  <header>
+    <div class="kicker">Optimization</div>
+    <h1>Four rounds, one byte-identical teapot</h1>
+    <div class="meta">2026-11-18 &middot; Onyx Infer engineering notes</div>
+    
+  </header>
+  <div class="prose">
+<h2>The rule</h2>
+<p>No performance conclusion without evidence. Every optimization candidate must bring three things: a committed measurement JSON, passing correctness gates, and — for the native pipeline — the output hash of a fixed reference request (the teapot, seed 42). If a candidate is accepted, the diff proves the pixels did not move.</p>
+<h2>The trajectory</h2>
+<p>Same machine, same request, four rounds:</p>
+<table><thead><tr><th>Round</th><th>Commit</th><th>Change</th><th>1024 median</th><th>Output</th></tr></thead><tbody><tr><td>Baseline</td><td><code>b5bf491</code></td><td>Full C++/Metal pipeline</td><td>42.30 s</td><td><code>d3e32281…</code></td></tr><tr><td>1</td><td><code>4bd6893</code></td><td>Q4 grouped zero-point caching</td><td>42.63 s</td><td>identical — and slower</td></tr><tr><td>2</td><td><code>e3d1b87</code></td><td>Weights <code>pread</code> directly into <code>MTLBuffer</code></td><td>38.74 s</td><td>identical, peak memory −46.7%</td></tr><tr><td>3</td><td><code>fb4c0aa</code></td><td>Per-token BF16 modulation packed in shared CPU memory</td><td>37.50 s</td><td>identical</td></tr><tr><td>4</td><td><code>40420aa</code></td><td>Fused QKV transforms + Q/K RMSNorm + RoPE + SDPA; native offset views kill tensor copies</td><td><strong>34.65 s</strong></td><td>identical</td></tr></tbody></table>
+<p>Cumulative: <strong>1.22×</strong> over the v1 baseline. The stage split at round 4 is text 3.83 s / DiT 26.02 s / VAE 4.41 s, with peak GPU allocation around 2.0 GB for a 1024×1024 render.</p>
+<h2>Round 1 made things slower</h2>
+<p>Theory said caching grouped zero-points should help; measurement said 42.63 s against a 42.30 s baseline. The v1 review publishes that row anyway. We would rather have a small truthful number than a big story — an optimization log you cannot trust is worse than no log.</p>
+<h2>Why byte-identical matters</h2>
+<ul><li>It converts a subjective quality debate into one hex string:</li></ul>
+<p><code>d3e3228138e309c627d0c48e2bcbb1597a18fdf5c2ebccc1767c1ecef232b8c8</code>.</p>
+<ul><li>It lets us chase aggressive tricks — round 4 fuses five operations into one dispatch and</li></ul>
+<p>replaces copies with <code>MPSNDArray</code> offset views — at full speed, because if the hash moves, the change moves out.</p>
+<ul><li>It makes automated optimization safe. Our Loop controller can only submit candidates</li></ul>
+<p>through the public protocols and must attach evidence; it cannot redefine what "correct" means.</p>
+<h2>Where this goes</h2>
+<p>The next rounds aim at the two gaps we publish rather than hide: our own Q4 GEMM kernel is still ~16× slower than MLX's <code>quantized_matmul</code> on the same shape, and the community MLX W8A8 path is ~1.64× faster end-to-end on the same request. Those numbers live in <code>benchmarks/results/</code>, right next to the code that produced them.</p>
+  </div>
+  <p><a class="backlink" href="index.html">&#8592; All posts</a></p>
+</main>
+
+<footer class="site"><div class="wrap">
+  <div class="foot-grid">
+    <div class="col">
+      <h4>Project</h4>
+      <a href="../index.html">Home</a>
+      <a href="../blog/index.html">Blog</a>
+      <a href="https://github.com/phantom5125/onyx-infer-open" target="_blank" rel="noopener">GitHub repository</a>
+      <a href="https://github.com/phantom5125/onyx-infer-open/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a>
+    </div>
+    <div class="col">
+      <h4>Design docs</h4>
+      <a href="https://github.com/phantom5125/onyx-infer-open/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noopener">Architecture</a>
+      <a href="https://github.com/phantom5125/onyx-infer-open/blob/main/docs/PROTOCOLS.md" target="_blank" rel="noopener">Protocols (onyx.*.v1)</a>
+      <a href="https://github.com/phantom5125/onyx-infer-open/blob/main/docs/LOOP.md" target="_blank" rel="noopener">Optimization loop</a>
+      <a href="https://github.com/phantom5125/onyx-infer-open/blob/main/docs/V1_REVIEW.md" target="_blank" rel="noopener">v1 review</a>
+    </div>
+    <div class="col">
+      <h4>Evidence</h4>
+      <a href="https://github.com/phantom5125/onyx-infer-open/blob/main/benchmarks/results/native-v1-stability.json" target="_blank" rel="noopener">native-v1-stability.json</a>
+      <a href="https://github.com/phantom5125/onyx-infer-open/blob/main/benchmarks/results/native-round4-fused-attention-views.json" target="_blank" rel="noopener">round 4 measurements</a>
+      <a href="https://github.com/phantom5125/onyx-infer-open/blob/main/benchmarks/results/m5-max-36gb-q4-operator-v1.json" target="_blank" rel="noopener">Q4 operator comparison</a>
+    </div>
+  </div>
+  <p class="foot-note">Onyx Infer source code is available under the <a href="https://github.com/phantom5125/onyx-infer-open/blob/main/LICENSE">MIT License</a>. &copy; 2026 Onyx Infer contributors.</p>
+</div></footer>
+</body>
+</html>

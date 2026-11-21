@@ -1,0 +1,10 @@
+{
+  "name": "text-baseline-moka-pot",
+  "description": "Lightweight text-rendering control from MiniMax-H3-Image showcase (moka pot blueprint). Single exact uppercase English title, no reference image required.",
+  "source": "https://github.com/MiniMax-AI/MiniMax-H3-Image/blob/main/showcase/instruction-following.md#moka-pot-blueprint",
+  "width": 1024,
+  "height": 1024,
+  "seed": 42,
+  "expected_labels_en": ["MOKA POT"],
+  "prompt": "Turn the octagonal moka pot into a classic engineering blueprint poster. Use a dark-blue background with a light grid, and render all graphics as white line drawings with a slightly weathered grain. Center the uppercase title “MOKA POT” at the top. Arrange an exploded view of the components vertically on the left: lid with small Bakelite knob, upper chamber with handle, stainless-steel filter screen, rubber gasket, funnel filter basket, and lower chamber with safety pressure-release valve. Place a larger cross-section at the upper right showing the internal water path and coffee chamber, and smaller top and side views at the lower right. Include dimension lines, leader lines, and letter labels throughout. Portrait 3:4, with a technical-drawing layout."
+}

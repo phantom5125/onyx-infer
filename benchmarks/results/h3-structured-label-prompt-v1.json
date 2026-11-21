@@ -1,0 +1,399 @@
+{
+  "case": "text-baseline-jet-engine",
+  "device": "Mac Studio M5 Max, 32 GPU cores, 36 GiB, macOS 27.2.1 (26B131)",
+  "source_base_commit": "26e75b8",
+  "native_binary_sha256": "8f883fca27b8e2519f7ba8605d0b916297f1390ee7d32fe7b4923a126ff9a1fd",
+  "model_manifest_sha256": "88a48c026021c05f0c6d7d16bf4d03c86ebb6c7755e6159f7d0594d3439ace88",
+  "execution": "Native W4 max-quality, six PDD steps, no reference image or external prompt expander",
+  "measurement": "Apple Vision accurate mode, zh-Hans and en-US, language correction off, minimum text height 0.006; remove ASCII spaces and count each target read exactly once",
+  "expected_labels": [
+    "进气罩",
+    "压气机叶片盘",
+    "燃烧室",
+    "涡轮盘",
+    "中心主轴",
+    "尾喷管",
+    "机匣外壳",
+    "电子控制单元",
+    "燃油泵",
+    "附件齿轮箱",
+    "燃油管路"
+  ],
+  "prompt_specs": {
+    "raw": "benchmarks/requests/text-baseline-jet-engine.json",
+    "structured": "benchmarks/requests/text-baseline-jet-engine-structured.json"
+  },
+  "summary": {
+    "raw-square": {
+      "labels_read_exactly_once": 4,
+      "expected_labels": 33,
+      "labels_read_multiple_times": 0
+    },
+    "structured-square": {
+      "labels_read_exactly_once": 21,
+      "expected_labels": 33,
+      "labels_read_multiple_times": 1
+    },
+    "raw-portrait": {
+      "labels_read_exactly_once": 5,
+      "expected_labels": 33,
+      "labels_read_multiple_times": 0
+    },
+    "structured-portrait": {
+      "labels_read_exactly_once": 21,
+      "expected_labels": 33,
+      "labels_read_multiple_times": 0
+    }
+  },
+  "runs": [
+    {
+      "seed": 42,
+      "arm": "raw-square",
+      "size": [
+        1024,
+        1024
+      ],
+      "png_sha256": "234e4c17fd5cba139dc9f1f842329789e829651551e0f3e22c9f4fc8e29413e0",
+      "labels_read_exactly_once": [],
+      "labels_read_multiple_times": [],
+      "ocr_transcript": [
+        "进气單",
+        "压与机叶片處",
+        "燃燒室",
+        "渦轮徵",
+        "中心主籍",
+        "尾麼管",
+        "机回外売",
+        "娇隱外売",
+        "电子造制单元",
+        "烧由原",
+        "然油柔",
+        "附件歯義第",
+        "爃油管路"
+      ]
+    },
+    {
+      "seed": 42,
+      "arm": "structured-portrait",
+      "size": [
+        832,
+        1248
+      ],
+      "png_sha256": "c3057a4e0ee063b559eb29baf5adea2d3247fbd2bf3819c3d4f39853f0917dc5",
+      "labels_read_exactly_once": [
+        "进气罩",
+        "压气机叶片盘",
+        "燃烧室",
+        "涡轮盘",
+        "中心主轴",
+        "电子控制单元",
+        "燃油泵",
+        "燃油管路"
+      ],
+      "labels_read_multiple_times": [],
+      "ocr_transcript": [
+        "进气罩",
+        "压气机叶片盘",
+        "燃烧室",
+        "涡轮盘",
+        "中心主轴",
+        "尾噴管",
+        "机匣外売",
+        "电子控制单元",
+        "燃油泵",
+        "附件齿较箱",
+        "燃油管路"
+      ]
+    },
+    {
+      "seed": 42,
+      "arm": "structured-square",
+      "size": [
+        1024,
+        1024
+      ],
+      "png_sha256": "4c01e187dd60e357cdac3127decb0d6999c42bad836b530cb4f476e694218732",
+      "labels_read_exactly_once": [
+        "进气罩",
+        "燃烧室",
+        "涡轮盘",
+        "中心主轴",
+        "尾喷管",
+        "电子控制单元",
+        "燃油泵",
+        "附件齿轮箱",
+        "燃油管路"
+      ],
+      "labels_read_multiple_times": [],
+      "ocr_transcript": [
+        "进气罩",
+        "压气机叶片鹽",
+        "燃烧室",
+        "涡轮盘",
+        "中心主轴",
+        "尾喷管",
+        "机匣外売",
+        "电子控制单元",
+        "燃油泵",
+        "附件齿轮箱",
+        "燃油管路"
+      ]
+    },
+    {
+      "seed": 42,
+      "arm": "raw-portrait",
+      "size": [
+        832,
+        1248
+      ],
+      "png_sha256": "079df9cca3168735c32be713829d625cc27943dc3c3844222fca939325db1684",
+      "labels_read_exactly_once": [
+        "进气罩",
+        "中心主轴",
+        "电子控制单元"
+      ],
+      "labels_read_multiple_times": [],
+      "ocr_transcript": [
+        "进气罩",
+        "压气机叶片",
+        "燃焿室",
+        "漏燒室",
+        "混轮盘",
+        "中心主轴",
+        "尾噴管S",
+        "机國外売",
+        "电子控制单元",
+        "-燃油泵",
+        "附件齿输着",
+        "-燃油管"
+      ]
+    },
+    {
+      "seed": 741,
+      "arm": "structured-portrait",
+      "size": [
+        832,
+        1248
+      ],
+      "png_sha256": "9acc38a9bfb5393fc406b24026b4c56aea784e81c415f5002020d2b757bb4455",
+      "labels_read_exactly_once": [
+        "压气机叶片盘",
+        "尾喷管",
+        "电子控制单元",
+        "燃油泵",
+        "附件齿轮箱",
+        "燃油管路"
+      ],
+      "labels_read_multiple_times": [],
+      "ocr_transcript": [
+        "进气罩一",
+        "压气机叶片盘",
+        "燃燒室",
+        "渦轮盘",
+        "尾喷管",
+        "机匣外売",
+        "电子控制单元",
+        "燃油泵",
+        "附件齿轮箱",
+        "燃油管路"
+      ]
+    },
+    {
+      "seed": 741,
+      "arm": "raw-portrait",
+      "size": [
+        832,
+        1248
+      ],
+      "png_sha256": "7264dfbd8afff4861f0f0fdaebf064cda52fea2d6f272a1b3b69dd5be210af4a",
+      "labels_read_exactly_once": [
+        "尾喷管"
+      ],
+      "labels_read_multiple_times": [],
+      "ocr_transcript": [
+        "逆气單",
+        "压气机叶片斷",
+        "涵轮齒",
+        "中心主軸",
+        "尾喷管",
+        "机匣外完",
+        "电子制单元",
+        "滋油原",
+        "附件齿船籀",
+        "-燃油管路"
+      ]
+    },
+    {
+      "seed": 741,
+      "arm": "raw-square",
+      "size": [
+        1024,
+        1024
+      ],
+      "png_sha256": "72b6e4f345d4a1550aafba0231dbaf03e901659b29917aabaac20cde10cc34ac",
+      "labels_read_exactly_once": [],
+      "labels_read_multiple_times": [],
+      "ocr_transcript": [
+        "遗气管",
+        "玉气肌叶片堡",
+        "隱能康",
+        "中心主额、",
+        "屢戦管",
+        "—机區外売",
+        "电子送制幾元",
+        "滚設测",
+        "附片齿說陷",
+        "兴油言紫"
+      ]
+    },
+    {
+      "seed": 741,
+      "arm": "structured-square",
+      "size": [
+        1024,
+        1024
+      ],
+      "png_sha256": "7bd7a1e3c871e731ac29508e8c9eb08a2ffef872e634e20408304848bc35cfc7",
+      "labels_read_exactly_once": [
+        "进气罩",
+        "涡轮盘",
+        "中心主轴",
+        "电子控制单元",
+        "燃油泵",
+        "附件齿轮箱",
+        "燃油管路"
+      ],
+      "labels_read_multiple_times": [
+        "燃烧室"
+      ],
+      "ocr_transcript": [
+        "进气罩",
+        "压气机叶片壹",
+        "燃烧室",
+        "燃烧室",
+        "涡轮盘",
+        "中心主轴",
+        "屠喷管",
+        "机區外売",
+        "电子控制单元",
+        "燃油泵",
+        "附件齿轮箱",
+        "燃油管路"
+      ]
+    },
+    {
+      "seed": 20261120,
+      "arm": "structured-square",
+      "size": [
+        1024,
+        1024
+      ],
+      "png_sha256": "ca96e13368eef226907c82a622c114eb86186bd63af88385eeff0b3b6c6f28a3",
+      "labels_read_exactly_once": [
+        "涡轮盘",
+        "中心主轴",
+        "电子控制单元",
+        "燃油泵",
+        "燃油管路"
+      ],
+      "labels_read_multiple_times": [],
+      "ocr_transcript": [
+        "涡轮盘",
+        "中心主轴",
+        "尾啧管",
+        "机匣外売",
+        "电子控制单元",
+        "燃油泵",
+        "附件齿输箱",
+        "燃油管路"
+      ]
+    },
+    {
+      "seed": 20261120,
+      "arm": "raw-square",
+      "size": [
+        1024,
+        1024
+      ],
+      "png_sha256": "9084e9d4691d064c829e0696e90788f13456815c97f31039965dda894f3f5706",
+      "labels_read_exactly_once": [
+        "进气罩",
+        "尾喷管",
+        "电子控制单元",
+        "燃油泵"
+      ],
+      "labels_read_multiple_times": [],
+      "ocr_transcript": [
+        "进气罩",
+        "压气机叶片ュ",
+        "燃挠室",
+        "中心主軸",
+        "尾喷管",
+        "机匣外売",
+        "电子控制单元",
+        "燃油系",
+        "燃油泵",
+        "附件歯轮箱",
+        "燃油管陷"
+      ]
+    },
+    {
+      "seed": 20261120,
+      "arm": "raw-portrait",
+      "size": [
+        832,
+        1248
+      ],
+      "png_sha256": "24c8f4c690898e3243f9f5527ac687b7cc75d89223e5f665f91a89ae9b8483c5",
+      "labels_read_exactly_once": [
+        "燃油管路"
+      ],
+      "labels_read_multiple_times": [],
+      "ocr_transcript": [
+        "遊气罩",
+        "压气机叶片盅",
+        "燃榜室",
+        "渦乾畫",
+        "中心主糖",
+        "尾陵管",
+        "机區外売",
+        "电子整制单元",
+        "燉油泵",
+        "附件齿粮着",
+        "燃油管路"
+      ]
+    },
+    {
+      "seed": 20261120,
+      "arm": "structured-portrait",
+      "size": [
+        832,
+        1248
+      ],
+      "png_sha256": "d93eb80c04e9d4f90ec038b1268c0982b27b6809cb2c9edab70568c012a0282f",
+      "labels_read_exactly_once": [
+        "压气机叶片盘",
+        "燃烧室",
+        "中心主轴",
+        "尾喷管",
+        "电子控制单元",
+        "燃油泵",
+        "燃油管路"
+      ],
+      "labels_read_multiple_times": [],
+      "ocr_transcript": [
+        "进气罩，",
+        "压气机叶片盘",
+        "燃烧室",
+        "濕烧室",
+        "中心主轴",
+        "尾喷管",
+        "一机国外売",
+        "电子控制单元",
+        "燃油泵",
+        "附件歯轮維",
+        "燃油管路"
+      ]
+    }
+  ]
+}

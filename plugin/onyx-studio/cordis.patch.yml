@@ -1,0 +1,12 @@
+- insert:
+    - id: onyx-studio
+      name: '@local/onyx-studio'
+      config:
+        # Absolute path of the runnable onyx-infer checkout. Leave empty to
+        # auto-detect the repository's main worktree from this plugin's copy.
+        engineRoot: ''
+        # Execution plan label recorded on generated runs.
+        planId: 'native.mpsgraph.q4.stream.v1'
+        # Live sampler cadence and sample cap for the memory/stage series.
+        sampleIntervalMs: 100
+        maxSamples: 4000

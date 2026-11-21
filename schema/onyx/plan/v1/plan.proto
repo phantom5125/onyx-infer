@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package onyx.plan.v1;
+
+import "onyx/common/v1/types.proto";
+import "onyx/model/v1/model.proto";
+
+option cc_enable_arenas = true;
+
+enum MemorySpace {
+  MEMORY_SPACE_UNSPECIFIED = 0;
+  MEMORY_SPACE_HOST = 1;
+  MEMORY_SPACE_SHARED = 2;
+  MEMORY_SPACE_DEVICE = 3;
+}
+
+message QuantizedStorage {
+  uint32 bits = 1;
+  uint32 group_size = 2;
+  bool signed_values = 3;
+  onyx.common.v1.DType scale_dtype = 4;
+  string packing = 5;
+  string scales_buffer = 6;
+}
+
+message PhysicalTensorDesc {
+  onyx.model.v1.LogicalTensorType logical_type = 1;
+  onyx.common.v1.DType storage_dtype = 2;
+  repeated uint64 strides = 3;
+  uint64 alignment = 4;
+  MemorySpace memory_space = 5;
+  QuantizedStorage quantization = 6;
+  string tiling = 7;
+}
+
+message BufferResource {
+  string buffer_id = 1;
+  uint64 byte_size = 2;
+  MemorySpace memory_space = 3;
+  uint64 alignment = 4;
+  PhysicalTensorDesc tensor = 5;
+}
+
+message ResourcePhase {
+  string phase_id = 1;
+  repeated string resident_buffers = 2;
+  repeated string resident_components = 3;
+  uint64 temporary_arena_bytes = 4;
+  repeated string release_components = 5;
+}
+
+message KernelVariant {
+  string variant_id = 1;
+  string op = 2;
+  uint32 op_version = 3;
+  string entry_point = 4;
+  bytes implementation_sha256 = 5;
+  map<string, string> parameters = 6;
+  repeated string required_features = 7;
+}
+
+message PlannedNode {
+  string node_id = 1;
+  repeated string source_node_ids = 2;
+  string kernel_variant_id = 3;
+  repeated string input_buffers = 4;
+  repeated string output_buffers = 5;
+  repeated string dependency_node_ids = 6;
+  string phase_id = 7;
+}
+
+message ExecutionPlan {
+  string protocol = 1;
+  string plan_id = 2;
+  bytes semantic_digest = 3;
+  string target_id = 4;
+  string backend = 5;
+  string numeric_profile_id = 6;
+  string quantization_profile_id = 7;
+  repeated PhysicalTensorDesc tensors = 8;
+  repeated BufferResource buffers = 9;
+  repeated ResourcePhase phases = 10;
+  repeated KernelVariant kernels = 11;
+  repeated PlannedNode nodes = 12;
+  bytes cache_key = 13;
+}

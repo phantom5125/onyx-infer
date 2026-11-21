@@ -1,0 +1,531 @@
+{
+  "benchmark": "h3-teapot-1024-seed42-v1",
+  "metadata": {
+    "device": "Mac Studio M5 Max, 32 GPU cores, 36 GiB",
+    "os_version": "27.2.1",
+    "os_build": "26B131",
+    "base_commit": "619e797e7cb608edee0664959a4e78f4a9b3beb1",
+    "native_source_patch_sha256": "af5597ffa5c82e5b8751a50179fa9b5704111bbe428bd7b5b15b5e6574f54392",
+    "model_manifest_sha256": "88a48c026021c05f0c6d7d16bf4d03c86ebb6c7755e6159f7d0594d3439ace88",
+    "schedule_sha256": "cbc0cf1fbb7a7f9525987db453c1bf8218b95ebc686c9c5b74cbb5bbc4852e0b"
+  },
+  "plan": {
+    "profile": "max-quality",
+    "iterations_per_arm": 3,
+    "order": [
+      [
+        "off",
+        "cold",
+        "hit"
+      ],
+      [
+        "cold",
+        "hit",
+        "off"
+      ],
+      [
+        "hit",
+        "off",
+        "cold"
+      ]
+    ],
+    "note": "Native CLI in fresh processes. Cold creates a new modulation cache entry; OS disk cache is not purged. One baseline and one population request are excluded from medians.",
+    "cache_entry_bytes": 58189888
+  },
+  "summary": {
+    "off": {
+      "total_seconds_median": 43.14165854098974,
+      "native_dit_seconds_median": 32.932601,
+      "peak_sampled_rss_bytes": 1911898112,
+      "dit_weight_read_bytes": 85656876608
+    },
+    "cold": {
+      "total_seconds_median": 42.96389020899369,
+      "native_dit_seconds_median": 32.780678,
+      "peak_sampled_rss_bytes": 1927479296,
+      "dit_weight_read_bytes": 85656876608
+    },
+    "hit": {
+      "total_seconds_median": 38.20633612500387,
+      "native_dit_seconds_median": 28.114347,
+      "peak_sampled_rss_bytes": 1927577600,
+      "dit_weight_read_bytes": 59514797120
+    }
+  },
+  "runs": [
+    {
+      "case": "teapot-1024",
+      "name": "warmup-baseline",
+      "arm": "off",
+      "warmup": true,
+      "base": true,
+      "binary_sha256": "dd6b479c7c3db321062825555d612c91099f4db672416f2e4fa2e5a5b5ec879a",
+      "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+      "total_seconds": 42.303295125006116,
+      "stage_seconds": {
+        "text": 5.507477541003027,
+        "dit": 32.18187066700193,
+        "vae": 4.606463917007204
+      },
+      "dit_native": 32.072039,
+      "weight_cache": {
+        "budget": 0,
+        "bytes": 0,
+        "entries": 0,
+        "hits": 0,
+        "read_calls": 2752,
+        "read_bytes": 85656876608
+      },
+      "modulation_cache": "disabled",
+      "process_wall_seconds": 42.46718220898765,
+      "peak_footprint_bytes": 0,
+      "peak_rss_bytes": 1909391360,
+      "memory_samples": 1290,
+      "swap_before": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)",
+      "swap_after": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)"
+    },
+    {
+      "case": "teapot-1024",
+      "name": "warmup-cache",
+      "arm": "seed",
+      "warmup": true,
+      "base": false,
+      "binary_sha256": "8f883fca27b8e2519f7ba8605d0b916297f1390ee7d32fe7b4923a126ff9a1fd",
+      "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+      "total_seconds": 42.44556133300648,
+      "stage_seconds": {
+        "text": 5.533342665992677,
+        "dit": 32.22629995900206,
+        "vae": 4.676488791999873
+      },
+      "dit_native": 32.124812,
+      "weight_cache": {
+        "budget": 0,
+        "bytes": 0,
+        "entries": 0,
+        "hits": 0,
+        "read_calls": 2752,
+        "read_bytes": 85656876608
+      },
+      "modulation_cache": "miss",
+      "process_wall_seconds": 42.60469454199483,
+      "peak_footprint_bytes": 0,
+      "peak_rss_bytes": 1905590272,
+      "memory_samples": 1268,
+      "swap_before": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)",
+      "swap_after": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)"
+    },
+    {
+      "case": "teapot-1024",
+      "name": "block-1-off",
+      "arm": "off",
+      "warmup": false,
+      "base": false,
+      "binary_sha256": "8f883fca27b8e2519f7ba8605d0b916297f1390ee7d32fe7b4923a126ff9a1fd",
+      "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+      "total_seconds": 43.35917112500465,
+      "stage_seconds": {
+        "text": 5.194836666996707,
+        "dit": 33.14287525000691,
+        "vae": 5.0121096249931725
+      },
+      "dit_native": 33.02389,
+      "weight_cache": {
+        "budget": 0,
+        "bytes": 0,
+        "entries": 0,
+        "hits": 0,
+        "read_calls": 2752,
+        "read_bytes": 85656876608
+      },
+      "modulation_cache": "disabled",
+      "process_wall_seconds": 43.51544166599342,
+      "peak_footprint_bytes": 0,
+      "peak_rss_bytes": 1896185856,
+      "memory_samples": 1166,
+      "swap_before": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)",
+      "swap_after": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)"
+    },
+    {
+      "case": "teapot-1024",
+      "name": "block-1-cold",
+      "arm": "cold",
+      "warmup": false,
+      "base": false,
+      "binary_sha256": "8f883fca27b8e2519f7ba8605d0b916297f1390ee7d32fe7b4923a126ff9a1fd",
+      "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+      "total_seconds": 43.11917550000362,
+      "stage_seconds": {
+        "text": 5.118478207994485,
+        "dit": 33.216844582988415,
+        "vae": 4.774603958998341
+      },
+      "dit_native": 33.106883,
+      "weight_cache": {
+        "budget": 0,
+        "bytes": 0,
+        "entries": 0,
+        "hits": 0,
+        "read_calls": 2752,
+        "read_bytes": 85656876608
+      },
+      "modulation_cache": "miss",
+      "process_wall_seconds": 43.279961958993226,
+      "peak_footprint_bytes": 0,
+      "peak_rss_bytes": 1896415232,
+      "memory_samples": 1148,
+      "swap_before": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)",
+      "swap_after": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)"
+    },
+    {
+      "case": "teapot-1024",
+      "name": "block-1-hit",
+      "arm": "hit",
+      "warmup": false,
+      "base": false,
+      "binary_sha256": "8f883fca27b8e2519f7ba8605d0b916297f1390ee7d32fe7b4923a126ff9a1fd",
+      "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+      "total_seconds": 38.20633612500387,
+      "stage_seconds": {
+        "text": 5.033483082996099,
+        "dit": 28.11328516699723,
+        "vae": 5.050356124993414
+      },
+      "dit_native": 28.003161,
+      "weight_cache": {
+        "budget": 0,
+        "bytes": 0,
+        "entries": 0,
+        "hits": 0,
+        "read_calls": 2646,
+        "read_bytes": 59514797120
+      },
+      "modulation_cache": "hit",
+      "process_wall_seconds": 38.36359729099786,
+      "peak_footprint_bytes": 0,
+      "peak_rss_bytes": 1896284160,
+      "memory_samples": 1020,
+      "swap_before": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)",
+      "swap_after": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)"
+    },
+    {
+      "case": "teapot-1024",
+      "name": "block-2-cold",
+      "arm": "cold",
+      "warmup": false,
+      "base": false,
+      "binary_sha256": "8f883fca27b8e2519f7ba8605d0b916297f1390ee7d32fe7b4923a126ff9a1fd",
+      "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+      "total_seconds": 42.96389020899369,
+      "stage_seconds": {
+        "text": 5.239373792006518,
+        "dit": 32.89171133299533,
+        "vae": 4.823472415999277
+      },
+      "dit_native": 32.780678,
+      "weight_cache": {
+        "budget": 0,
+        "bytes": 0,
+        "entries": 0,
+        "hits": 0,
+        "read_calls": 2752,
+        "read_bytes": 85656876608
+      },
+      "modulation_cache": "miss",
+      "process_wall_seconds": 43.11993316700682,
+      "peak_footprint_bytes": 0,
+      "peak_rss_bytes": 1926725632,
+      "memory_samples": 1146,
+      "swap_before": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)",
+      "swap_after": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)"
+    },
+    {
+      "case": "teapot-1024",
+      "name": "block-2-hit",
+      "arm": "hit",
+      "warmup": false,
+      "base": false,
+      "binary_sha256": "8f883fca27b8e2519f7ba8605d0b916297f1390ee7d32fe7b4923a126ff9a1fd",
+      "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+      "total_seconds": 38.066304250009125,
+      "stage_seconds": {
+        "text": 5.206419666996226,
+        "dit": 28.223835708005936,
+        "vae": 4.62807429098757
+      },
+      "dit_native": 28.114347,
+      "weight_cache": {
+        "budget": 0,
+        "bytes": 0,
+        "entries": 0,
+        "hits": 0,
+        "read_calls": 2646,
+        "read_bytes": 59514797120
+      },
+      "modulation_cache": "hit",
+      "process_wall_seconds": 38.226948541996535,
+      "peak_footprint_bytes": 0,
+      "peak_rss_bytes": 1927577600,
+      "memory_samples": 1016,
+      "swap_before": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)",
+      "swap_after": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)"
+    },
+    {
+      "case": "teapot-1024",
+      "name": "block-2-off",
+      "arm": "off",
+      "warmup": false,
+      "base": false,
+      "binary_sha256": "8f883fca27b8e2519f7ba8605d0b916297f1390ee7d32fe7b4923a126ff9a1fd",
+      "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+      "total_seconds": 43.14165854098974,
+      "stage_seconds": {
+        "text": 5.196269457999733,
+        "dit": 33.051688459003344,
+        "vae": 4.884019374992931
+      },
+      "dit_native": 32.932601,
+      "weight_cache": {
+        "budget": 0,
+        "bytes": 0,
+        "entries": 0,
+        "hits": 0,
+        "read_calls": 2752,
+        "read_bytes": 85656876608
+      },
+      "modulation_cache": "disabled",
+      "process_wall_seconds": 43.30246070798603,
+      "peak_footprint_bytes": 0,
+      "peak_rss_bytes": 1865170944,
+      "memory_samples": 1160,
+      "swap_before": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)",
+      "swap_after": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)"
+    },
+    {
+      "case": "teapot-1024",
+      "name": "block-3-hit",
+      "arm": "hit",
+      "warmup": false,
+      "base": false,
+      "binary_sha256": "8f883fca27b8e2519f7ba8605d0b916297f1390ee7d32fe7b4923a126ff9a1fd",
+      "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+      "total_seconds": 38.39434433399583,
+      "stage_seconds": {
+        "text": 5.2939289580099285,
+        "dit": 28.22799808299169,
+        "vae": 4.862815959000727
+      },
+      "dit_native": 28.118677,
+      "weight_cache": {
+        "budget": 0,
+        "bytes": 0,
+        "entries": 0,
+        "hits": 0,
+        "read_calls": 2646,
+        "read_bytes": 59514797120
+      },
+      "modulation_cache": "hit",
+      "process_wall_seconds": 38.55271604200243,
+      "peak_footprint_bytes": 0,
+      "peak_rss_bytes": 1927577600,
+      "memory_samples": 1030,
+      "swap_before": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)",
+      "swap_after": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)"
+    },
+    {
+      "case": "teapot-1024",
+      "name": "block-3-off",
+      "arm": "off",
+      "warmup": false,
+      "base": false,
+      "binary_sha256": "8f883fca27b8e2519f7ba8605d0b916297f1390ee7d32fe7b4923a126ff9a1fd",
+      "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+      "total_seconds": 42.09135395899648,
+      "stage_seconds": {
+        "text": 5.206427832992631,
+        "dit": 32.08913133300666,
+        "vae": 4.786775957996724
+      },
+      "dit_native": 31.947141,
+      "weight_cache": {
+        "budget": 0,
+        "bytes": 0,
+        "entries": 0,
+        "hits": 0,
+        "read_calls": 2752,
+        "read_bytes": 85656876608
+      },
+      "modulation_cache": "disabled",
+      "process_wall_seconds": 42.25053120800294,
+      "peak_footprint_bytes": 0,
+      "peak_rss_bytes": 1911898112,
+      "memory_samples": 1218,
+      "swap_before": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)",
+      "swap_after": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)"
+    },
+    {
+      "case": "teapot-1024",
+      "name": "block-3-cold",
+      "arm": "cold",
+      "warmup": false,
+      "base": false,
+      "binary_sha256": "8f883fca27b8e2519f7ba8605d0b916297f1390ee7d32fe7b4923a126ff9a1fd",
+      "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+      "total_seconds": 42.33474662499793,
+      "stage_seconds": {
+        "text": 5.127778750000289,
+        "dit": 32.411708042011014,
+        "vae": 4.785504833009327
+      },
+      "dit_native": 32.334399,
+      "weight_cache": {
+        "budget": 0,
+        "bytes": 0,
+        "entries": 0,
+        "hits": 0,
+        "read_calls": 2752,
+        "read_bytes": 85656876608
+      },
+      "modulation_cache": "miss",
+      "process_wall_seconds": 42.49300470900198,
+      "peak_footprint_bytes": 0,
+      "peak_rss_bytes": 1927479296,
+      "memory_samples": 1277,
+      "swap_before": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)",
+      "swap_after": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)"
+    }
+  ],
+  "native_latents": {
+    "size": [
+      512,
+      768
+    ],
+    "seed": 741,
+    "cache_payload_bitflip_offset": 1024,
+    "runs": [
+      {
+        "stage": "dit",
+        "profile": "max-quality",
+        "steps": 6,
+        "seconds": 30.069868,
+        "modulation_cache": "disabled",
+        "weight_cache": {
+          "budget": 0,
+          "bytes": 0,
+          "entries": 0,
+          "hits": 0,
+          "read_calls": 2752,
+          "read_bytes": 85656876608
+        },
+        "name": "off",
+        "latent_sha256": "13eef9e2e2618dfad63468d1c01c7c62d26fc5e32558219dd97b6308d2480369"
+      },
+      {
+        "stage": "dit",
+        "profile": "max-quality",
+        "steps": 6,
+        "seconds": 23.780868,
+        "modulation_cache": "hit",
+        "weight_cache": {
+          "budget": 0,
+          "bytes": 0,
+          "entries": 0,
+          "hits": 0,
+          "read_calls": 2646,
+          "read_bytes": 59514797120
+        },
+        "name": "hit",
+        "latent_sha256": "13eef9e2e2618dfad63468d1c01c7c62d26fc5e32558219dd97b6308d2480369"
+      },
+      {
+        "stage": "dit",
+        "profile": "max-quality",
+        "steps": 6,
+        "seconds": 29.186111,
+        "modulation_cache": "miss",
+        "weight_cache": {
+          "budget": 0,
+          "bytes": 0,
+          "entries": 0,
+          "hits": 0,
+          "read_calls": 2752,
+          "read_bytes": 85656876608
+        },
+        "name": "bitflip",
+        "latent_sha256": "13eef9e2e2618dfad63468d1c01c7c62d26fc5e32558219dd97b6308d2480369"
+      },
+      {
+        "stage": "dit",
+        "profile": "max-quality",
+        "steps": 6,
+        "seconds": 23.0915,
+        "modulation_cache": "hit",
+        "weight_cache": {
+          "budget": 0,
+          "bytes": 0,
+          "entries": 0,
+          "hits": 0,
+          "read_calls": 2646,
+          "read_bytes": 59514797120
+        },
+        "name": "restored",
+        "latent_sha256": "13eef9e2e2618dfad63468d1c01c7c62d26fc5e32558219dd97b6308d2480369"
+      }
+    ]
+  },
+  "4096_compatibility": {
+    "note": "Single runs against the current baseline binary. The archived image came from an earlier revision. This pair checks byte equivalence.",
+    "runs": {
+      "off": {
+        "case_id": "h3-teapot-4096-seed42-v1",
+        "total_seconds": 302.2570292080054,
+        "stage_seconds": {
+          "text": 5.159765874996083,
+          "dit": 230.21867916701012,
+          "vae": 66.86080445800326
+        },
+        "dit_native": 230.062266,
+        "modulation_cache": "disabled",
+        "weight_cache": {
+          "budget": 0,
+          "bytes": 0,
+          "entries": 0,
+          "hits": 0,
+          "read_calls": 2752,
+          "read_bytes": 85656876608
+        },
+        "peak_footprint_bytes": 0,
+        "peak_rss_bytes": 2878963712,
+        "swap_before": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)",
+        "swap_after": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)",
+        "png_sha256": "0b9761b2416b57639d9fe387a528136c072b867fa54f394399a651be36557e3f",
+        "cached_png_sha256": "0b9761b2416b57639d9fe387a528136c072b867fa54f394399a651be36557e3f"
+      },
+      "hit": {
+        "case_id": "h3-teapot-4096-seed42-v1",
+        "total_seconds": 300.8306327080063,
+        "stage_seconds": {
+          "text": 5.12525425000058,
+          "dit": 228.20750979200238,
+          "vae": 67.48128341700067
+        },
+        "dit_native": 228.053755,
+        "modulation_cache": "hit",
+        "weight_cache": {
+          "budget": 0,
+          "bytes": 0,
+          "entries": 0,
+          "hits": 0,
+          "read_calls": 2646,
+          "read_bytes": 59514797120
+        },
+        "peak_footprint_bytes": 0,
+        "peak_rss_bytes": 3425697792,
+        "swap_before": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)",
+        "swap_after": "total = 5120.00M  used = 3417.69M  free = 1702.31M  (encrypted)",
+        "png_sha256": "0b9761b2416b57639d9fe387a528136c072b867fa54f394399a651be36557e3f",
+        "archived_png_sha256": "05a9f329a3f3e722219b0a81ee3f9499258e425ef38b3b0926350d74d47e444f"
+      }
+    }
+  }
+}

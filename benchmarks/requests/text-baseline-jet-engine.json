@@ -1,0 +1,22 @@
+{
+  "name": "text-baseline-jet-engine",
+  "description": "Text-rendering quality baseline from MiniMax-H3-Image showcase instruction-following.md (jet engine, exploded view). Pure text-to-image, 11 exact Chinese labels, no reference image required.",
+  "source": "https://github.com/MiniMax-AI/MiniMax-H3-Image/blob/main/showcase/instruction-following.md#jet-engine-exploded-view",
+  "width": 1024,
+  "height": 1024,
+  "seed": 42,
+  "expected_labels_zh": [
+    "进气罩",
+    "压气机叶片盘",
+    "燃烧室",
+    "涡轮盘",
+    "中心主轴",
+    "尾喷管",
+    "机匣外壳",
+    "电子控制单元",
+    "燃油泵",
+    "附件齿轮箱",
+    "燃油管路"
+  ],
+  "prompt": "Turn the jet engine into a high-precision exploded structural rendering. Use a solid dark-gray background and an oblique overhead isometric view, with components floating apart along a diagonal axis from the upper right to the lower left: intake cowling, compressor blade discs, combustion chamber, turbine discs, central shaft, and exhaust nozzle in sequence. Divide the engine casing into curved panels suspended around the main shaft; distribute the electronic control box, fuel pump, accessory gears, fuel lines, and copper-colored wiring harness on either side. Use cool gray, silver, and matte white for the outer shell and casing, with warm gold and bronze for the turbine core and shaft. Keep components aligned and evenly spaced, with soft studio lighting and realistic metallic reflections. Connect major components to both sides of the image with thin white leader lines and label them in Chinese: “进气罩,” “压气机叶片盘,” “燃烧室,” “涡轮盘,” “中心主轴,” “尾喷管,” “机匣外壳,” “电子控制单元,” “燃油泵,” “附件齿轮箱,” and “燃油管路” (intake cowling, compressor blade discs, combustion chamber, turbine discs, central shaft, exhaust nozzle, engine casing, electronic control unit, fuel pump, accessory gearbox, and fuel lines, respectively). Use small, simple white sans-serif text in two neat columns, with leader lines that neither cross nor obscure components. Portrait 2:3, with no branding."
+}

@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="640" y2="300" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4f8fd6" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#8a5cf6" stop-opacity=".16"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#4f8fd6"/>
+      <stop offset="1" stop-color="#8a5cf6"/>
+    </linearGradient>
+    <linearGradient id="page" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#ffffff" stop-opacity=".92"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity=".68"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="640" height="300" rx="18" fill="url(#bg)"/>
+
+  <!-- logo mark -->
+  <g transform="translate(30 26)">
+    <rect width="34" height="34" rx="9" fill="url(#brand)"/>
+    <path d="M17 6.2l3.9 7.8L29 17.2l-8.1 3L17 28.2l-3.9-8-8.1-3 8.1-3.2z" fill="#fff" opacity=".94"/>
+  </g>
+  <!-- panel frame: two cards hint at the studio + reader tabs -->
+  <rect x="86" y="30" width="118" height="26" rx="13" fill="#8a8f98" opacity=".28"/>
+  <rect x="212" y="30" width="118" height="26" rx="13" fill="url(#brand)" opacity=".85"/>
+  <rect x="338" y="30" width="118" height="26" rx="13" fill="#8a8f98" opacity=".28"/>
+  <rect x="464" y="30" width="118" height="26" rx="13" fill="#8a8f98" opacity=".28"/>
+
+  <!-- reading column: text page -->
+  <rect x="76" y="86" width="216" height="180" rx="12" fill="url(#page)" stroke="#7a8699" stroke-opacity=".55"/>
+  <g fill="#5f6b7d" opacity=".6">
+    <rect x="96" y="112" width="176" height="8" rx="4"/>
+    <rect x="112" y="132" width="160" height="8" rx="4"/>
+    <rect x="96" y="152" width="176" height="8" rx="4"/>
+    <rect x="112" y="172" width="150" height="8" rx="4"/>
+    <rect x="96" y="192" width="176" height="8" rx="4"/>
+    <rect x="112" y="212" width="128" height="8" rx="4"/>
+    <rect x="96" y="232" width="166" height="8" rx="4"/>
+  </g>
+
+  <!-- reading column: illustration page -->
+  <rect x="316" y="86" width="248" height="180" rx="12" fill="url(#page)" stroke="#7a8699" stroke-opacity=".55"/>
+  <g>
+    <rect x="332" y="102" width="216" height="148" rx="8" fill="url(#brand)" opacity=".2"/>
+    <path d="M332 226l52-64 40 44 30-34 94 54z" fill="#4f8fd6" opacity=".55"/>
+    <path d="M446 234l40-48 62 48z" fill="#8a5cf6" opacity=".5"/>
+    <circle cx="516" cy="136" r="17" fill="#ffffff" opacity=".8"/>
+  </g>
+  <!-- caption under the illustration -->
+  <g fill="#5f6b7d" opacity=".5">
+    <rect x="332" y="258" width="128" height="7" rx="3.5"/>
+    <rect x="470" y="256" width="22" height="11" rx="5.5" fill="#4f8fd6" opacity=".7"/>
+  </g>
+
+  <!-- page dots -->
+  <g fill="#5f6b7d" opacity=".55">
+    <circle cx="288" cy="278" r="4"/>
+    <circle cx="308" cy="278" r="4" fill="url(#brand)"/>
+    <circle cx="328" cy="278" r="4"/>
+    <circle cx="348" cy="278" r="4"/>
+  </g>
+
+  <!-- sparkline: engine pulse -->
+  <g transform="translate(560 210)">
+    <rect x="-4" y="-14" width="72" height="46" rx="10" fill="#8a8f98" opacity=".18"/>
+    <path d="M2 16l10-9 9 5 11-13 10 7 9-11 9 6" stroke="url(#brand)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

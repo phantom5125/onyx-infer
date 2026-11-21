@@ -1,0 +1,36 @@
+{
+  "protocol": "onyx.native-optimization.v1",
+  "round": 4,
+  "change": "Fuse DiT QKV layout transforms, Q/K RMSNorm, RoPE and SDPA; use native MPSNDArray offset views for contiguous reshape and leading-axis slices; address modulation steps directly in CPU memory",
+  "baseline_commit": "fb4c0aa",
+  "baseline_seconds_median": 37.496992041,
+  "contemporaneous_baseline_seconds_median": 39.243523875,
+  "contemporaneous_baseline_summary": "artifacts/benchmarks/onyx-native-h3/round2-baseline-cpu-modulation.json",
+  "candidate_seconds_median": 34.650940667,
+  "speedup_vs_baseline": 1.082134895,
+  "speedup_vs_contemporaneous_baseline": 1.132538486,
+  "speedup_vs_v1": 1.118130030,
+  "candidate_samples_seconds": [
+    34.521116667,
+    34.650940667,
+    34.742846792
+  ],
+  "candidate_stage_seconds_median": {
+    "text": 3.829232709,
+    "dit": 26.023271875,
+    "vae": 4.405283625
+  },
+  "candidate_peak_bytes_max": 1997750272,
+  "baseline_peak_bytes_max": 1824505856,
+  "all_outputs_identical": true,
+  "output_sha256": "d3e3228138e309c627d0c48e2bcbb1597a18fdf5c2ebccc1767c1ecef232b8c8",
+  "visual_validation": "1024x1024 teapot image checked; byte-identical to the native v1 output",
+  "tests": {
+    "python_passed": 23,
+    "metal_ctest_passed": 4,
+    "native_offset_view_test": "passed",
+    "schema_compatibility": "0 additive changes"
+  },
+  "decision": "accepted",
+  "summary": "artifacts/benchmarks/onyx-native-h3/round2-fused-attention-views.json"
+}

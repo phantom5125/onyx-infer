@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  contract-and-metal:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.13'
+          enable-cache: true
+      - name: Contract validation
+        run: python tools/native_validate.py --suite contract --label contract-${{ github.sha }}
+      - name: Metal probes and Q4 GEMM
+        run: python tools/native_validate.py --suite metal --skip-build --m 16 --n 128 --k 256 --label metal-${{ github.sha }}
+      - name: Profile registry and gates
+        run: python tools/native_validate.py --suite profiles --label profiles-${{ github.sha }}
+      - name: Onyx Studio importer and JavaScript syntax
+        run: |
+          python plugin/onyx-studio/tests/run_book_import_test.py
+          node --check plugin/onyx-studio/index.js
+          node --check plugin/onyx-studio/client.js
+      - name: Upload validation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: onyx-ci-${{ github.sha }}
+          path: |
+            artifacts/ci/*.json
+            artifacts/ci/*.md
+          retention-days: 14

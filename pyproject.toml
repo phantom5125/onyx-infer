@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "onyx-infer"
+version = "0.4.0"
+description = "Native Apple Silicon image inference with versioned replay contracts"
+requires-python = ">=3.12"
+dependencies = [
+  "numpy>=2.2,<3",
+  "Pillow>=11,<13",
+  "protobuf>=6.30,<7",
+  "psutil>=7,<8",
+  "rfc8785>=0.1,<1",
+  "safetensors>=0.6,<1",
+  "tokenizers>=0.21,<0.25",
+]
+
+[project.optional-dependencies]
+reference = ["mlx>=0.32.3,<0.33"]
+
+[dependency-groups]
+dev = [
+  "grpcio-tools>=1.76,<2",
+  "pytest>=8.4,<10",
+  "pyyaml>=6,<7",
+]
+
+[project.scripts]
+onyx = "onyx.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"

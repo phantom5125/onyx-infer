@@ -1,0 +1,39 @@
+{
+  "protocol": "onyx.stability.v1",
+  "schema_status": "stable",
+  "scope": "onyx common/job/model/plan/trace/loop v1; native H3 text-to-image on M5 Max 36 GB; binary plugin ABI is not part of v1",
+  "native_1024": {
+    "baseline_seconds_median": 42.302455666,
+    "round1_seconds_median": 42.625247625,
+    "round2_seconds_median": 38.744257334,
+    "round2_peak_bytes": 1824456704,
+    "all_outputs_identical": true,
+    "stages": {
+      "text": 3.87046375,
+      "dit": 29.903386584,
+      "vae": 4.816074584
+    }
+  },
+  "native_4096": {
+    "seconds": 329.607656666,
+    "peak_bytes": 2144190464,
+    "run_record": "/Users/daocheng/workspace/onyx-infer/artifacts/benchmarks/onyx-native-h3/h3-teapot-4096-seed42-v1/e560ab05-e589-4a69-8c62-7dc408f17a82/run.pb"
+  },
+  "community_comparison": {
+    "community_w8a8_seconds_median": 23.612049416,
+    "native_over_community_time_ratio": 1.640868043743213,
+    "scope": "Same 1024 teapot request; different quantization and execution implementations"
+  },
+  "tests": {
+    "python_passed": 17,
+    "metal_ctest_passed": 4,
+    "schema_compatibility": "0 additive changes"
+  },
+  "optimization_commits": {
+    "baseline_reference": "c9346f3",
+    "native_baseline": "b5bf491",
+    "round1": "4bd6893",
+    "round2": "e3d1b87"
+  },
+  "quality_note": "1024 and 4096 teapot functional/visual validation; no broad W4 quality-equivalence claim"
+}

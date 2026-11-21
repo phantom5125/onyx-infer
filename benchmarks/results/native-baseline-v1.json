@@ -1,0 +1,24 @@
+{
+  "protocol": "onyx.native-baseline.v1",
+  "label": "native-baseline",
+  "run": {
+    "run_id": "7a6356ce-1338-4fa0-a2a0-47f11c0969e9",
+    "return_code": 0,
+    "seconds": 43.072885333,
+    "peak_bytes": 3423223808,
+    "output": "/Users/daocheng/workspace/onyx-infer/artifacts/benchmarks/onyx-native-h3/h3-teapot-1024-seed42-v1/7a6356ce-1338-4fa0-a2a0-47f11c0969e9/output.png",
+    "output_sha256": "d3e3228138e309c627d0c48e2bcbb1597a18fdf5c2ebccc1767c1ecef232b8c8",
+    "run_record": "/Users/daocheng/workspace/onyx-infer/artifacts/benchmarks/onyx-native-h3/h3-teapot-1024-seed42-v1/7a6356ce-1338-4fa0-a2a0-47f11c0969e9/run.pb",
+    "error": null
+  },
+  "stages": {
+    "text": 4.811779041,
+    "dit": 33.242860917,
+    "vae": 4.850033583
+  },
+  "vae_reference_pixel_correlation": 0.9999928910617746,
+  "text_reference_correlation": 0.9999987306604403,
+  "native_vs_community_time_ratio": 1.8241908855151279,
+  "quality_scope": "Native 1024 teapot generation passed; VAE and text have separate numerical references",
+  "native_cpp_metal": true
+}

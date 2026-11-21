@@ -1,0 +1,16 @@
+{
+  "protocol": "onyx.native-optimization.v1",
+  "round": 2,
+  "change": "Read weights directly into MTLBuffer contents without NSData staging",
+  "baseline_seconds_median": 42.302455666,
+  "round1_seconds_median": 42.625247625,
+  "candidate_seconds_median": 38.744257334,
+  "speedup_vs_baseline": 1.091838083288733,
+  "speedup_vs_round1": 1.100169433047675,
+  "baseline_peak_bytes": 3422896128,
+  "candidate_peak_bytes": 1824456704,
+  "peak_memory_reduction": 0.4669844962353471,
+  "all_outputs_identical": true,
+  "decision": "accepted",
+  "summary": "artifacts/benchmarks/onyx-native-h3/round2-direct-pread.json"
+}

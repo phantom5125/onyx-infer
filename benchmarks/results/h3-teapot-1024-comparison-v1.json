@@ -1,0 +1,97 @@
+{
+  "protocol": "onyx.generation-comparison.v1",
+  "case_id": "h3-teapot-1024-seed42-v1",
+  "target_id": "mac17-14-m5-max-36gb",
+  "community": {
+    "implementation": "Anionex/h3-image-mlx W8A8 resident",
+    "revision": "eccdf321cf009e7c636253f7a3a477f076b8314c",
+    "seconds_median": 23.612049416,
+    "seconds_p95": 24.491148125,
+    "measured_runs": 3,
+    "peak_bytes_max": 13767311360,
+    "all_outputs_identical": true
+  },
+  "onyx_reference": {
+    "implementation": "Independent Onyx MLX W8A16 reference; not native C++ Metal",
+    "seconds": 42.684664125,
+    "peak_bytes": 10197254144,
+    "stages": {
+      "text": 8.828152833,
+      "dit": 33.112844709,
+      "vae": 0.707086416
+    },
+    "run_record": "/Users/daocheng/workspace/onyx-infer/artifacts/benchmarks/onyx-reference-h3/h3-teapot-1024-seed42-v1/a75cf2e1-d397-4926-8321-f16ea0b0c62c/run.pb"
+  },
+  "reference_over_community_time_ratio": 1.8077492289202142,
+  "image_similarity": {
+    "reference": "/Users/daocheng/workspace/onyx-infer/artifacts/benchmarks/community-h3/h3-teapot-1024-seed42-v1/c7430d5a-8f81-477e-abdf-0226eff6b433/output.png",
+    "candidate": "/Users/daocheng/workspace/onyx-infer/artifacts/benchmarks/onyx-reference-h3/h3-teapot-1024-seed42-v1/a75cf2e1-d397-4926-8321-f16ea0b0c62c/output.png",
+    "shape": [
+      1024,
+      1024,
+      3
+    ],
+    "mae": 0.01743965595960617,
+    "rmse": 0.04500831022230363,
+    "psnr_db": 26.934145835389465,
+    "pixel_identical": false,
+    "pixel_correlation": 0.9853201506390297,
+    "scope": "Similarity between two implementations, not an absolute image-quality score"
+  },
+  "scope": "Same prompt, seed, dimensions and source weights. Community uses W8A8; reference uses W8A16. This is not a native Onyx W4 performance result or an absolute quality evaluation.",
+  "native_onyx_w4_status": "completed-native-cpp-metal",
+  "onyx_w4_reference": {
+    "implementation": "Onyx original-checkpoint W4BF16 MLX reference; not native C++ Metal",
+    "seconds": 237.921625834,
+    "peak_bytes": 12657328128,
+    "stages": {
+      "text": 36.672439167,
+      "dit": 199.997838667,
+      "vae": 1.2202335
+    },
+    "run_record": "/Users/daocheng/workspace/onyx-infer/artifacts/benchmarks/onyx-w4-reference-h3/h3-teapot-1024-seed42-v1/ec692a48-1692-4b68-afcc-8b08ec343fa2/run.pb"
+  },
+  "w4_reference_over_community_time_ratio": 10.076280192467305,
+  "w4_image_similarity": {
+    "reference": "/Users/daocheng/workspace/onyx-infer/artifacts/benchmarks/community-h3/h3-teapot-1024-seed42-v1/c7430d5a-8f81-477e-abdf-0226eff6b433/output.png",
+    "candidate": "/Users/daocheng/workspace/onyx-infer/artifacts/benchmarks/onyx-w4-reference-h3/h3-teapot-1024-seed42-v1/ec692a48-1692-4b68-afcc-8b08ec343fa2/output.png",
+    "shape": [
+      1024,
+      1024,
+      3
+    ],
+    "mae": 0.1393589824438095,
+    "rmse": 0.20440866237838623,
+    "psnr_db": 13.790014074521533,
+    "pixel_identical": false,
+    "pixel_correlation": 0.6750220655931687,
+    "scope": "Similarity between two implementations, not an absolute image-quality score"
+  },
+  "onyx_native": {
+    "implementation": "Onyx C++ Metal with MPSGraph and native Onyx Q4 pack",
+    "seconds": 38.744257334,
+    "peak_bytes": 1823784960,
+    "stages": {
+      "text": 3.87046375,
+      "dit": 29.903386584,
+      "vae": 4.816074584
+    },
+    "run_record": "/Users/daocheng/workspace/onyx-infer/artifacts/benchmarks/onyx-native-h3/h3-teapot-1024-seed42-v1/faa2652d-32e1-427c-85f0-11ef2c4d3714/run.pb"
+  },
+  "native_over_community_time_ratio": 1.640868043743213,
+  "native_image_similarity": {
+    "reference": "/Users/daocheng/workspace/onyx-infer/artifacts/benchmarks/community-h3/h3-teapot-1024-seed42-v1/c7430d5a-8f81-477e-abdf-0226eff6b433/output.png",
+    "candidate": "/Users/daocheng/workspace/onyx-infer/artifacts/benchmarks/onyx-native-h3/h3-teapot-1024-seed42-v1/faa2652d-32e1-427c-85f0-11ef2c4d3714/output.png",
+    "shape": [
+      1024,
+      1024,
+      3
+    ],
+    "mae": 0.14185506105422974,
+    "rmse": 0.20669130119932147,
+    "psnr_db": 13.693556013717396,
+    "pixel_identical": false,
+    "pixel_correlation": 0.6664913764968301,
+    "scope": "Similarity between two implementations, not an absolute image-quality score"
+  }
+}

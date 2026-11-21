@@ -1,0 +1,67 @@
+name: Native validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Validation suite
+        required: true
+        default: h3
+        type: choice
+        options: [metal, kernel, h3, h3-e2e, all]
+      case:
+        description: Benchmark case
+        required: true
+        default: teapot-1024
+        type: choice
+        options: [teapot-1024, teapot-4096]
+      runs:
+        description: Measured generations
+        required: true
+        default: '1'
+      variant:
+        description: Q4 kernel variant
+        required: true
+        default: tile16
+        type: choice
+        options: [tile16, tile32]
+      label:
+        description: Report label (unique identifier)
+        required: true
+        default: manual
+  schedule:
+    - cron: '17 5 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    runs-on: [self-hosted, macOS, ARM64, onyx-metal]
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.13'
+          enable-cache: true
+      - name: Prepare Python environment
+        run: uv sync --extra reference
+      - name: Run native validation
+        run: |
+          python tools/native_validate.py \
+            --suite "${{ inputs.suite || 'metal' }}" \
+            --case "${{ inputs.case || 'teapot-1024' }}" \
+            --runs "${{ inputs.runs || '1' }}" \
+            --variant "${{ inputs.variant || 'tile16' }}" \
+            --label "${{ inputs.label || 'scheduled' }}-${{ github.sha }}"
+      - name: Upload native reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: onyx-native-${{ inputs.label || 'scheduled' }}-${{ github.sha }}
+          path: |
+            artifacts/ci/*.json
+            artifacts/ci/*.md
+          retention-days: 30

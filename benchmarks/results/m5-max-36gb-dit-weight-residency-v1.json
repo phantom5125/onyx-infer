@@ -1,0 +1,547 @@
+{
+  "case": "h3-teapot-1024-seed42-v1",
+  "device": "Mac Studio M5 Max 32 GPU cores, 36 GiB, macOS 27.2.1 (26B131)",
+  "native_binary_sha256": "8f883fca27b8e2519f7ba8605d0b916297f1390ee7d32fe7b4923a126ff9a1fd",
+  "model_manifest_sha256": "88a48c026021c05f0c6d7d16bf4d03c86ebb6c7755e6159f7d0594d3439ace88",
+  "execution": "MPSGraph max-quality with a warm AdaLN modulation cache in every run",
+  "direct_dit_stage": {
+    "summary": {
+      "0": {
+        "median_seconds": 19.493746,
+        "peak_sampled_memory_bytes": 1767129088
+      },
+      "10": {
+        "median_seconds": 16.255069,
+        "peak_sampled_memory_bytes": 8621096960
+      }
+    },
+    "runs": [
+      {
+        "stage": "dit",
+        "profile": "max-quality",
+        "steps": 6,
+        "seconds": 20.390498,
+        "modulation_cache": "hit",
+        "weight_cache": {
+          "budget": 0,
+          "bytes": 0,
+          "entries": 0,
+          "hits": 0,
+          "read_calls": 2646,
+          "read_bytes": 59514797120
+        },
+        "block": 0,
+        "budget_gib": 0,
+        "warmup": true,
+        "elapsed": 20.44446662500559,
+        "latent_sha256": "03d2b12c990fe77be3151a946595b23fa86af8cbfaa397cfd0243b445dae0be9",
+        "peak_bytes": 1767079936,
+        "memory_source": "rss",
+        "swap_before": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)",
+        "swap_after": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)"
+      },
+      {
+        "stage": "dit",
+        "profile": "max-quality",
+        "steps": 6,
+        "seconds": 17.253859,
+        "modulation_cache": "hit",
+        "weight_cache": {
+          "budget": 10737418240,
+          "bytes": 10077456960,
+          "entries": 423,
+          "hits": 2015,
+          "read_calls": 631,
+          "read_bytes": 11329849920
+        },
+        "block": 0,
+        "budget_gib": 10,
+        "warmup": true,
+        "elapsed": 17.4657872079988,
+        "latent_sha256": "03d2b12c990fe77be3151a946595b23fa86af8cbfaa397cfd0243b445dae0be9",
+        "peak_bytes": 7244070912,
+        "memory_source": "rss",
+        "swap_before": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)",
+        "swap_after": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)"
+      },
+      {
+        "stage": "dit",
+        "profile": "max-quality",
+        "steps": 6,
+        "seconds": 17.17087,
+        "modulation_cache": "hit",
+        "weight_cache": {
+          "budget": 10737418240,
+          "bytes": 10077456960,
+          "entries": 423,
+          "hits": 2015,
+          "read_calls": 631,
+          "read_bytes": 11329849920
+        },
+        "block": 1,
+        "budget_gib": 10,
+        "warmup": false,
+        "elapsed": 17.35644770800718,
+        "latent_sha256": "03d2b12c990fe77be3151a946595b23fa86af8cbfaa397cfd0243b445dae0be9",
+        "peak_bytes": 7430127616,
+        "memory_source": "rss",
+        "swap_before": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)",
+        "swap_after": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)"
+      },
+      {
+        "stage": "dit",
+        "profile": "max-quality",
+        "steps": 6,
+        "seconds": 19.608776,
+        "modulation_cache": "hit",
+        "weight_cache": {
+          "budget": 0,
+          "bytes": 0,
+          "entries": 0,
+          "hits": 0,
+          "read_calls": 2646,
+          "read_bytes": 59514797120
+        },
+        "block": 1,
+        "budget_gib": 0,
+        "warmup": false,
+        "elapsed": 19.657090291002532,
+        "latent_sha256": "03d2b12c990fe77be3151a946595b23fa86af8cbfaa397cfd0243b445dae0be9",
+        "peak_bytes": 1767129088,
+        "memory_source": "rss",
+        "swap_before": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)",
+        "swap_after": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)"
+      },
+      {
+        "stage": "dit",
+        "profile": "max-quality",
+        "steps": 6,
+        "seconds": 18.869112,
+        "modulation_cache": "hit",
+        "weight_cache": {
+          "budget": 0,
+          "bytes": 0,
+          "entries": 0,
+          "hits": 0,
+          "read_calls": 2646,
+          "read_bytes": 59514797120
+        },
+        "block": 2,
+        "budget_gib": 0,
+        "warmup": false,
+        "elapsed": 18.918276041003992,
+        "latent_sha256": "03d2b12c990fe77be3151a946595b23fa86af8cbfaa397cfd0243b445dae0be9",
+        "peak_bytes": 1767079936,
+        "memory_source": "rss",
+        "swap_before": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)",
+        "swap_after": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)"
+      },
+      {
+        "stage": "dit",
+        "profile": "max-quality",
+        "steps": 6,
+        "seconds": 15.942251,
+        "modulation_cache": "hit",
+        "weight_cache": {
+          "budget": 10737418240,
+          "bytes": 10077456960,
+          "entries": 423,
+          "hits": 2015,
+          "read_calls": 631,
+          "read_bytes": 11329849920
+        },
+        "block": 2,
+        "budget_gib": 10,
+        "warmup": false,
+        "elapsed": 16.16316304099746,
+        "latent_sha256": "03d2b12c990fe77be3151a946595b23fa86af8cbfaa397cfd0243b445dae0be9",
+        "peak_bytes": 8621096960,
+        "memory_source": "rss",
+        "swap_before": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)",
+        "swap_after": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)"
+      },
+      {
+        "stage": "dit",
+        "profile": "max-quality",
+        "steps": 6,
+        "seconds": 16.255069,
+        "modulation_cache": "hit",
+        "weight_cache": {
+          "budget": 10737418240,
+          "bytes": 10077456960,
+          "entries": 423,
+          "hits": 2015,
+          "read_calls": 631,
+          "read_bytes": 11329849920
+        },
+        "block": 3,
+        "budget_gib": 10,
+        "warmup": false,
+        "elapsed": 16.455275915999664,
+        "latent_sha256": "03d2b12c990fe77be3151a946595b23fa86af8cbfaa397cfd0243b445dae0be9",
+        "peak_bytes": 8260452352,
+        "memory_source": "rss",
+        "swap_before": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)",
+        "swap_after": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)"
+      },
+      {
+        "stage": "dit",
+        "profile": "max-quality",
+        "steps": 6,
+        "seconds": 19.493746,
+        "modulation_cache": "hit",
+        "weight_cache": {
+          "budget": 0,
+          "bytes": 0,
+          "entries": 0,
+          "hits": 0,
+          "read_calls": 2646,
+          "read_bytes": 59514797120
+        },
+        "block": 3,
+        "budget_gib": 0,
+        "warmup": false,
+        "elapsed": 19.542821707989788,
+        "latent_sha256": "03d2b12c990fe77be3151a946595b23fa86af8cbfaa397cfd0243b445dae0be9",
+        "peak_bytes": 1767096320,
+        "memory_source": "rss",
+        "swap_before": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)",
+        "swap_after": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)"
+      }
+    ]
+  },
+  "native_generate": {
+    "summary": {
+      "0": {
+        "median_seconds": 30.68646658299258,
+        "peak_sampled_memory_bytes": 1925185536
+      },
+      "10240": {
+        "median_seconds": 24.958607791006216,
+        "peak_sampled_memory_bytes": 7612661760
+      }
+    },
+    "runs": [
+      {
+        "case": "h3-teapot-1024-seed42-v1",
+        "label": "warmup-0",
+        "warmup": true,
+        "budget_mib": 0,
+        "total_seconds": 28.16313870799786,
+        "stage_seconds": {
+          "text": 3.8658877500129165,
+          "dit": 20.071966790987062,
+          "vae": 4.2166184579982655
+        },
+        "wall_seconds": 28.315880207999726,
+        "dit_native_seconds": 20.031442,
+        "cache": {
+          "budget": 0,
+          "bytes": 0,
+          "entries": 0,
+          "hits": 0,
+          "read_calls": 2646,
+          "read_bytes": 59514797120
+        },
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "peak_rss_bytes": 1877442560,
+        "peak_footprint_bytes": 0,
+        "dit_metal_allocated_gib_at_step_end": [
+          7.87,
+          7.87,
+          7.87,
+          7.87,
+          7.87,
+          7.87
+        ],
+        "swap_before": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)",
+        "swap_after": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)"
+      },
+      {
+        "case": "h3-teapot-1024-seed42-v1",
+        "label": "warmup-10240",
+        "warmup": true,
+        "budget_mib": 10240,
+        "total_seconds": 25.22176583299006,
+        "stage_seconds": {
+          "text": 3.793524459004402,
+          "dit": 17.195947457992588,
+          "vae": 4.223122124996735
+        },
+        "wall_seconds": 25.375023833010346,
+        "dit_native_seconds": 17.000706,
+        "cache": {
+          "budget": 10737418240,
+          "bytes": 10077456960,
+          "entries": 423,
+          "hits": 2015,
+          "read_calls": 631,
+          "read_bytes": 11329849920
+        },
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "peak_rss_bytes": 6587416576,
+        "peak_footprint_bytes": 0,
+        "dit_metal_allocated_gib_at_step_end": [
+          17.18,
+          17.18,
+          17.18,
+          17.18,
+          17.18,
+          17.18
+        ],
+        "swap_before": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)",
+        "swap_after": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)"
+      },
+      {
+        "case": "h3-teapot-1024-seed42-v1",
+        "label": "block-1-0",
+        "warmup": false,
+        "budget_mib": 0,
+        "total_seconds": 28.193044749990804,
+        "stage_seconds": {
+          "text": 3.7954236250079703,
+          "dit": 20.153421334005543,
+          "vae": 4.235247500007972
+        },
+        "wall_seconds": 28.34053508299985,
+        "dit_native_seconds": 20.110989,
+        "cache": {
+          "budget": 0,
+          "bytes": 0,
+          "entries": 0,
+          "hits": 0,
+          "read_calls": 2646,
+          "read_bytes": 59514797120
+        },
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "peak_rss_bytes": 1925185536,
+        "peak_footprint_bytes": 0,
+        "dit_metal_allocated_gib_at_step_end": [
+          7.87,
+          7.87,
+          7.87,
+          7.87,
+          7.87,
+          7.87
+        ],
+        "swap_before": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)",
+        "swap_after": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)"
+      },
+      {
+        "case": "h3-teapot-1024-seed42-v1",
+        "label": "block-1-10240",
+        "warmup": false,
+        "budget_mib": 10240,
+        "total_seconds": 24.958607791006216,
+        "stage_seconds": {
+          "text": 3.7723636659939075,
+          "dit": 16.954027041996596,
+          "vae": 4.222945792003884
+        },
+        "wall_seconds": 25.10870562499622,
+        "dit_native_seconds": 16.759695,
+        "cache": {
+          "budget": 10737418240,
+          "bytes": 10077456960,
+          "entries": 423,
+          "hits": 2015,
+          "read_calls": 631,
+          "read_bytes": 11329849920
+        },
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "peak_rss_bytes": 6706102272,
+        "peak_footprint_bytes": 0,
+        "dit_metal_allocated_gib_at_step_end": [
+          16.61,
+          16.6,
+          16.6,
+          16.6,
+          16.6,
+          16.6
+        ],
+        "swap_before": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)",
+        "swap_after": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)"
+      },
+      {
+        "case": "h3-teapot-1024-seed42-v1",
+        "label": "block-2-10240",
+        "warmup": false,
+        "budget_mib": 10240,
+        "total_seconds": 24.531222666002577,
+        "stage_seconds": {
+          "text": 3.8160047919955105,
+          "dit": 16.493415834003827,
+          "vae": 4.213907917001052
+        },
+        "wall_seconds": 24.68225079200056,
+        "dit_native_seconds": 16.306164,
+        "cache": {
+          "budget": 10737418240,
+          "bytes": 10077456960,
+          "entries": 423,
+          "hits": 2015,
+          "read_calls": 631,
+          "read_bytes": 11329849920
+        },
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "peak_rss_bytes": 7612661760,
+        "peak_footprint_bytes": 0,
+        "dit_metal_allocated_gib_at_step_end": [
+          17.2,
+          17.2,
+          17.2,
+          17.2,
+          17.2,
+          17.2
+        ],
+        "swap_before": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)",
+        "swap_after": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)"
+      },
+      {
+        "case": "h3-teapot-1024-seed42-v1",
+        "label": "block-2-0",
+        "warmup": false,
+        "budget_mib": 0,
+        "total_seconds": 30.68646658299258,
+        "stage_seconds": {
+          "text": 3.800196833006339,
+          "dit": 19.81292145801126,
+          "vae": 7.063919042004272
+        },
+        "wall_seconds": 30.836498040996958,
+        "dit_native_seconds": 19.77012,
+        "cache": {
+          "budget": 0,
+          "bytes": 0,
+          "entries": 0,
+          "hits": 0,
+          "read_calls": 2646,
+          "read_bytes": 59514797120
+        },
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "peak_rss_bytes": 1877884928,
+        "peak_footprint_bytes": 0,
+        "dit_metal_allocated_gib_at_step_end": [
+          7.87,
+          7.87,
+          7.87,
+          7.87,
+          7.87,
+          7.87
+        ],
+        "swap_before": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)",
+        "swap_after": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)"
+      },
+      {
+        "case": "h3-teapot-1024-seed42-v1",
+        "label": "block-3-0",
+        "warmup": false,
+        "budget_mib": 0,
+        "total_seconds": 31.32934783399105,
+        "stage_seconds": {
+          "text": 3.7966983749938663,
+          "dit": 20.78364004100149,
+          "vae": 6.73962437499722
+        },
+        "wall_seconds": 31.479833291989053,
+        "dit_native_seconds": 20.738444,
+        "cache": {
+          "budget": 0,
+          "bytes": 0,
+          "entries": 0,
+          "hits": 0,
+          "read_calls": 2646,
+          "read_bytes": 59514797120
+        },
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "peak_rss_bytes": 1886076928,
+        "peak_footprint_bytes": 0,
+        "dit_metal_allocated_gib_at_step_end": [
+          7.87,
+          7.87,
+          7.87,
+          7.87,
+          7.87,
+          7.87
+        ],
+        "swap_before": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)",
+        "swap_after": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)"
+      },
+      {
+        "case": "h3-teapot-1024-seed42-v1",
+        "label": "block-3-10240",
+        "warmup": false,
+        "budget_mib": 10240,
+        "total_seconds": 27.473071082989918,
+        "stage_seconds": {
+          "text": 3.780731792008737,
+          "dit": 17.067339582994464,
+          "vae": 6.61735816700093
+        },
+        "wall_seconds": 27.62624537499505,
+        "dit_native_seconds": 16.875433,
+        "cache": {
+          "budget": 10737418240,
+          "bytes": 10077456960,
+          "entries": 423,
+          "hits": 2015,
+          "read_calls": 631,
+          "read_bytes": 11329849920
+        },
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "peak_rss_bytes": 7181369344,
+        "peak_footprint_bytes": 0,
+        "dit_metal_allocated_gib_at_step_end": [
+          17.19,
+          17.19,
+          16.61,
+          16.61,
+          16.61,
+          16.61
+        ],
+        "swap_before": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)",
+        "swap_after": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)"
+      }
+    ],
+    "sequence": "One warmup per budget, then three paired blocks with order 0/10240, 10240/0, 0/10240"
+  },
+  "4096_compatibility": {
+    "cached_weights": {
+      "case": "h3-teapot-4096-seed42-v1",
+      "label": "stress-16mp",
+      "warmup": false,
+      "budget_mib": 10240,
+      "total_seconds": 318.462402959005,
+      "stage_seconds": {
+        "text": 3.89125425000384,
+        "dit": 209.29851733299438,
+        "vae": 105.25586833400303
+      },
+      "wall_seconds": 318.61145954100357,
+      "dit_native_seconds": 209.075259,
+      "cache": {
+        "budget": 10737418240,
+        "bytes": 10077456960,
+        "entries": 423,
+        "hits": 2015,
+        "read_calls": 631,
+        "read_bytes": 11329849920
+      },
+      "png_sha256": "0b9761b2416b57639d9fe387a528136c072b867fa54f394399a651be36557e3f",
+      "peak_rss_bytes": 8644575232,
+      "peak_footprint_bytes": 0,
+      "dit_metal_allocated_gib_at_step_end": [
+        19.8,
+        19.88,
+        19.88,
+        19.88,
+        19.8,
+        19.8
+      ],
+      "swap_before": "total = 5120.00M  used = 3426.69M  free = 1693.31M  (encrypted)",
+      "swap_after": "total = 5120.00M  used = 4279.38M  free = 840.62M  (encrypted)"
+    },
+    "off_png_sha256": "0b9761b2416b57639d9fe387a528136c072b867fa54f394399a651be36557e3f",
+    "performance_gate": "rejected: swap increased by 852.69 MiB"
+  }
+}

@@ -1,0 +1,180 @@
+syntax = "proto3";
+
+package onyx.model.v1;
+
+import "onyx/common/v1/types.proto";
+
+option cc_enable_arenas = true;
+
+message Dimension {
+  oneof value {
+    uint64 literal = 1;
+    string symbol = 2;
+  }
+}
+
+message LogicalTensorType {
+  onyx.common.v1.DType dtype = 1;
+  repeated Dimension shape = 2;
+}
+
+message IntList { repeated int64 values = 1; }
+message FloatList { repeated double values = 1; }
+message StringList { repeated string values = 1; }
+message DimensionList { repeated Dimension values = 1; }
+
+message Attribute {
+  oneof value {
+    int64 integer = 1;
+    double floating = 2;
+    string text = 3;
+    bool boolean = 4;
+    IntList integers = 5;
+    FloatList floating_values = 6;
+    StringList strings = 7;
+    DimensionList dimensions = 8;
+  }
+}
+
+message Value {
+  string value_id = 1;
+  LogicalTensorType type = 2;
+}
+
+message Node {
+  string node_id = 1;
+  string op = 2;
+  uint32 op_version = 3;
+  repeated string inputs = 4;
+  repeated string outputs = 5;
+  map<string, Attribute> attributes = 6;
+}
+
+message SemanticGraph {
+  string graph_id = 1;
+  repeated Value values = 2;
+  repeated Node nodes = 3;
+  repeated string inputs = 4;
+  repeated string outputs = 5;
+  map<string, uint64> symbolic_constraints_min = 6;
+  map<string, uint64> symbolic_constraints_max = 7;
+}
+
+enum ComponentRole {
+  COMPONENT_ROLE_UNSPECIFIED = 0;
+  COMPONENT_ROLE_TEXT_ENCODER = 1;
+  COMPONENT_ROLE_TRANSFORMER = 2;
+  COMPONENT_ROLE_VAE = 3;
+  COMPONENT_ROLE_TOKENIZER = 4;
+  COMPONENT_ROLE_AUXILIARY = 5;
+}
+
+message Component {
+  string component_id = 1;
+  ComponentRole role = 2;
+  string graph_id = 3;
+  repeated onyx.common.v1.ArtifactRef artifacts = 4;
+}
+
+message Stage {
+  string stage_id = 1;
+  string component_id = 2;
+  string graph_id = 3;
+  repeated string inputs = 4;
+  repeated string outputs = 5;
+}
+
+message StageCall {
+  string stage_id = 1;
+  uint32 iterations = 2;
+  map<string, string> input_bindings = 3;
+  map<string, string> output_bindings = 4;
+}
+
+message RngSpec {
+  string algorithm = 1;
+  string algorithm_version = 2;
+  string generator_device = 3;
+  LogicalTensorType noise_type = 4;
+  string noise_layout = 5;
+}
+
+message NumericProfile {
+  string profile_id = 1;
+  onyx.common.v1.DType activation_dtype = 2;
+  onyx.common.v1.DType accumulation_dtype = 3;
+  onyx.common.v1.DType softmax_dtype = 4;
+  onyx.common.v1.DType normalization_dtype = 5;
+  bool fast_math = 6;
+}
+
+enum QuantizationGranularity {
+  QUANTIZATION_GRANULARITY_UNSPECIFIED = 0;
+  QUANTIZATION_GRANULARITY_PER_TENSOR = 1;
+  QUANTIZATION_GRANULARITY_PER_CHANNEL = 2;
+  QUANTIZATION_GRANULARITY_GROUP_WISE = 3;
+}
+
+message TensorQuantization {
+  string tensor_pattern = 1;
+  uint32 bits = 2;
+  bool signed_values = 3;
+  QuantizationGranularity granularity = 4;
+  uint32 group_size = 5;
+  onyx.common.v1.DType scale_dtype = 6;
+  onyx.common.v1.DType zero_point_dtype = 7;
+  bool symmetric = 8;
+  string rounding = 9;
+  string clipping = 10;
+  optional uint32 tensor_ndim = 11;
+}
+
+message QuantizationProfile {
+  string profile_id = 1;
+  string algorithm = 2;
+  string algorithm_version = 3;
+  string calibration_set_digest = 4;
+  string evaluation_set_digest = 5;
+  string tool_identity = 6;
+  repeated TensorQuantization tensor_rules = 7;
+  repeated string high_precision_exceptions = 8;
+  onyx.common.v1.ArtifactRef quality_evidence = 9;
+}
+
+message Recipe {
+  string recipe_id = 1;
+  repeated StageCall calls = 2;
+  repeated double sigmas = 3;
+  RngSpec rng = 4;
+  string numeric_profile_id = 5;
+  map<string, Attribute> request_constraints = 6;
+}
+
+message ModelManifest {
+  string protocol = 1;
+  string model_id = 2;
+  string source_revision = 3;
+  bytes source_model_semantic_digest = 4;
+  repeated Component components = 5;
+  repeated SemanticGraph graphs = 6;
+  repeated Stage stages = 7;
+  repeated Recipe recipes = 8;
+  string numeric_profile_id = 9;
+  QuantizationProfile quantization = 10;
+  bytes semantic_digest = 11;
+  repeated NumericProfile numeric_profiles = 12;
+}
+
+message SourceFile {
+  string path = 1;
+  uint64 byte_size = 2;
+  bytes sha256 = 3;
+}
+
+message SourceLock {
+  string transport = 1;
+  string repo_id = 2;
+  string revision = 3;
+  repeated SourceFile files = 4;
+  bytes tree_digest = 5;
+}

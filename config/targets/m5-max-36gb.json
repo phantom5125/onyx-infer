@@ -1,0 +1,17 @@
+{
+  "target_id": "mac17-14-m5-max-36gb",
+  "model_identifier": "Mac17,14",
+  "chip": "Apple M5 Max",
+  "cpu_cores": 18,
+  "gpu_cores": 32,
+  "physical_memory_bytes": 38654705664,
+  "recommended_gpu_working_set_bytes": 30150672384,
+  "max_metal_buffer_bytes": 22613000192,
+  "unified_memory": true,
+  "metal": "Metal 4",
+  "macos_version": "27.0",
+  "macos_build": "26A425",
+  "clang_version": "Apple clang 21.0.0 (clang-2100.4.1.1)",
+  "metal_compiler_version": "32023.921 (metalfe-32023.921.6)",
+  "metal_target": "air64-apple-darwin27.0.0"
+}

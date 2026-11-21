@@ -1,0 +1,2351 @@
+{
+  "enums": {
+    "onyx.common.v1.ArtifactKind": {
+      "ARTIFACT_KIND_IMAGE": 1,
+      "ARTIFACT_KIND_MODEL": 4,
+      "ARTIFACT_KIND_OTHER": 15,
+      "ARTIFACT_KIND_PATCH": 7,
+      "ARTIFACT_KIND_PLAN": 5,
+      "ARTIFACT_KIND_TENSOR": 2,
+      "ARTIFACT_KIND_TRACE": 6,
+      "ARTIFACT_KIND_UNSPECIFIED": 0,
+      "ARTIFACT_KIND_WEIGHTS": 3
+    },
+    "onyx.common.v1.DType": {
+      "DTYPE_BF16": 1,
+      "DTYPE_BOOL": 13,
+      "DTYPE_FP16": 2,
+      "DTYPE_FP32": 3,
+      "DTYPE_FP64": 4,
+      "DTYPE_INT16": 7,
+      "DTYPE_INT32": 9,
+      "DTYPE_INT64": 11,
+      "DTYPE_INT8": 5,
+      "DTYPE_UINT16": 8,
+      "DTYPE_UINT32": 10,
+      "DTYPE_UINT64": 12,
+      "DTYPE_UINT8": 6,
+      "DTYPE_UNSPECIFIED": 0
+    },
+    "onyx.common.v1.ErrorCode": {
+      "ERROR_CODE_ARTIFACT_INTEGRITY": 4,
+      "ERROR_CODE_BACKEND_FAILURE": 11,
+      "ERROR_CODE_CANCELLED": 9,
+      "ERROR_CODE_CAPABILITY_MISSING": 5,
+      "ERROR_CODE_DEADLINE_EXCEEDED": 10,
+      "ERROR_CODE_IDEMPOTENCY_CONFLICT": 13,
+      "ERROR_CODE_INTERNAL": 12,
+      "ERROR_CODE_INVALID_REQUEST": 1,
+      "ERROR_CODE_MODEL_NOT_FOUND": 3,
+      "ERROR_CODE_NUMERIC_FAILURE": 8,
+      "ERROR_CODE_PLAN_MISMATCH": 6,
+      "ERROR_CODE_RESOURCE_EXHAUSTED": 7,
+      "ERROR_CODE_UNSPECIFIED": 0,
+      "ERROR_CODE_UNSUPPORTED_PARAMETER": 2
+    },
+    "onyx.common.v1.Retryability": {
+      "RETRYABILITY_AFTER_CHANGE": 2,
+      "RETRYABILITY_NO": 1,
+      "RETRYABILITY_TRANSIENT": 3,
+      "RETRYABILITY_UNSPECIFIED": 0
+    },
+    "onyx.job.v1.OutputSpec.Format": {
+      "FORMAT_UNSPECIFIED": 0,
+      "JPEG": 2,
+      "PNG": 1,
+      "WEBP": 3
+    },
+    "onyx.loop.v1.Decision": {
+      "DECISION_ACCEPTED": 1,
+      "DECISION_INCONCLUSIVE": 3,
+      "DECISION_REJECTED": 2,
+      "DECISION_UNSPECIFIED": 0
+    },
+    "onyx.model.v1.ComponentRole": {
+      "COMPONENT_ROLE_AUXILIARY": 5,
+      "COMPONENT_ROLE_TEXT_ENCODER": 1,
+      "COMPONENT_ROLE_TOKENIZER": 4,
+      "COMPONENT_ROLE_TRANSFORMER": 2,
+      "COMPONENT_ROLE_UNSPECIFIED": 0,
+      "COMPONENT_ROLE_VAE": 3
+    },
+    "onyx.model.v1.QuantizationGranularity": {
+      "QUANTIZATION_GRANULARITY_GROUP_WISE": 3,
+      "QUANTIZATION_GRANULARITY_PER_CHANNEL": 2,
+      "QUANTIZATION_GRANULARITY_PER_TENSOR": 1,
+      "QUANTIZATION_GRANULARITY_UNSPECIFIED": 0
+    },
+    "onyx.plan.v1.MemorySpace": {
+      "MEMORY_SPACE_DEVICE": 3,
+      "MEMORY_SPACE_HOST": 1,
+      "MEMORY_SPACE_SHARED": 2,
+      "MEMORY_SPACE_UNSPECIFIED": 0
+    },
+    "onyx.trace.v1.CacheState": {
+      "CACHE_STATE_COLD": 1,
+      "CACHE_STATE_UNSPECIFIED": 0,
+      "CACHE_STATE_WARM": 3,
+      "CACHE_STATE_WARM_MODEL_COLD_PLAN": 2
+    }
+  },
+  "messages": {
+    "onyx.common.v1.ArtifactRef": {
+      "artifact_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "byte_size": {
+        "label": 1,
+        "number": 3,
+        "type": 4,
+        "type_name": ""
+      },
+      "kind": {
+        "label": 1,
+        "number": 6,
+        "type": 14,
+        "type_name": ".onyx.common.v1.ArtifactKind"
+      },
+      "local_locator": {
+        "label": 1,
+        "number": 5,
+        "type": 9,
+        "type_name": ""
+      },
+      "media_type": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "schema": {
+        "label": 1,
+        "number": 7,
+        "type": 9,
+        "type_name": ""
+      },
+      "sha256": {
+        "label": 1,
+        "number": 4,
+        "type": 12,
+        "type_name": ""
+      }
+    },
+    "onyx.common.v1.DeviceCapabilities": {
+      "chip": {
+        "label": 1,
+        "number": 3,
+        "type": 9,
+        "type_name": ""
+      },
+      "cpu_cores": {
+        "label": 1,
+        "number": 4,
+        "type": 13,
+        "type_name": ""
+      },
+      "features": {
+        "label": 3,
+        "number": 13,
+        "type": 9,
+        "type_name": ""
+      },
+      "gpu_cores": {
+        "label": 1,
+        "number": 5,
+        "type": 13,
+        "type_name": ""
+      },
+      "max_buffer_bytes": {
+        "label": 1,
+        "number": 8,
+        "type": 4,
+        "type_name": ""
+      },
+      "metal_version": {
+        "label": 1,
+        "number": 10,
+        "type": 9,
+        "type_name": ""
+      },
+      "model_identifier": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "os_build": {
+        "label": 1,
+        "number": 12,
+        "type": 9,
+        "type_name": ""
+      },
+      "os_version": {
+        "label": 1,
+        "number": 11,
+        "type": 9,
+        "type_name": ""
+      },
+      "physical_memory_bytes": {
+        "label": 1,
+        "number": 6,
+        "type": 4,
+        "type_name": ""
+      },
+      "recommended_working_set_bytes": {
+        "label": 1,
+        "number": 7,
+        "type": 4,
+        "type_name": ""
+      },
+      "target_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "unified_memory": {
+        "label": 1,
+        "number": 9,
+        "type": 8,
+        "type_name": ""
+      }
+    },
+    "onyx.common.v1.Error": {
+      "code": {
+        "label": 1,
+        "number": 1,
+        "type": 14,
+        "type_name": ".onyx.common.v1.ErrorCode"
+      },
+      "details": {
+        "label": 3,
+        "number": 5,
+        "type": 11,
+        "type_name": ".onyx.common.v1.Error.DetailsEntry"
+      },
+      "message": {
+        "label": 1,
+        "number": 4,
+        "type": 9,
+        "type_name": ""
+      },
+      "retryability": {
+        "label": 1,
+        "number": 2,
+        "type": 14,
+        "type_name": ".onyx.common.v1.Retryability"
+      },
+      "stage": {
+        "label": 1,
+        "number": 3,
+        "type": 11,
+        "type_name": ".onyx.common.v1.StageIdentity"
+      }
+    },
+    "onyx.common.v1.Error.DetailsEntry": {
+      "key": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "value": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.common.v1.ImageSize": {
+      "height": {
+        "label": 1,
+        "number": 2,
+        "type": 13,
+        "type_name": ""
+      },
+      "width": {
+        "label": 1,
+        "number": 1,
+        "type": 13,
+        "type_name": ""
+      }
+    },
+    "onyx.common.v1.Metric": {
+      "name": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "source": {
+        "label": 1,
+        "number": 5,
+        "type": 9,
+        "type_name": ""
+      },
+      "stage": {
+        "label": 1,
+        "number": 4,
+        "type": 11,
+        "type_name": ".onyx.common.v1.StageIdentity"
+      },
+      "unit": {
+        "label": 1,
+        "number": 3,
+        "type": 9,
+        "type_name": ""
+      },
+      "value": {
+        "label": 1,
+        "number": 2,
+        "type": 1,
+        "type_name": ""
+      }
+    },
+    "onyx.common.v1.StageIdentity": {
+      "stage_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "stage_index": {
+        "label": 1,
+        "number": 2,
+        "type": 13,
+        "type_name": ""
+      },
+      "step_index": {
+        "label": 1,
+        "number": 3,
+        "type": 13,
+        "type_name": ""
+      }
+    },
+    "onyx.job.v1.Accepted": {
+      "job_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.job.v1.ArtifactReady": {
+      "artifact": {
+        "label": 1,
+        "number": 1,
+        "type": 11,
+        "type_name": ".onyx.common.v1.ArtifactRef"
+      },
+      "role": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.job.v1.CancelRequest": {
+      "job_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "reason": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.job.v1.Cancelled": {
+      "reason": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.job.v1.Completed": {
+      "run_record": {
+        "label": 1,
+        "number": 1,
+        "type": 11,
+        "type_name": ".onyx.common.v1.ArtifactRef"
+      }
+    },
+    "onyx.job.v1.ExecutionHints": {
+      "allow_plan_cache": {
+        "label": 1,
+        "number": 4,
+        "type": 8,
+        "type_name": ""
+      },
+      "allow_shader_cache": {
+        "label": 1,
+        "number": 5,
+        "type": 8,
+        "type_name": ""
+      },
+      "backend": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "plan_id": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "timeout_ns": {
+        "label": 1,
+        "number": 3,
+        "type": 4,
+        "type_name": ""
+      }
+    },
+    "onyx.job.v1.Failed": {
+      "error": {
+        "label": 1,
+        "number": 1,
+        "type": 11,
+        "type_name": ".onyx.common.v1.Error"
+      }
+    },
+    "onyx.job.v1.GenerateRequest": {
+      "client_metadata": {
+        "label": 3,
+        "number": 11,
+        "type": 11,
+        "type_name": ".onyx.job.v1.GenerateRequest.ClientMetadataEntry"
+      },
+      "execution": {
+        "label": 1,
+        "number": 10,
+        "type": 11,
+        "type_name": ".onyx.job.v1.ExecutionHints"
+      },
+      "image_count": {
+        "label": 1,
+        "number": 8,
+        "type": 13,
+        "type_name": ""
+      },
+      "model": {
+        "label": 1,
+        "number": 3,
+        "type": 11,
+        "type_name": ".onyx.job.v1.ModelRef"
+      },
+      "output": {
+        "label": 1,
+        "number": 9,
+        "type": 11,
+        "type_name": ".onyx.job.v1.OutputSpec"
+      },
+      "prompt": {
+        "label": 1,
+        "number": 4,
+        "type": 9,
+        "type_name": ""
+      },
+      "protocol": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "references": {
+        "label": 3,
+        "number": 7,
+        "type": 11,
+        "type_name": ".onyx.common.v1.ArtifactRef"
+      },
+      "request_id": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "seed": {
+        "label": 1,
+        "number": 6,
+        "type": 4,
+        "type_name": ""
+      },
+      "size": {
+        "label": 1,
+        "number": 5,
+        "type": 11,
+        "type_name": ".onyx.common.v1.ImageSize"
+      }
+    },
+    "onyx.job.v1.GenerateRequest.ClientMetadataEntry": {
+      "key": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "value": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.job.v1.Job": {
+      "job_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "request_id": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "run_id": {
+        "label": 1,
+        "number": 3,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.job.v1.MetricEvent": {
+      "metric": {
+        "label": 1,
+        "number": 1,
+        "type": 11,
+        "type_name": ".onyx.common.v1.Metric"
+      }
+    },
+    "onyx.job.v1.ModelRef": {
+      "manifest_digest": {
+        "label": 1,
+        "number": 3,
+        "type": 12,
+        "type_name": ""
+      },
+      "model_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "recipe_id": {
+        "label": 1,
+        "number": 4,
+        "type": 9,
+        "type_name": ""
+      },
+      "source_revision": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.job.v1.OutputSpec": {
+      "color_space": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "compression": {
+        "label": 1,
+        "number": 3,
+        "type": 13,
+        "type_name": ""
+      },
+      "format": {
+        "label": 1,
+        "number": 1,
+        "type": 14,
+        "type_name": ".onyx.job.v1.OutputSpec.Format"
+      }
+    },
+    "onyx.job.v1.PrepareOptions": {
+      "allow_plan_cache": {
+        "label": 1,
+        "number": 2,
+        "type": 8,
+        "type_name": ""
+      },
+      "allow_shader_cache": {
+        "label": 1,
+        "number": 3,
+        "type": 8,
+        "type_name": ""
+      },
+      "preferred_backend": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.job.v1.PreparedModel": {
+      "capabilities": {
+        "label": 3,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "estimated_peak_memory_bytes": {
+        "label": 1,
+        "number": 3,
+        "type": 4,
+        "type_name": ""
+      },
+      "model": {
+        "label": 1,
+        "number": 1,
+        "type": 11,
+        "type_name": ".onyx.job.v1.ModelRef"
+      },
+      "plan_id": {
+        "label": 1,
+        "number": 4,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.job.v1.Progress": {
+      "completed": {
+        "label": 1,
+        "number": 2,
+        "type": 4,
+        "type_name": ""
+      },
+      "identity": {
+        "label": 1,
+        "number": 1,
+        "type": 11,
+        "type_name": ".onyx.common.v1.StageIdentity"
+      },
+      "total": {
+        "label": 1,
+        "number": 3,
+        "type": 4,
+        "type_name": ""
+      },
+      "unit": {
+        "label": 1,
+        "number": 4,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.job.v1.RunEvent": {
+      "accepted": {
+        "label": 1,
+        "number": 10,
+        "type": 11,
+        "type_name": ".onyx.job.v1.Accepted"
+      },
+      "artifact_ready": {
+        "label": 1,
+        "number": 14,
+        "type": 11,
+        "type_name": ".onyx.job.v1.ArtifactReady"
+      },
+      "cancelled": {
+        "label": 1,
+        "number": 17,
+        "type": 11,
+        "type_name": ".onyx.job.v1.Cancelled"
+      },
+      "completed": {
+        "label": 1,
+        "number": 15,
+        "type": 11,
+        "type_name": ".onyx.job.v1.Completed"
+      },
+      "failed": {
+        "label": 1,
+        "number": 16,
+        "type": 11,
+        "type_name": ".onyx.job.v1.Failed"
+      },
+      "metric": {
+        "label": 1,
+        "number": 13,
+        "type": 11,
+        "type_name": ".onyx.job.v1.MetricEvent"
+      },
+      "monotonic_time_ns": {
+        "label": 1,
+        "number": 4,
+        "type": 4,
+        "type_name": ""
+      },
+      "progress": {
+        "label": 1,
+        "number": 12,
+        "type": 11,
+        "type_name": ".onyx.job.v1.Progress"
+      },
+      "request_id": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "run_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "sequence": {
+        "label": 1,
+        "number": 3,
+        "type": 4,
+        "type_name": ""
+      },
+      "stage_started": {
+        "label": 1,
+        "number": 11,
+        "type": 11,
+        "type_name": ".onyx.job.v1.StageStarted"
+      },
+      "wall_time_unix_ns": {
+        "label": 1,
+        "number": 5,
+        "type": 3,
+        "type_name": ""
+      }
+    },
+    "onyx.job.v1.SessionConfig": {
+      "artifact_directory": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "device_id": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "enable_trace": {
+        "label": 1,
+        "number": 4,
+        "type": 8,
+        "type_name": ""
+      },
+      "memory_budget_bytes": {
+        "label": 1,
+        "number": 3,
+        "type": 4,
+        "type_name": ""
+      }
+    },
+    "onyx.job.v1.StageStarted": {
+      "identity": {
+        "label": 1,
+        "number": 1,
+        "type": 11,
+        "type_name": ".onyx.common.v1.StageIdentity"
+      }
+    },
+    "onyx.loop.v1.BenchmarkCase": {
+      "case_id": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "cold_cache_runs": {
+        "label": 1,
+        "number": 6,
+        "type": 13,
+        "type_name": ""
+      },
+      "correctness_suite_id": {
+        "label": 1,
+        "number": 10,
+        "type": 9,
+        "type_name": ""
+      },
+      "interleave_candidates": {
+        "label": 1,
+        "number": 7,
+        "type": 8,
+        "type_name": ""
+      },
+      "max_experiments": {
+        "label": 1,
+        "number": 11,
+        "type": 4,
+        "type_name": ""
+      },
+      "max_wall_time_ns": {
+        "label": 1,
+        "number": 12,
+        "type": 4,
+        "type_name": ""
+      },
+      "measured_runs": {
+        "label": 1,
+        "number": 5,
+        "type": 13,
+        "type_name": ""
+      },
+      "primary_metric": {
+        "label": 1,
+        "number": 9,
+        "type": 9,
+        "type_name": ""
+      },
+      "protocol": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "request": {
+        "label": 1,
+        "number": 3,
+        "type": 11,
+        "type_name": ".onyx.job.v1.GenerateRequest"
+      },
+      "target_id": {
+        "label": 1,
+        "number": 8,
+        "type": 9,
+        "type_name": ""
+      },
+      "warmups": {
+        "label": 1,
+        "number": 4,
+        "type": 13,
+        "type_name": ""
+      }
+    },
+    "onyx.loop.v1.Candidate": {
+      "base_source_revision": {
+        "label": 1,
+        "number": 3,
+        "type": 9,
+        "type_name": ""
+      },
+      "build_configuration_digest": {
+        "label": 1,
+        "number": 6,
+        "type": 9,
+        "type_name": ""
+      },
+      "candidate_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "case_id": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "kernel_variant_ids": {
+        "label": 3,
+        "number": 8,
+        "type": 9,
+        "type_name": ""
+      },
+      "patch_sha256": {
+        "label": 1,
+        "number": 4,
+        "type": 12,
+        "type_name": ""
+      },
+      "plan_id": {
+        "label": 1,
+        "number": 7,
+        "type": 9,
+        "type_name": ""
+      },
+      "proposer": {
+        "label": 1,
+        "number": 9,
+        "type": 9,
+        "type_name": ""
+      },
+      "scope": {
+        "label": 1,
+        "number": 5,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.loop.v1.Comparison": {
+      "baseline_median": {
+        "label": 1,
+        "number": 2,
+        "type": 1,
+        "type_name": ""
+      },
+      "baseline_p95": {
+        "label": 1,
+        "number": 4,
+        "type": 1,
+        "type_name": ""
+      },
+      "candidate_median": {
+        "label": 1,
+        "number": 3,
+        "type": 1,
+        "type_name": ""
+      },
+      "candidate_p95": {
+        "label": 1,
+        "number": 5,
+        "type": 1,
+        "type_name": ""
+      },
+      "metric": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "speed_ratio": {
+        "label": 1,
+        "number": 6,
+        "type": 1,
+        "type_name": ""
+      },
+      "statistically_inconclusive": {
+        "label": 1,
+        "number": 7,
+        "type": 8,
+        "type_name": ""
+      }
+    },
+    "onyx.loop.v1.Evaluation": {
+      "comparisons": {
+        "label": 3,
+        "number": 6,
+        "type": 11,
+        "type_name": ".onyx.loop.v1.Comparison"
+      },
+      "correctness_passed": {
+        "label": 1,
+        "number": 3,
+        "type": 8,
+        "type_name": ""
+      },
+      "decision": {
+        "label": 1,
+        "number": 9,
+        "type": 14,
+        "type_name": ".onyx.loop.v1.Decision"
+      },
+      "evaluation_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "experiment_id": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "memory_passed": {
+        "label": 1,
+        "number": 5,
+        "type": 8,
+        "type_name": ""
+      },
+      "quality_passed": {
+        "label": 1,
+        "number": 4,
+        "type": 8,
+        "type_name": ""
+      },
+      "reasons": {
+        "label": 3,
+        "number": 7,
+        "type": 9,
+        "type_name": ""
+      },
+      "report": {
+        "label": 1,
+        "number": 8,
+        "type": 11,
+        "type_name": ".onyx.common.v1.ArtifactRef"
+      }
+    },
+    "onyx.loop.v1.Experiment": {
+      "candidate": {
+        "label": 1,
+        "number": 3,
+        "type": 11,
+        "type_name": ".onyx.loop.v1.Candidate"
+      },
+      "case_id": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "environment_digest": {
+        "label": 1,
+        "number": 6,
+        "type": 9,
+        "type_name": ""
+      },
+      "experiment_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "raw_logs": {
+        "label": 3,
+        "number": 5,
+        "type": 11,
+        "type_name": ".onyx.common.v1.ArtifactRef"
+      },
+      "run_records": {
+        "label": 3,
+        "number": 4,
+        "type": 11,
+        "type_name": ".onyx.common.v1.ArtifactRef"
+      }
+    },
+    "onyx.model.v1.Attribute": {
+      "boolean": {
+        "label": 1,
+        "number": 4,
+        "type": 8,
+        "type_name": ""
+      },
+      "dimensions": {
+        "label": 1,
+        "number": 8,
+        "type": 11,
+        "type_name": ".onyx.model.v1.DimensionList"
+      },
+      "floating": {
+        "label": 1,
+        "number": 2,
+        "type": 1,
+        "type_name": ""
+      },
+      "floating_values": {
+        "label": 1,
+        "number": 6,
+        "type": 11,
+        "type_name": ".onyx.model.v1.FloatList"
+      },
+      "integer": {
+        "label": 1,
+        "number": 1,
+        "type": 3,
+        "type_name": ""
+      },
+      "integers": {
+        "label": 1,
+        "number": 5,
+        "type": 11,
+        "type_name": ".onyx.model.v1.IntList"
+      },
+      "strings": {
+        "label": 1,
+        "number": 7,
+        "type": 11,
+        "type_name": ".onyx.model.v1.StringList"
+      },
+      "text": {
+        "label": 1,
+        "number": 3,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.model.v1.Component": {
+      "artifacts": {
+        "label": 3,
+        "number": 4,
+        "type": 11,
+        "type_name": ".onyx.common.v1.ArtifactRef"
+      },
+      "component_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "graph_id": {
+        "label": 1,
+        "number": 3,
+        "type": 9,
+        "type_name": ""
+      },
+      "role": {
+        "label": 1,
+        "number": 2,
+        "type": 14,
+        "type_name": ".onyx.model.v1.ComponentRole"
+      }
+    },
+    "onyx.model.v1.Dimension": {
+      "literal": {
+        "label": 1,
+        "number": 1,
+        "type": 4,
+        "type_name": ""
+      },
+      "symbol": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.model.v1.DimensionList": {
+      "values": {
+        "label": 3,
+        "number": 1,
+        "type": 11,
+        "type_name": ".onyx.model.v1.Dimension"
+      }
+    },
+    "onyx.model.v1.FloatList": {
+      "values": {
+        "label": 3,
+        "number": 1,
+        "type": 1,
+        "type_name": ""
+      }
+    },
+    "onyx.model.v1.IntList": {
+      "values": {
+        "label": 3,
+        "number": 1,
+        "type": 3,
+        "type_name": ""
+      }
+    },
+    "onyx.model.v1.LogicalTensorType": {
+      "dtype": {
+        "label": 1,
+        "number": 1,
+        "type": 14,
+        "type_name": ".onyx.common.v1.DType"
+      },
+      "shape": {
+        "label": 3,
+        "number": 2,
+        "type": 11,
+        "type_name": ".onyx.model.v1.Dimension"
+      }
+    },
+    "onyx.model.v1.ModelManifest": {
+      "components": {
+        "label": 3,
+        "number": 5,
+        "type": 11,
+        "type_name": ".onyx.model.v1.Component"
+      },
+      "graphs": {
+        "label": 3,
+        "number": 6,
+        "type": 11,
+        "type_name": ".onyx.model.v1.SemanticGraph"
+      },
+      "model_id": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "numeric_profile_id": {
+        "label": 1,
+        "number": 9,
+        "type": 9,
+        "type_name": ""
+      },
+      "numeric_profiles": {
+        "label": 3,
+        "number": 12,
+        "type": 11,
+        "type_name": ".onyx.model.v1.NumericProfile"
+      },
+      "protocol": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "quantization": {
+        "label": 1,
+        "number": 10,
+        "type": 11,
+        "type_name": ".onyx.model.v1.QuantizationProfile"
+      },
+      "recipes": {
+        "label": 3,
+        "number": 8,
+        "type": 11,
+        "type_name": ".onyx.model.v1.Recipe"
+      },
+      "semantic_digest": {
+        "label": 1,
+        "number": 11,
+        "type": 12,
+        "type_name": ""
+      },
+      "source_model_semantic_digest": {
+        "label": 1,
+        "number": 4,
+        "type": 12,
+        "type_name": ""
+      },
+      "source_revision": {
+        "label": 1,
+        "number": 3,
+        "type": 9,
+        "type_name": ""
+      },
+      "stages": {
+        "label": 3,
+        "number": 7,
+        "type": 11,
+        "type_name": ".onyx.model.v1.Stage"
+      }
+    },
+    "onyx.model.v1.Node": {
+      "attributes": {
+        "label": 3,
+        "number": 6,
+        "type": 11,
+        "type_name": ".onyx.model.v1.Node.AttributesEntry"
+      },
+      "inputs": {
+        "label": 3,
+        "number": 4,
+        "type": 9,
+        "type_name": ""
+      },
+      "node_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "op": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "op_version": {
+        "label": 1,
+        "number": 3,
+        "type": 13,
+        "type_name": ""
+      },
+      "outputs": {
+        "label": 3,
+        "number": 5,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.model.v1.Node.AttributesEntry": {
+      "key": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "value": {
+        "label": 1,
+        "number": 2,
+        "type": 11,
+        "type_name": ".onyx.model.v1.Attribute"
+      }
+    },
+    "onyx.model.v1.NumericProfile": {
+      "accumulation_dtype": {
+        "label": 1,
+        "number": 3,
+        "type": 14,
+        "type_name": ".onyx.common.v1.DType"
+      },
+      "activation_dtype": {
+        "label": 1,
+        "number": 2,
+        "type": 14,
+        "type_name": ".onyx.common.v1.DType"
+      },
+      "fast_math": {
+        "label": 1,
+        "number": 6,
+        "type": 8,
+        "type_name": ""
+      },
+      "normalization_dtype": {
+        "label": 1,
+        "number": 5,
+        "type": 14,
+        "type_name": ".onyx.common.v1.DType"
+      },
+      "profile_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "softmax_dtype": {
+        "label": 1,
+        "number": 4,
+        "type": 14,
+        "type_name": ".onyx.common.v1.DType"
+      }
+    },
+    "onyx.model.v1.QuantizationProfile": {
+      "algorithm": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "algorithm_version": {
+        "label": 1,
+        "number": 3,
+        "type": 9,
+        "type_name": ""
+      },
+      "calibration_set_digest": {
+        "label": 1,
+        "number": 4,
+        "type": 9,
+        "type_name": ""
+      },
+      "evaluation_set_digest": {
+        "label": 1,
+        "number": 5,
+        "type": 9,
+        "type_name": ""
+      },
+      "high_precision_exceptions": {
+        "label": 3,
+        "number": 8,
+        "type": 9,
+        "type_name": ""
+      },
+      "profile_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "quality_evidence": {
+        "label": 1,
+        "number": 9,
+        "type": 11,
+        "type_name": ".onyx.common.v1.ArtifactRef"
+      },
+      "tensor_rules": {
+        "label": 3,
+        "number": 7,
+        "type": 11,
+        "type_name": ".onyx.model.v1.TensorQuantization"
+      },
+      "tool_identity": {
+        "label": 1,
+        "number": 6,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.model.v1.Recipe": {
+      "calls": {
+        "label": 3,
+        "number": 2,
+        "type": 11,
+        "type_name": ".onyx.model.v1.StageCall"
+      },
+      "numeric_profile_id": {
+        "label": 1,
+        "number": 5,
+        "type": 9,
+        "type_name": ""
+      },
+      "recipe_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "request_constraints": {
+        "label": 3,
+        "number": 6,
+        "type": 11,
+        "type_name": ".onyx.model.v1.Recipe.RequestConstraintsEntry"
+      },
+      "rng": {
+        "label": 1,
+        "number": 4,
+        "type": 11,
+        "type_name": ".onyx.model.v1.RngSpec"
+      },
+      "sigmas": {
+        "label": 3,
+        "number": 3,
+        "type": 1,
+        "type_name": ""
+      }
+    },
+    "onyx.model.v1.Recipe.RequestConstraintsEntry": {
+      "key": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "value": {
+        "label": 1,
+        "number": 2,
+        "type": 11,
+        "type_name": ".onyx.model.v1.Attribute"
+      }
+    },
+    "onyx.model.v1.RngSpec": {
+      "algorithm": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "algorithm_version": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "generator_device": {
+        "label": 1,
+        "number": 3,
+        "type": 9,
+        "type_name": ""
+      },
+      "noise_layout": {
+        "label": 1,
+        "number": 5,
+        "type": 9,
+        "type_name": ""
+      },
+      "noise_type": {
+        "label": 1,
+        "number": 4,
+        "type": 11,
+        "type_name": ".onyx.model.v1.LogicalTensorType"
+      }
+    },
+    "onyx.model.v1.SemanticGraph": {
+      "graph_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "inputs": {
+        "label": 3,
+        "number": 4,
+        "type": 9,
+        "type_name": ""
+      },
+      "nodes": {
+        "label": 3,
+        "number": 3,
+        "type": 11,
+        "type_name": ".onyx.model.v1.Node"
+      },
+      "outputs": {
+        "label": 3,
+        "number": 5,
+        "type": 9,
+        "type_name": ""
+      },
+      "symbolic_constraints_max": {
+        "label": 3,
+        "number": 7,
+        "type": 11,
+        "type_name": ".onyx.model.v1.SemanticGraph.SymbolicConstraintsMaxEntry"
+      },
+      "symbolic_constraints_min": {
+        "label": 3,
+        "number": 6,
+        "type": 11,
+        "type_name": ".onyx.model.v1.SemanticGraph.SymbolicConstraintsMinEntry"
+      },
+      "values": {
+        "label": 3,
+        "number": 2,
+        "type": 11,
+        "type_name": ".onyx.model.v1.Value"
+      }
+    },
+    "onyx.model.v1.SemanticGraph.SymbolicConstraintsMaxEntry": {
+      "key": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "value": {
+        "label": 1,
+        "number": 2,
+        "type": 4,
+        "type_name": ""
+      }
+    },
+    "onyx.model.v1.SemanticGraph.SymbolicConstraintsMinEntry": {
+      "key": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "value": {
+        "label": 1,
+        "number": 2,
+        "type": 4,
+        "type_name": ""
+      }
+    },
+    "onyx.model.v1.SourceFile": {
+      "byte_size": {
+        "label": 1,
+        "number": 2,
+        "type": 4,
+        "type_name": ""
+      },
+      "path": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "sha256": {
+        "label": 1,
+        "number": 3,
+        "type": 12,
+        "type_name": ""
+      }
+    },
+    "onyx.model.v1.SourceLock": {
+      "files": {
+        "label": 3,
+        "number": 4,
+        "type": 11,
+        "type_name": ".onyx.model.v1.SourceFile"
+      },
+      "repo_id": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "revision": {
+        "label": 1,
+        "number": 3,
+        "type": 9,
+        "type_name": ""
+      },
+      "transport": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "tree_digest": {
+        "label": 1,
+        "number": 5,
+        "type": 12,
+        "type_name": ""
+      }
+    },
+    "onyx.model.v1.Stage": {
+      "component_id": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "graph_id": {
+        "label": 1,
+        "number": 3,
+        "type": 9,
+        "type_name": ""
+      },
+      "inputs": {
+        "label": 3,
+        "number": 4,
+        "type": 9,
+        "type_name": ""
+      },
+      "outputs": {
+        "label": 3,
+        "number": 5,
+        "type": 9,
+        "type_name": ""
+      },
+      "stage_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.model.v1.StageCall": {
+      "input_bindings": {
+        "label": 3,
+        "number": 3,
+        "type": 11,
+        "type_name": ".onyx.model.v1.StageCall.InputBindingsEntry"
+      },
+      "iterations": {
+        "label": 1,
+        "number": 2,
+        "type": 13,
+        "type_name": ""
+      },
+      "output_bindings": {
+        "label": 3,
+        "number": 4,
+        "type": 11,
+        "type_name": ".onyx.model.v1.StageCall.OutputBindingsEntry"
+      },
+      "stage_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.model.v1.StageCall.InputBindingsEntry": {
+      "key": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "value": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.model.v1.StageCall.OutputBindingsEntry": {
+      "key": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "value": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.model.v1.StringList": {
+      "values": {
+        "label": 3,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.model.v1.TensorQuantization": {
+      "bits": {
+        "label": 1,
+        "number": 2,
+        "type": 13,
+        "type_name": ""
+      },
+      "clipping": {
+        "label": 1,
+        "number": 10,
+        "type": 9,
+        "type_name": ""
+      },
+      "granularity": {
+        "label": 1,
+        "number": 4,
+        "type": 14,
+        "type_name": ".onyx.model.v1.QuantizationGranularity"
+      },
+      "group_size": {
+        "label": 1,
+        "number": 5,
+        "type": 13,
+        "type_name": ""
+      },
+      "rounding": {
+        "label": 1,
+        "number": 9,
+        "type": 9,
+        "type_name": ""
+      },
+      "scale_dtype": {
+        "label": 1,
+        "number": 6,
+        "type": 14,
+        "type_name": ".onyx.common.v1.DType"
+      },
+      "signed_values": {
+        "label": 1,
+        "number": 3,
+        "type": 8,
+        "type_name": ""
+      },
+      "symmetric": {
+        "label": 1,
+        "number": 8,
+        "type": 8,
+        "type_name": ""
+      },
+      "tensor_ndim": {
+        "label": 1,
+        "number": 11,
+        "type": 13,
+        "type_name": ""
+      },
+      "tensor_pattern": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "zero_point_dtype": {
+        "label": 1,
+        "number": 7,
+        "type": 14,
+        "type_name": ".onyx.common.v1.DType"
+      }
+    },
+    "onyx.model.v1.Value": {
+      "type": {
+        "label": 1,
+        "number": 2,
+        "type": 11,
+        "type_name": ".onyx.model.v1.LogicalTensorType"
+      },
+      "value_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.plan.v1.BufferResource": {
+      "alignment": {
+        "label": 1,
+        "number": 4,
+        "type": 4,
+        "type_name": ""
+      },
+      "buffer_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "byte_size": {
+        "label": 1,
+        "number": 2,
+        "type": 4,
+        "type_name": ""
+      },
+      "memory_space": {
+        "label": 1,
+        "number": 3,
+        "type": 14,
+        "type_name": ".onyx.plan.v1.MemorySpace"
+      },
+      "tensor": {
+        "label": 1,
+        "number": 5,
+        "type": 11,
+        "type_name": ".onyx.plan.v1.PhysicalTensorDesc"
+      }
+    },
+    "onyx.plan.v1.ExecutionPlan": {
+      "backend": {
+        "label": 1,
+        "number": 5,
+        "type": 9,
+        "type_name": ""
+      },
+      "buffers": {
+        "label": 3,
+        "number": 9,
+        "type": 11,
+        "type_name": ".onyx.plan.v1.BufferResource"
+      },
+      "cache_key": {
+        "label": 1,
+        "number": 13,
+        "type": 12,
+        "type_name": ""
+      },
+      "kernels": {
+        "label": 3,
+        "number": 11,
+        "type": 11,
+        "type_name": ".onyx.plan.v1.KernelVariant"
+      },
+      "nodes": {
+        "label": 3,
+        "number": 12,
+        "type": 11,
+        "type_name": ".onyx.plan.v1.PlannedNode"
+      },
+      "numeric_profile_id": {
+        "label": 1,
+        "number": 6,
+        "type": 9,
+        "type_name": ""
+      },
+      "phases": {
+        "label": 3,
+        "number": 10,
+        "type": 11,
+        "type_name": ".onyx.plan.v1.ResourcePhase"
+      },
+      "plan_id": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "protocol": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "quantization_profile_id": {
+        "label": 1,
+        "number": 7,
+        "type": 9,
+        "type_name": ""
+      },
+      "semantic_digest": {
+        "label": 1,
+        "number": 3,
+        "type": 12,
+        "type_name": ""
+      },
+      "target_id": {
+        "label": 1,
+        "number": 4,
+        "type": 9,
+        "type_name": ""
+      },
+      "tensors": {
+        "label": 3,
+        "number": 8,
+        "type": 11,
+        "type_name": ".onyx.plan.v1.PhysicalTensorDesc"
+      }
+    },
+    "onyx.plan.v1.KernelVariant": {
+      "entry_point": {
+        "label": 1,
+        "number": 4,
+        "type": 9,
+        "type_name": ""
+      },
+      "implementation_sha256": {
+        "label": 1,
+        "number": 5,
+        "type": 12,
+        "type_name": ""
+      },
+      "op": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "op_version": {
+        "label": 1,
+        "number": 3,
+        "type": 13,
+        "type_name": ""
+      },
+      "parameters": {
+        "label": 3,
+        "number": 6,
+        "type": 11,
+        "type_name": ".onyx.plan.v1.KernelVariant.ParametersEntry"
+      },
+      "required_features": {
+        "label": 3,
+        "number": 7,
+        "type": 9,
+        "type_name": ""
+      },
+      "variant_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.plan.v1.KernelVariant.ParametersEntry": {
+      "key": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "value": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.plan.v1.PhysicalTensorDesc": {
+      "alignment": {
+        "label": 1,
+        "number": 4,
+        "type": 4,
+        "type_name": ""
+      },
+      "logical_type": {
+        "label": 1,
+        "number": 1,
+        "type": 11,
+        "type_name": ".onyx.model.v1.LogicalTensorType"
+      },
+      "memory_space": {
+        "label": 1,
+        "number": 5,
+        "type": 14,
+        "type_name": ".onyx.plan.v1.MemorySpace"
+      },
+      "quantization": {
+        "label": 1,
+        "number": 6,
+        "type": 11,
+        "type_name": ".onyx.plan.v1.QuantizedStorage"
+      },
+      "storage_dtype": {
+        "label": 1,
+        "number": 2,
+        "type": 14,
+        "type_name": ".onyx.common.v1.DType"
+      },
+      "strides": {
+        "label": 3,
+        "number": 3,
+        "type": 4,
+        "type_name": ""
+      },
+      "tiling": {
+        "label": 1,
+        "number": 7,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.plan.v1.PlannedNode": {
+      "dependency_node_ids": {
+        "label": 3,
+        "number": 6,
+        "type": 9,
+        "type_name": ""
+      },
+      "input_buffers": {
+        "label": 3,
+        "number": 4,
+        "type": 9,
+        "type_name": ""
+      },
+      "kernel_variant_id": {
+        "label": 1,
+        "number": 3,
+        "type": 9,
+        "type_name": ""
+      },
+      "node_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "output_buffers": {
+        "label": 3,
+        "number": 5,
+        "type": 9,
+        "type_name": ""
+      },
+      "phase_id": {
+        "label": 1,
+        "number": 7,
+        "type": 9,
+        "type_name": ""
+      },
+      "source_node_ids": {
+        "label": 3,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.plan.v1.QuantizedStorage": {
+      "bits": {
+        "label": 1,
+        "number": 1,
+        "type": 13,
+        "type_name": ""
+      },
+      "group_size": {
+        "label": 1,
+        "number": 2,
+        "type": 13,
+        "type_name": ""
+      },
+      "packing": {
+        "label": 1,
+        "number": 5,
+        "type": 9,
+        "type_name": ""
+      },
+      "scale_dtype": {
+        "label": 1,
+        "number": 4,
+        "type": 14,
+        "type_name": ".onyx.common.v1.DType"
+      },
+      "scales_buffer": {
+        "label": 1,
+        "number": 6,
+        "type": 9,
+        "type_name": ""
+      },
+      "signed_values": {
+        "label": 1,
+        "number": 3,
+        "type": 8,
+        "type_name": ""
+      }
+    },
+    "onyx.plan.v1.ResourcePhase": {
+      "phase_id": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "release_components": {
+        "label": 3,
+        "number": 5,
+        "type": 9,
+        "type_name": ""
+      },
+      "resident_buffers": {
+        "label": 3,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "resident_components": {
+        "label": 3,
+        "number": 3,
+        "type": 9,
+        "type_name": ""
+      },
+      "temporary_arena_bytes": {
+        "label": 1,
+        "number": 4,
+        "type": 4,
+        "type_name": ""
+      }
+    },
+    "onyx.trace.v1.BuildIdentity": {
+      "backend_version": {
+        "label": 1,
+        "number": 4,
+        "type": 9,
+        "type_name": ""
+      },
+      "compiler_version": {
+        "label": 1,
+        "number": 5,
+        "type": 9,
+        "type_name": ""
+      },
+      "kernel_variant_ids": {
+        "label": 3,
+        "number": 7,
+        "type": 9,
+        "type_name": ""
+      },
+      "metallib_sha256": {
+        "label": 1,
+        "number": 6,
+        "type": 12,
+        "type_name": ""
+      },
+      "runtime_version": {
+        "label": 1,
+        "number": 3,
+        "type": 9,
+        "type_name": ""
+      },
+      "source_dirty": {
+        "label": 1,
+        "number": 2,
+        "type": 8,
+        "type_name": ""
+      },
+      "source_revision": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "source_tree_sha256": {
+        "label": 1,
+        "number": 8,
+        "type": 12,
+        "type_name": ""
+      }
+    },
+    "onyx.trace.v1.RngExecution": {
+      "actual_seed": {
+        "label": 1,
+        "number": 4,
+        "type": 4,
+        "type_name": ""
+      },
+      "algorithm": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "algorithm_version": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "generator_device": {
+        "label": 1,
+        "number": 3,
+        "type": 9,
+        "type_name": ""
+      },
+      "initial_noise_sha256": {
+        "label": 1,
+        "number": 5,
+        "type": 12,
+        "type_name": ""
+      },
+      "noise_layout": {
+        "label": 1,
+        "number": 6,
+        "type": 9,
+        "type_name": ""
+      }
+    },
+    "onyx.trace.v1.RunRecord": {
+      "build": {
+        "label": 1,
+        "number": 10,
+        "type": 11,
+        "type_name": ".onyx.trace.v1.BuildIdentity"
+      },
+      "cache_state": {
+        "label": 1,
+        "number": 13,
+        "type": 14,
+        "type_name": ".onyx.trace.v1.CacheState"
+      },
+      "command": {
+        "label": 3,
+        "number": 23,
+        "type": 9,
+        "type_name": ""
+      },
+      "device": {
+        "label": 1,
+        "number": 11,
+        "type": 11,
+        "type_name": ".onyx.common.v1.DeviceCapabilities"
+      },
+      "events": {
+        "label": 3,
+        "number": 21,
+        "type": 11,
+        "type_name": ".onyx.job.v1.RunEvent"
+      },
+      "metrics": {
+        "label": 3,
+        "number": 19,
+        "type": 11,
+        "type_name": ".onyx.common.v1.Metric"
+      },
+      "monotonic_start_ns": {
+        "label": 1,
+        "number": 15,
+        "type": 4,
+        "type_name": ""
+      },
+      "numeric_profile_id": {
+        "label": 1,
+        "number": 8,
+        "type": 9,
+        "type_name": ""
+      },
+      "outputs": {
+        "label": 3,
+        "number": 20,
+        "type": 11,
+        "type_name": ".onyx.common.v1.ArtifactRef"
+      },
+      "peak_memory_bytes": {
+        "label": 1,
+        "number": 17,
+        "type": 4,
+        "type_name": ""
+      },
+      "plan_id": {
+        "label": 1,
+        "number": 7,
+        "type": 9,
+        "type_name": ""
+      },
+      "protocol": {
+        "label": 1,
+        "number": 1,
+        "type": 9,
+        "type_name": ""
+      },
+      "quantization_profile_id": {
+        "label": 1,
+        "number": 9,
+        "type": 9,
+        "type_name": ""
+      },
+      "replay_request": {
+        "label": 1,
+        "number": 5,
+        "type": 11,
+        "type_name": ".onyx.job.v1.GenerateRequest"
+      },
+      "request_digest": {
+        "label": 1,
+        "number": 4,
+        "type": 12,
+        "type_name": ""
+      },
+      "request_id": {
+        "label": 1,
+        "number": 3,
+        "type": 9,
+        "type_name": ""
+      },
+      "resolved_model": {
+        "label": 1,
+        "number": 6,
+        "type": 11,
+        "type_name": ".onyx.job.v1.ModelRef"
+      },
+      "rng": {
+        "label": 1,
+        "number": 12,
+        "type": 11,
+        "type_name": ".onyx.trace.v1.RngExecution"
+      },
+      "run_id": {
+        "label": 1,
+        "number": 2,
+        "type": 9,
+        "type_name": ""
+      },
+      "stages": {
+        "label": 3,
+        "number": 18,
+        "type": 11,
+        "type_name": ".onyx.trace.v1.StageTiming"
+      },
+      "terminal_error": {
+        "label": 1,
+        "number": 22,
+        "type": 11,
+        "type_name": ".onyx.common.v1.Error"
+      },
+      "total_wall_time_ns": {
+        "label": 1,
+        "number": 16,
+        "type": 4,
+        "type_name": ""
+      },
+      "wall_start_unix_ns": {
+        "label": 1,
+        "number": 14,
+        "type": 3,
+        "type_name": ""
+      }
+    },
+    "onyx.trace.v1.StageTiming": {
+      "encode_time_ns": {
+        "label": 1,
+        "number": 2,
+        "type": 4,
+        "type_name": ""
+      },
+      "gpu_time_ns": {
+        "label": 1,
+        "number": 3,
+        "type": 4,
+        "type_name": ""
+      },
+      "peak_memory_bytes": {
+        "label": 1,
+        "number": 5,
+        "type": 4,
+        "type_name": ""
+      },
+      "stage": {
+        "label": 1,
+        "number": 1,
+        "type": 11,
+        "type_name": ".onyx.common.v1.StageIdentity"
+      },
+      "wall_time_ns": {
+        "label": 1,
+        "number": 4,
+        "type": 4,
+        "type_name": ""
+      }
+    }
+  }
+}

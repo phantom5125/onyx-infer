@@ -1,0 +1,23 @@
+{
+  "transport": "modelscope",
+  "h3_image": {
+    "repo_id": "MiniMax/MiniMax-H3-Image",
+    "revision": "df334556f585a596a710cf4f7ce3a567c0738ee5",
+    "selected_bytes": 135377983745,
+    "source_role": "original BF16/FP32 checkpoint and text encoder"
+  },
+  "h3_base": {
+    "repo_id": "MiniMax/MiniMax-H3",
+    "revision": "b025b988b0b036b87ff39034ba3f60097f78837e",
+    "source_role": "architecture reference; H3 Image ModelScope snapshot already contains text_encoder"
+  },
+  "community_mlx": {
+    "repo_id": "Anionex/h3-image-mlx",
+    "revision": "eccdf321cf009e7c636253f7a3a477f076b8314c",
+    "weights_repo_id": "Comfy-Org/MiniMax-H3-Image",
+    "weights_modelscope_revision": "b8ebf14be96f02e5c58960620a101de71b0bd9f3",
+    "weights_bytes": 49296196495,
+    "precision": "INT8 ConvRot W8A8",
+    "source_role": "community comparison only"
+  }
+}

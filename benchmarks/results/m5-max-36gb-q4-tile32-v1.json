@@ -1,0 +1,110 @@
+{
+  "protocol": "onyx.optimization-comparison.v1",
+  "target_id": "mac17-14-m5-max-36gb",
+  "primary_metric": "wall_median_ms",
+  "results": [
+    {
+      "case_id": "h3-text-q0-qproj-m69",
+      "shape": {
+        "m": 69,
+        "n": 8192,
+        "k": 5120,
+        "group_size": 64
+      },
+      "baseline_variant": "tile16",
+      "candidate_variant": "tile32",
+      "baseline_wall_median_ms": 3.289417,
+      "candidate_wall_median_ms": 2.444041,
+      "speedup": 1.3458927243855565,
+      "candidate_max_abs_error": 0.000191092491,
+      "baseline_samples_ms": [
+        4.88821,
+        3.28942,
+        3.79596,
+        3.35271,
+        3.34692,
+        3.20562,
+        3.21296,
+        3.40146,
+        3.28475,
+        3.34371,
+        3.22738,
+        3.47821,
+        3.24667,
+        3.197,
+        3.22954,
+        3.42267,
+        3.21783,
+        3.21833,
+        3.20263,
+        3.38062
+      ],
+      "candidate_samples_ms": [
+        4.13563,
+        2.80379,
+        2.44021,
+        2.42529,
+        3.03633,
+        2.35946,
+        2.52521,
+        2.44404,
+        2.44046,
+        2.44642,
+        2.36163,
+        2.36396,
+        2.49792,
+        2.41367,
+        2.44704,
+        2.36379,
+        2.35942,
+        2.5695,
+        2.43079,
+        2.60171
+      ],
+      "baseline_source": "artifacts/benchmarks/onyx/h3-text-q0-qproj-m69.json",
+      "candidate_source": "artifacts/benchmarks/onyx/h3-text-q0-qproj-m69-tile32.json"
+    },
+    {
+      "case_id": "h3-qkv-m1024-n21504-k5376",
+      "shape": {
+        "m": 1024,
+        "n": 21504,
+        "k": 5376,
+        "group_size": 64
+      },
+      "baseline_variant": "tile16",
+      "candidate_variant": "tile32",
+      "baseline_wall_median_ms": 109.772708,
+      "candidate_wall_median_ms": 65.648208,
+      "speedup": 1.672135635446439,
+      "candidate_max_abs_error": 0.00146913528,
+      "baseline_samples_ms": [
+        109.561,
+        109.73,
+        109.759,
+        109.773,
+        109.558,
+        109.754,
+        110.387,
+        110.39,
+        110.309,
+        110.231
+      ],
+      "candidate_samples_ms": [
+        65.5848,
+        65.8641,
+        65.4652,
+        65.188,
+        64.9372,
+        65.2006,
+        65.6482,
+        66.6983,
+        66.6406,
+        66.508
+      ],
+      "baseline_source": "artifacts/benchmarks/onyx/q4-qkv-1024x21504x5376.json",
+      "candidate_source": "artifacts/benchmarks/onyx/q4-qkv-1024x21504x5376-tile32.json"
+    }
+  ],
+  "scope": "Same Q4 tensors, shapes and numerical checks; only Metal tiling variant changes"
+}

@@ -1,0 +1,26 @@
+{
+  "protocol": "onyx.native-optimization.v1",
+  "round": 3,
+  "change": "Pack per-token BF16 modulation in shared CPU memory instead of separate GPU gather and reshape graphs",
+  "baseline_commit": "e795afd",
+  "baseline_seconds_median": 38.744257334,
+  "candidate_seconds_median": 37.496992041,
+  "speedup_vs_baseline": 1.033263076,
+  "candidate_samples_seconds": [
+    37.496992041,
+    37.277902583,
+    50.880120875
+  ],
+  "candidate_peak_bytes_max": 1824505856,
+  "baseline_output_sha256": "d3e3228138e309c627d0c48e2bcbb1597a18fdf5c2ebccc1767c1ecef232b8c8",
+  "all_outputs_identical": true,
+  "visual_validation": "1024x1024 teapot output checked; no visible regression",
+  "outlier_note": "The third sample took 50.88 seconds; median and all individual samples are reported without trimming.",
+  "tests": {
+    "python_passed": 23,
+    "metal_ctest_passed": 4,
+    "schema_compatibility": "0 additive changes"
+  },
+  "decision": "accepted",
+  "summary": "artifacts/benchmarks/onyx-native-h3/round1-cpu-gather.json"
+}

@@ -1,0 +1,69 @@
+{
+  "protocol": "onyx.numeric-fix.v1",
+  "case_id": "h3-original-adaln-timestep-flip-v1",
+  "root_cause": "flip_sin_to_cos=True requires [cos,sin]; implementation incorrectly emitted [sin,cos]",
+  "before_min_part_correlation": 0.555527406008017,
+  "after_min_part_correlation": 0.9999803810638349,
+  "after_final_correlation": 0.999996356616229,
+  "after_parts": [
+    {
+      "name": "shift_msa",
+      "correlation": 0.9999939781815292,
+      "original_std": 0.17451201379299164,
+      "community_std": 0.1745205670595169,
+      "rmse": 0.0006057205027900636,
+      "original_mean": -0.00019445305224508047,
+      "community_mean": -0.00018954039842355996
+    },
+    {
+      "name": "scale_msa",
+      "correlation": 0.9999803810638349,
+      "original_std": 0.2704017758369446,
+      "community_std": 0.2703963816165924,
+      "rmse": 0.0016966109396889806,
+      "original_mean": -0.6848709583282471,
+      "community_mean": -0.6847732067108154
+    },
+    {
+      "name": "gate_msa",
+      "correlation": 0.9999913629545988,
+      "original_std": 0.12254758924245834,
+      "community_std": 0.12251035869121552,
+      "rmse": 0.0005106170428916812,
+      "original_mean": -0.0007285019964911044,
+      "community_mean": -0.0007298815180547535
+    },
+    {
+      "name": "shift_mlp",
+      "correlation": 0.9999898710349315,
+      "original_std": 0.07892300188541412,
+      "community_std": 0.078945592045784,
+      "rmse": 0.00035599441616795957,
+      "original_mean": -0.0004727834602817893,
+      "community_mean": -0.00047423283103853464
+    },
+    {
+      "name": "scale_mlp",
+      "correlation": 0.9999957201481557,
+      "original_std": 0.5651934742927551,
+      "community_std": 0.5650791525840759,
+      "rmse": 0.0016598696820437908,
+      "original_mean": -0.4800996780395508,
+      "community_mean": -0.48000839352607727
+    },
+    {
+      "name": "gate_mlp",
+      "correlation": 0.9999959170578251,
+      "original_std": 0.2215675413608551,
+      "community_std": 0.22163332998752594,
+      "rmse": 0.0006366587476804852,
+      "original_mean": -0.0011901194229722023,
+      "community_mean": -0.0011927061714231968
+    }
+  ],
+  "evidence": [
+    "artifacts/reference-tests/original-adaln-before-flip.json",
+    "artifacts/reference-tests/original-adaln-after-flip.json"
+  ],
+  "scope": "Original versus pruned H3 block 0 modulation comparison; full-image quality requires a new generation run"
+}

@@ -1,0 +1,15 @@
+{
+  "target_id": "mac16-12-m4-24gb",
+  "model_identifier": "Mac16,12",
+  "chip": "Apple M4",
+  "cpu_cores": 10,
+  "gpu_cores": 10,
+  "physical_memory_bytes": 25769803776,
+  "recommended_gpu_working_set_bytes": 19069665280,
+  "max_metal_buffer_bytes": 14302248960,
+  "unified_memory": true,
+  "metal": "Metal 4",
+  "macos_version": "26.2",
+  "macos_build": "25C56",
+  "metal_compiler_version": "32023.850.10"
+}

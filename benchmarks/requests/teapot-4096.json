@@ -1,0 +1,33 @@
+{
+  "protocol": "onyx.loop.v1",
+  "case_id": "h3-teapot-4096-seed42-v1",
+  "request": {
+    "protocol": "onyx.job.v1",
+    "request_id": "7e2f54de-287f-4a34-b2ea-d990a06a4b31",
+    "model": {
+      "model_id": "minimax-h3-image",
+      "source_revision": "df334556f585a596a710cf4f7ce3a567c0738ee5",
+      "recipe_id": "h3.pdd6.v1"
+    },
+    "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+    "size": {
+      "width": 4096,
+      "height": 4096
+    },
+    "seed": "42",
+    "image_count": 1,
+    "output": {
+      "format": "PNG",
+      "color_space": "srgb"
+    }
+  },
+  "target_id": "mac17-14-m5-max-36gb",
+  "primary_metric": "complete_generation_wall_time_ns",
+  "correctness_suite_id": "h3-teapot-stages-v1",
+  "warmups": 0,
+  "measured_runs": 1,
+  "cold_cache_runs": 1,
+  "interleave_candidates": false,
+  "max_experiments": 1,
+  "max_wall_time_ns": "7200000000000"
+}

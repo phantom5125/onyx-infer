@@ -1,0 +1,247 @@
+{
+  "case": "text-baseline-jet-engine-structured, 1024x1024",
+  "device": "Mac Studio M5 Max 32 GPU cores, 36 GiB, macOS 27.2.1 (26B131)",
+  "native_base_commit": "59679ff2e612a0a611b7bf05993de7eb1a303a50",
+  "diagnostic_patch_sha256": "4d7204650500f31b62346cf840e232986d5ca8a46dbe2acfd57816425cad26e8",
+  "diagnostic_native_binary_sha256": "6ecc081f105b6051a385bdfa26436d789c6753971f8661df1962f77f9ce4507d",
+  "w4_manifest_sha256": "88a48c026021c05f0c6d7d16bf4d03c86ebb6c7755e6159f7d0594d3439ace88",
+  "original_model_index_sha256": {
+    "text_encoder": "06c952c569285870b811989b794b9766493e280fb77fbcb957fc4e5fcf25403a",
+    "transformer": "067f163d406bc30980a618e87318c2de1dc4bfa6fcbc26c420988c77074467fb"
+  },
+  "tokens_sha256": "4c6d87e671feb5d526e476abb28b536026ccc4070a420770769189bb635c0730",
+  "same_controls": "Structured prompt, original tokenizer, six PDD steps, same initial noise per seed, same FP32 VAE",
+  "measurement": "Exact-once Apple Vision reads, language correction disabled. Timings are stage observations.",
+  "seeds": [
+    {
+      "seed": 42,
+      "text_encode_seconds": {
+        "w4": 4.054355,
+        "bf16": 9.434371
+      },
+      "runs": [
+        {
+          "arm": "text-w4-dit-w4",
+          "seed": 42,
+          "embedding_sha256": "1a269d64119a5a6955323efa0faf5b12e17426cf2b89e1c2b1d1782a870fe6a5",
+          "noise_sha256": "e29f217472f4ff529a1f28a37f6a3d9852fa3fe7b71b66c9b7742e2d90c069e8",
+          "latent_sha256": "1b9317f494a6b74a8054fa1243067a18643e7b56469f261aec84ab5fde198e28",
+          "png_sha256": "4c01e187dd60e357cdac3127decb0d6999c42bad836b530cb4f476e694218732",
+          "dit_seconds": 24.603906,
+          "vae_seconds": 4.381563,
+          "ocr_transcript": [
+            "进气罩",
+            "压气机叶片鹽",
+            "燃烧室",
+            "涡轮盘",
+            "中心主轴",
+            "尾喷管",
+            "机匣外売",
+            "电子控制单元",
+            "燃油泵",
+            "附件齿轮箱",
+            "燃油管路"
+          ],
+          "labels_read_exactly_once": [
+            "进气罩",
+            "燃烧室",
+            "涡轮盘",
+            "中心主轴",
+            "尾喷管",
+            "电子控制单元",
+            "燃油泵",
+            "附件齿轮箱",
+            "燃油管路"
+          ],
+          "labels_read_multiple_times": [],
+          "replay_png_sha256": "4c01e187dd60e357cdac3127decb0d6999c42bad836b530cb4f476e694218732",
+          "replay_latent_sha256": "1b9317f494a6b74a8054fa1243067a18643e7b56469f261aec84ab5fde198e28"
+        },
+        {
+          "arm": "text-bf16-dit-w4",
+          "seed": 42,
+          "embedding_sha256": "850ad0fdb9ebf2137b6d7c79b34b6617d204c3667c93b455d39fc085dcc9b521",
+          "noise_sha256": "e29f217472f4ff529a1f28a37f6a3d9852fa3fe7b71b66c9b7742e2d90c069e8",
+          "latent_sha256": "7f0393d16f2e78e849b73c0d7b624a943e906357950f9e44e015b86b478e0f54",
+          "png_sha256": "a479a0cc0ec97f566f519ec20f7d63a5d5ff7e4d0fcd375be780091494a18e4d",
+          "dit_seconds": 24.46414,
+          "vae_seconds": 4.416022,
+          "ocr_transcript": [
+            "进气罩",
+            "压气机叶片盘",
+            "燃烧室",
+            "涡轮鹽",
+            "中心主轴",
+            "尾嚝管",
+            "机匣外壳",
+            "电子控制单元",
+            "燃油泵",
+            "附件齿轮箱",
+            "燃油管路"
+          ],
+          "labels_read_exactly_once": [
+            "进气罩",
+            "压气机叶片盘",
+            "燃烧室",
+            "中心主轴",
+            "机匣外壳",
+            "电子控制单元",
+            "燃油泵",
+            "附件齿轮箱",
+            "燃油管路"
+          ],
+          "labels_read_multiple_times": [],
+          "replay_png_sha256": "a479a0cc0ec97f566f519ec20f7d63a5d5ff7e4d0fcd375be780091494a18e4d",
+          "replay_latent_sha256": "7f0393d16f2e78e849b73c0d7b624a943e906357950f9e44e015b86b478e0f54"
+        },
+        {
+          "arm": "text-w4-dit-bf16",
+          "seed": 42,
+          "embedding_sha256": "1a269d64119a5a6955323efa0faf5b12e17426cf2b89e1c2b1d1782a870fe6a5",
+          "noise_sha256": "e29f217472f4ff529a1f28a37f6a3d9852fa3fe7b71b66c9b7742e2d90c069e8",
+          "latent_sha256": "72d5d23b941b1de42742baa55a6c9635fa6a6d846b295758312e85e26d9ad26c",
+          "png_sha256": "632e7727602a19948ebf297c47d9cf8fd21ee84b3ce35b6bda519fbac4030cd5",
+          "dit_seconds": 57.344526,
+          "vae_seconds": 4.852537,
+          "ocr_transcript": [
+            "进气罩•",
+            "压气机叶片盘",
+            "燃烧室",
+            "中心主轴",
+            "尾喷管",
+            "机匪外売",
+            "电子控制单元",
+            "燃油泵",
+            "附件齿轮箱",
+            "燃油管路"
+          ],
+          "labels_read_exactly_once": [
+            "压气机叶片盘",
+            "燃烧室",
+            "中心主轴",
+            "尾喷管",
+            "电子控制单元",
+            "燃油泵",
+            "附件齿轮箱",
+            "燃油管路"
+          ],
+          "labels_read_multiple_times": [],
+          "replay_png_sha256": "632e7727602a19948ebf297c47d9cf8fd21ee84b3ce35b6bda519fbac4030cd5",
+          "replay_latent_sha256": "72d5d23b941b1de42742baa55a6c9635fa6a6d846b295758312e85e26d9ad26c"
+        }
+      ]
+    },
+    {
+      "seed": 741,
+      "text_encode_seconds": {
+        "w4": 4.035505,
+        "bf16": 9.833207
+      },
+      "runs": [
+        {
+          "arm": "text-w4-dit-w4",
+          "seed": 741,
+          "embedding_sha256": "1a269d64119a5a6955323efa0faf5b12e17426cf2b89e1c2b1d1782a870fe6a5",
+          "noise_sha256": "94c59bd66307878ac3b2b13bff2a18a16ca15aa41ad96ca9663bc15938de7bc2",
+          "latent_sha256": "2fffc0969ca00f567c4d475aed994abb64cc3f111145d9e4baa191a8fc64f72f",
+          "png_sha256": "7bd7a1e3c871e731ac29508e8c9eb08a2ffef872e634e20408304848bc35cfc7",
+          "dit_seconds": 24.96017,
+          "vae_seconds": 4.254979,
+          "ocr_transcript": [
+            "进气罩",
+            "压气机叶片壹",
+            "燃烧室",
+            "燃烧室",
+            "涡轮盘",
+            "中心主轴",
+            "屠喷管",
+            "机區外売",
+            "电子控制单元",
+            "燃油泵",
+            "附件齿轮箱",
+            "燃油管路"
+          ],
+          "labels_read_exactly_once": [
+            "进气罩",
+            "涡轮盘",
+            "中心主轴",
+            "电子控制单元",
+            "燃油泵",
+            "附件齿轮箱",
+            "燃油管路"
+          ],
+          "labels_read_multiple_times": [
+            "燃烧室"
+          ],
+          "replay_png_sha256": "7bd7a1e3c871e731ac29508e8c9eb08a2ffef872e634e20408304848bc35cfc7",
+          "replay_latent_sha256": "2fffc0969ca00f567c4d475aed994abb64cc3f111145d9e4baa191a8fc64f72f"
+        },
+        {
+          "arm": "text-bf16-dit-w4",
+          "seed": 741,
+          "embedding_sha256": "850ad0fdb9ebf2137b6d7c79b34b6617d204c3667c93b455d39fc085dcc9b521",
+          "noise_sha256": "94c59bd66307878ac3b2b13bff2a18a16ca15aa41ad96ca9663bc15938de7bc2",
+          "latent_sha256": "6e48d45a0e94d35e7e055e76d4155229ce5985cdc554e759e1f1df8bf591745d",
+          "png_sha256": "9523f5afd0575583b94fbfdde0c4afa822b3d77d77bab38c3ef0736fd359957b",
+          "dit_seconds": 25.193368,
+          "vae_seconds": 4.25594,
+          "ocr_transcript": [
+            "进气罩",
+            "进气罩",
+            "压气机叶片賣",
+            "一机匣外売",
+            "燃浇室",
+            "电子遊制单元",
+            "燃燒室",
+            "燃油泵",
+            "燃油泵",
+            "涡能鐵-",
+            "中心主細",
+            "附件齿轮着",
+            "尾喷管",
+            "燃油管路"
+          ],
+          "labels_read_exactly_once": [
+            "尾喷管",
+            "燃油管路"
+          ],
+          "labels_read_multiple_times": [
+            "进气罩",
+            "燃油泵"
+          ],
+          "replay_png_sha256": "9523f5afd0575583b94fbfdde0c4afa822b3d77d77bab38c3ef0736fd359957b",
+          "replay_latent_sha256": "6e48d45a0e94d35e7e055e76d4155229ce5985cdc554e759e1f1df8bf591745d"
+        },
+        {
+          "arm": "text-w4-dit-bf16",
+          "seed": 741,
+          "embedding_sha256": "1a269d64119a5a6955323efa0faf5b12e17426cf2b89e1c2b1d1782a870fe6a5",
+          "noise_sha256": "94c59bd66307878ac3b2b13bff2a18a16ca15aa41ad96ca9663bc15938de7bc2",
+          "latent_sha256": "4c962f622b1fff44a66777feafe41620802b52246291baa70f6d8e08d4cb2ebb",
+          "png_sha256": "81eaf3102b1957b0da2ab891f1b57a6aa198f439a77889b6bf86cd379b47a367",
+          "dit_seconds": 57.821746,
+          "vae_seconds": 4.303855,
+          "ocr_transcript": [
+            "进气罩-",
+            "压气机叶片盤",
+            "燃燒室",
+            "滑轮維",
+            "中心主軸",
+            "尾嘖管",
+            "-机画外売",
+            "电子控制单元",
+            "燃油系",
+            "附件齿轮緬",
+            "燃油皆路"
+          ],
+          "labels_read_exactly_once": [
+            "电子控制单元"
+          ],
+          "labels_read_multiple_times": [],
+          "replay_png_sha256": "81eaf3102b1957b0da2ab891f1b57a6aa198f439a77889b6bf86cd379b47a367",
+          "replay_latent_sha256": "4c962f622b1fff44a66777feafe41620802b52246291baa70f6d8e08d4cb2ebb"
+        }
+      ]
+    }
+  ]
+}

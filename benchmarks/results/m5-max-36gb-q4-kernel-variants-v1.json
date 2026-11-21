@@ -1,0 +1,442 @@
+{
+  "protocol": "onyx.q4-kernel-variants.v1",
+  "date": "2026-11-18",
+  "target": "mac17-14-m5-max-36gb (M5 Max, Metal 4, macOS 27)",
+  "purpose": "Establish an isolated baseline with MLX Steel QMM and the Onyx variants in the same benchmark harness.",
+  "shapes": [
+    "1024x5376x5376",
+    "1024x21504x5376",
+    "69x8192x5120"
+  ],
+  "variants": {
+    "tile16": "Original tiled Onyx MSL baseline.",
+    "tile32": "Original Onyx 32×32 tiled variant.",
+    "simd": "New Steel-derived variant with threadgroup staging, four SIMD-group MMA tiles, transposed weights, and MLX-style scalar fragment loads.",
+    "mlx-steel": "Native MLX affine_qmm_t port using vendored MIT headers and bias = -8 * scale for Onyx weights."
+  },
+  "mlx_standalone_reference_ms": {
+    "1024x5376x5376": 1.71231,
+    "1024x21504x5376": 5.47585,
+    "69x8192x5120": 0.76965
+  },
+  "mlx_reference_note": "The MLX reference uses process-local steady-state wall_median_ms from m5-max-36gb-q4-operator-v1.json. Ratios across timing scopes are approximate.",
+  "provenance": {
+    "mlx_commit": "fbedcee5f4a0c7b2cbb642ea91d4c555460d3e48",
+    "mlx_license": "MIT (Copyright © 2023-2024 Apple Inc.)",
+    "vendored_headers": "ops/metal/mlx_root/ includes the vendored license."
+  },
+  "results": {
+    "tile16@1024x5376x5376": {
+      "correct": true,
+      "gpu_median_ms": 26.472,
+      "gpu_p95_ms": 26.479,
+      "wall_median_ms": 26.688,
+      "effective_tflops": 2.24,
+      "max_abs_error": 0.00146913528
+    },
+    "tile32@1024x5376x5376": {
+      "correct": true,
+      "gpu_median_ms": 15.684,
+      "gpu_p95_ms": 16.025,
+      "wall_median_ms": 15.863,
+      "effective_tflops": 3.77,
+      "max_abs_error": 0.00146913528
+    },
+    "simd@1024x5376x5376": {
+      "correct": true,
+      "gpu_median_ms": 5.01,
+      "gpu_p95_ms": 10.72,
+      "wall_median_ms": 9.861,
+      "effective_tflops": 11.8,
+      "max_abs_error": 0.00160455704,
+      "note": "The LD_TGP stride fix aligned dequantized writes with B fragment reads and restored correctness.",
+      "status": "verified (LD_TGP=34 + branch-free accumulate)"
+    },
+    "mlx-steel@1024x5376x5376": {
+      "correct": true,
+      "gpu_median_ms": 5.266,
+      "gpu_p95_ms": 5.303,
+      "wall_median_ms": 5.519,
+      "effective_tflops": 11.24,
+      "max_abs_error": 0.00261211395
+    },
+    "tile16@1024x21504x5376": {
+      "correct": true,
+      "gpu_median_ms": 106.237,
+      "gpu_p95_ms": 106.419,
+      "wall_median_ms": 106.434,
+      "effective_tflops": 2.23,
+      "max_abs_error": 0.00146913528
+    },
+    "tile32@1024x21504x5376": {
+      "correct": true,
+      "gpu_median_ms": 62.692,
+      "gpu_p95_ms": 62.912,
+      "wall_median_ms": 62.886,
+      "effective_tflops": 3.78,
+      "max_abs_error": 0.00146913528
+    },
+    "simd@1024x21504x5376": {
+      "correct": true,
+      "gpu_median_ms": 19.99,
+      "gpu_p95_ms": 38.577,
+      "wall_median_ms": 38.736,
+      "effective_tflops": 11.8,
+      "max_abs_error": 0.00160455704,
+      "note": "The LD_TGP stride fix aligned dequantized writes with B fragment reads and restored correctness.",
+      "status": "verified (LD_TGP=34 + branch-free accumulate)"
+    },
+    "mlx-steel@1024x21504x5376": {
+      "correct": true,
+      "gpu_median_ms": 20.735,
+      "gpu_p95_ms": 20.767,
+      "wall_median_ms": 20.972,
+      "effective_tflops": 11.42,
+      "max_abs_error": 0.00261211395
+    },
+    "tile16@69x8192x5120": {
+      "correct": true,
+      "gpu_median_ms": 3.047,
+      "gpu_p95_ms": 4.562,
+      "wall_median_ms": 3.907,
+      "effective_tflops": 1.9,
+      "max_abs_error": 0.00191354752
+    },
+    "tile32@69x8192x5120": {
+      "correct": true,
+      "gpu_median_ms": 3.517,
+      "gpu_p95_ms": 4.574,
+      "wall_median_ms": 3.712,
+      "effective_tflops": 1.65,
+      "max_abs_error": 0.00191354752
+    },
+    "simd@69x8192x5120": {
+      "correct": true,
+      "gpu_median_ms": 0.71,
+      "gpu_p95_ms": 6.442,
+      "wall_median_ms": 2.936,
+      "effective_tflops": 8.1,
+      "max_abs_error": 0.00191354752,
+      "note": "The LD_TGP stride fix aligned dequantized writes with B fragment reads and restored correctness.",
+      "status": "verified (LD_TGP=34 + branch-free accumulate)"
+    },
+    "mlx-steel@69x8192x5120": {
+      "correct": true,
+      "gpu_median_ms": 1.773,
+      "gpu_p95_ms": 3.775,
+      "wall_median_ms": 2.335,
+      "effective_tflops": 3.26,
+      "max_abs_error": 0.00191354752
+    }
+  },
+  "shared_storage_note": "Initial hypothesis: buffer storage and timing differences explained the roughly 3× Steel-to-MLX gap. A private-buffer and blit experiment tested the storage hypothesis.",
+  "correctness": "All variants passed the CPU tolerance |err| ≤ 0.05 + 0.005|v|. SIMD and Steel also have CTest probes.",
+  "production_mpsgraph_q4_comparison": {
+    "note": "Production MPSGraph Q4 timings are from the Onyx column of m5-max-36gb-q4-operator-v1.json. Steel ran through the local operator benchmark on the same device.",
+    "mpsgraph_q4_wall_median_ms": {
+      "1024x5376x5376": 28.12,
+      "1024x21504x5376": 109.77,
+      "69x8192x5120": 3.29
+    },
+    "mlx_steel_wall_median_ms": {
+      "1024x5376x5376": 5.27,
+      "1024x21504x5376": 20.74,
+      "69x8192x5120": 1.19
+    },
+    "steel_over_mpsgraph_speedup": {
+      "1024x5376x5376": 5.34,
+      "1024x21504x5376": 5.29,
+      "69x8192x5120": 2.77
+    },
+    "note2": "The linear_steel_probe runtime check measured max CPU-reference error 0.00028 on real weights. Shared and private buffers had equal measured performance on the reference machine."
+  },
+  "shared_vs_private_finding": {
+    "date": "2026-11-18",
+    "finding": "Shared and private Metal buffers took the same GPU time for matching shapes on Apple Silicon. MLX scheduling and batched dispatch likely explain the roughly 3× gap with the serialized benchmark.",
+    "tested_shapes": [
+      "1024x5376x5376",
+      "1024x21504x5376"
+    ],
+    "shared_ms": [
+      5.26,
+      20.73
+    ],
+    "private_ms": [
+      5.26,
+      20.74
+    ],
+    "implication": "Focus on kernel tiling, memory access, and MMA scheduling. Parallel command buffers and L2 scheduling were possible explanations for the 3× gap."
+  },
+  "ld_tgp_bug_fixed": {
+    "date": "2026-11-18",
+    "bug": "dequant2 received BN=32 instead of LD_TGP=40, so the high nibble went into padding instead of K+1. The B fragment read used the wrong stride as well.",
+    "fix": "Use LD_TGP for both dequantized writes and B fragment reads. The corrected probe passed.",
+    "performance_note": "Correcting the row stride restored numerics and left the roughly 9.6 ms and 38.4 ms timings similar."
+  },
+  "dit_qkv_projection_comparison": {
+    "shape": "1024×8192×5120 (DiT qkv_proj)",
+    "date": "2026-11-18",
+    "results": {
+      "tile16 (baseline)": 38.4,
+      "tile32": 22.61,
+      "simd (Onyx)": 13.92,
+      "mlx-steel (MLX port)": 7.6
+    },
+    "notes": "All variants passed the benchmark CPU check. The same-shape Steel runtime measured 17.08 ms GPU time including BF16-to-FP16 conversion.",
+    "implication": "The Steel kernel passed the DiT qkv_proj shape probe. At this stage the potential inference savings were unmeasured."
+  },
+  "simd_optimization_finding": {
+    "date": "2026-11-18",
+    "change": "Remove the if (!accumulated) branch in the k8 loop. Always call simdgroup_multiply_accumulate from a zero accumulator.",
+    "impact": "1024x5376x5376: 9.64ms to 4.99ms (1.93x); 1024x21504x5376: 38.52ms to 19.92ms (1.93x); TFLOPS 6.2 to 11.9",
+    "explanation": "Removing the conditional allowed unrolling and scheduling across four MMA instructions.",
+    "surpass": "SIMD measured 4.99 ms and Steel measured 5.27 ms."
+  },
+  "simd_real_data_validation": {
+    "date": "2026-11-18",
+    "fixture": "steel-fixture-m32 uses real text-q0-qproj weights at m=32, n=8192, k=5120.",
+    "correct": true,
+    "max_abs_error": 0.00133,
+    "gpu_median_ms": 1.19,
+    "steel_comparison": {
+      "correct": true,
+      "gpu_median_ms": 1.26
+    },
+    "conclusion": "On real quantized weights, SIMD passed the numerical check and measured 1.19 ms versus 1.26 ms for Steel."
+  },
+  "ld_tgp_optimization": {
+    "date": "2026-11-18",
+    "change": "LD_TGP 40→34 reduced threadgroup memory from 5120 to 4352 bytes per group and improved occupancy.",
+    "combined_with": "Remove the conditional accumulate branch and initialize the accumulator to zero.",
+    "combined_impact": {
+      "1024x5376x5376": "26.5→5.01ms (5.3x vs tile16)",
+      "1024x21504x5376": "106.2→19.99ms (5.3x)",
+      "69x8192x5120": "3.02→0.71ms (4.3x)"
+    },
+    "surpass": "SIMD was faster than Steel for all three measured shapes."
+  },
+  "dit_full_pipeline_q4_comparison": {
+    "date": "2026-11-18",
+    "scope": "Three Q4 GEMMs from one DiT step at m=1024: qkv_proj, out_proj, and fc1.",
+    "shape_note": "fc2 shares the 1024×5376×5376 shape with out_proj. Smaller token-refiner layers were excluded.",
+    "tile16_total_ms": 203.9,
+    "simd_total_ms": 38.5,
+    "steel_total_ms": 40.0,
+    "simd_speedup": 5.3,
+    "steel_speedup": 5.1,
+    "simd_faster_than_steel_pct": 4,
+    "per_image_savings_6nfe_seconds": 1.0,
+    "per_layer": {
+      "qkv_proj (1024×21504×5376)": {
+        "tile16": 106.41,
+        "simd": 20.04,
+        "steel": 20.73
+      },
+      "out_proj (1024×5376×5376)": {
+        "tile16": 26.57,
+        "simd": 5.14,
+        "steel": 5.41
+      },
+      "fc1 (1024×14336×5376)": {
+        "tile16": 70.97,
+        "simd": 13.33,
+        "steel": 13.86
+      }
+    },
+    "text_tower_note": "The continuous m=69 text-tower run measured SIMD at 3.37 ms and Steel at 3.76 ms. Small-M coverage overhead was considered."
+  },
+  "m69_remeasurement": {
+    "date": "2026-11-18",
+    "issue": "The continuous suite measured 3.37 ms for m=69 SIMD versus 3.04 ms for tile16. The isolated SIMD rerun measured 0.71 ms.",
+    "resolution": "The isolated result was 0.71 ms, or 4.3× faster than tile16. The 3.37 ms suite result was affected by thermal or system load.",
+    "lesson": "Use isolated or interleaved GPU measurements. Later runs in the continuous suite showed elevated timings.",
+    "final_m69": {
+      "tile16": 3.05,
+      "tile32": 2.28,
+      "simd": 0.71,
+      "mlx-steel": 3.76
+    },
+    "conclusion": "SIMD was the fastest tested variant across the measured shapes, including m=69, in this isolated comparison."
+  },
+  "bk64_experiment": {
+    "date": "2026-11-18",
+    "hypothesis": "The BK=64 hypothesis was that halving barriers and doubling arithmetic intensity would improve throughput.",
+    "implementation": "The candidate used LD_TGP=66, 16 scalar A writes, and eight decoded values per thread. Ws[BK*LD] fixed an out-of-bounds write from Ws[BN*LD].",
+    "result": {
+      "1024x5376x5376": "5.51 ms versus 5.01 ms with BK=32, 10% slower.",
+      "1024x21504x5376": "21.94 ms versus 19.99 ms, 10% slower.",
+      "69x8192x5120": "0.79 ms versus 0.71 ms, 11% slower."
+    },
+    "verdict": "Rejected. Fewer barriers did not offset twice the scalar A writes and threadgroup storage.",
+    "conclusion": "Restoring BK=32 and LD=34 recovered the 5.01 ms SIMD measurement."
+  },
+  "production_dit_decomposition": {
+    "date": "2026-11-18",
+    "measurement": "Four DiT-stage configurations, each with 6 steps × 28 blocks × 4 Q4 layers = 672 calls.",
+    "matrix_s": {
+      "mpsgraph+stream": 26.0,
+      "mpsgraph+lru": 26.6,
+      "simd+stream": 41.0,
+      "simd+lru": 37.3
+    },
+    "decomposition": {
+      "linear_host_time": "Host timing after deferred commits was 14 ms. The prior 23.3 s included GPU waits.",
+      "buffer_alloc": "Buffer allocation took 17 ms across 672 calls. This experiment found no material reason to cache allocations.",
+      "conclusion": "In-context SIMD GPU time exceeded the optimized MPSGraph graph with fused dequantization and matmul."
+    },
+    "verdict": "The 5.3× isolated speedup did not carry over end to end. Production stayed on MPSGraph. Its streaming store already overlapped I/O, so the LRU added no measured benefit.",
+    "lessons": [
+      "Isolated kernel timing and production timing differ because MPSGraph fuses and schedules work across its graph.",
+      "Deferring per-layer waits removed 23.3 s of measured host waiting time.",
+      "An LRU cache helps when I/O is the bottleneck."
+    ]
+  },
+  "end_to_end_pipeline": {
+    "date": "2026-11-18",
+    "baseline_max_quality": {
+      "total_s": 36.82,
+      "dit_s": 25.96,
+      "latent": "All values finite, range -4.000 to 3.962."
+    },
+    "speed_focus_bf16": {
+      "total_s": 50.92,
+      "dit_s": 39.95,
+      "latent": "All values finite, range -4.045 to 3.958."
+    },
+    "latent_quality": {
+      "correlation": 0.997305,
+      "mean_abs_diff": 0.042198,
+      "max_abs_diff": 1.482811,
+      "note": "BF16 latents correlated 0.9973 with the baseline."
+    },
+    "pixel_diff": {
+      "mean": 5.33,
+      "max": 235,
+      "pct_gt16": 9.69,
+      "note": "Diffusion amplifies small numerical perturbations, as seen when changing seed."
+    },
+    "correction": "The reported 377 non-finite baseline values came from reading FP32 data as uint16. The FP32 latent values were all finite.",
+    "production_dit": {
+      "date": "2026-11-18",
+      "measurement": "Four DiT-stage configurations, each with 6 steps × 28 blocks × 4 Q4 layers = 672 calls.",
+      "matrix_s": {
+        "mpsgraph+stream": 26.0,
+        "mpsgraph+lru": 26.6,
+        "simd+stream": 41.0,
+        "simd+lru": 37.3
+      },
+      "decomposition": {
+        "linear_host_time": "Host timing after deferred commits was 14 ms. The prior 23.3 s included GPU waits.",
+        "buffer_alloc": "Buffer allocation took 17 ms across 672 calls. This experiment found no material reason to cache allocations.",
+        "conclusion": "In-context SIMD GPU time exceeded the optimized MPSGraph graph with fused dequantization and matmul."
+      },
+      "verdict": "The 5.3× isolated speedup did not carry over end to end. Production stayed on MPSGraph. Its streaming store already overlapped I/O, so the LRU added no measured benefit.",
+      "lessons": [
+        "Isolated kernel timing and production timing differ because MPSGraph fuses and schedules work across its graph.",
+        "Deferring per-layer waits removed 23.3 s of measured host waiting time.",
+        "An LRU cache helps when I/O is the bottleneck."
+      ]
+    },
+    "perceptual_gate": {
+      "metric": "SSIM, 8×8 window mean, Wang et al. 2004.",
+      "value": 0.960067,
+      "threshold": 0.85,
+      "verdict": "pass",
+      "per_channel": [
+        0.964,
+        0.9653,
+        0.951
+      ],
+      "tool": "tools/ssim_check.py",
+      "note": "SSIM exceeded 0.95 in the measured image comparisons. The BF16 experiment used a perceptual gate."
+    },
+    "image_triangle": {
+      "mlx_reference_png": "Streamed MLX reference PNG at /tmp/ref-image.png, generated in 225.4 s.",
+      "ssim_mlx_vs_native_mpsgraph": 0.9812,
+      "ssim_mlx_vs_native_bf16": 0.9553,
+      "ssim_native_pair": 0.960067,
+      "verdict": "The recorded image comparisons among the MLX reference and two native paths all exceeded SSIM 0.95.",
+      "performance_context": "The streamed MLX reference took 225.4 s and the native path took 36.8 s, a 6.1× difference."
+    }
+  },
+  "reference_cross_validation": {
+    "date": "2026-11-18",
+    "setup": "MLX original_w4 and native MPSGraph with LRU used the same W4 package, native text embedding, and NumPy default_rng(42) noise.",
+    "latent_correlation": 0.996187,
+    "max_abs_diff": 1.94564,
+    "mean_abs_diff": 0.055153,
+    "ranges": {
+      "mlx_ref": "-4.302..3.963",
+      "native": "-4.000..3.962"
+    },
+    "significance": "The paired correlations were 0.9962 from MLX to native MPSGraph and 0.9973 from native MPSGraph to the BF16 path.",
+    "note": "The reference and native samplers had slightly different clipping behavior around [-4,4]. The reference minimum was -4.302."
+  },
+  "dit_gpu_decomposition": {
+    "date": "2026-11-18",
+    "method": "Sum GPUEndTime minus GPUStartTime inside linear_q4_simd after each command completes in wait mode.",
+    "dit_total_s": 36.5,
+    "simd_kernel_gpu_busy_s": 19.3,
+    "shared_ops_and_gaps_s": 17.2,
+    "call_count": 1120,
+    "incontext_vs_bench": "Isolated timings predicted about 7.5 s and initially measured 19.3 s in context. GPU counters were needed to investigate the resulting 2.6× estimate.",
+    "fp16_vs_bf16_dit": {
+      "fp16_path_dit_s": 41.56,
+      "bf16_path_dit_s": 36.5,
+      "note": "The BF16 candidate avoided FP16 NaNs and was faster on this workload."
+    },
+    "counter_feasibility": "The capability probe reported timestamp counters and stage-boundary sampling. Actual sampling was checked later in the campaign."
+  },
+  "gpu_counter_investigation": {
+    "date": "2026-11-18",
+    "counter_probe": "M5 Max (AGXG17X) reported a timestamp counter set and stage-boundary sampling support.",
+    "but": "Although the API reported support, AGXG17X asserted when sampleCountersInBuffer:atSampleIndex:withBarrier: was called.",
+    "modern_path": "Metal 4 timestamp heaps require Metal 4 command buffers and queues for timestamp writing and resolution.",
+    "verdict": "Remove the crashing legacy timestamp call. Per-dispatch timing needs an appropriate Metal 4 path.",
+    "mtl4_heap_attempt": "The dynamic MTL4CounterHeap probe hit an unrecognized selector because AGXG17CDevice lacked newCounterHeapWithDescriptor at runtime.",
+    "paths_exhausted": [
+      "The classic MTLCounterSampleBuffer stage probe asserted on AGXG17X.",
+      "The runtime device class did not implement MTL4CounterHeap in this test.",
+      "xctrace and Instruments required Xcode. The host had only Command Line Tools."
+    ],
+    "final_verdict": "Per-dispatch in-context profiling was unavailable on the reference setup. The uniform 2.38× gap needs working Metal 4 counters or Xcode for instruction-level analysis."
+  },
+  "per_class_incontext_decomposition": {
+    "date": "2026-11-18",
+    "method": "Five DiT measurements used ONYX_SIMD_SKIP to fall back to MPSGraph for selected layer classes.",
+    "matrix_s": {
+      "all_simd": 37.8,
+      "skip_qkv": 34.51,
+      "skip_out_proj": 37.76,
+      "skip_fc1": 35.07,
+      "skip_fc2": 35.02,
+      "all_mpsgraph": 26.6
+    },
+    "findings": {
+      "qkv": "SIMD took roughly 3.3 s longer than production MPSGraph over 168 calls, or 19.6 ms per call.",
+      "fc1": "About 2.7 s slower, or 16 ms per call.",
+      "fc2": "About 2.8 s slower, or 17 ms per call.",
+      "out_proj": "No significant difference at this small kernel size."
+    },
+    "key_insight": "SIMD QKV took about 20 ms in context, consistent with its probe. Cached MPSGraph took about 0.4–2 ms per call. The isolated 106 ms MPSGraph reading included repeated graph compilation.",
+    "implication": "Investigating production MPSGraph fusion and weight layout requires a working counter or MPSGraph profiler.",
+    "simd_kernels_validated": "Per-call timings matched the SIMD benchmark. The earlier 2.6× slowdown attribution was revised after measuring faster cached MPSGraph execution."
+  },
+  "thermal_neutral_decomposition": {
+    "date": "2026-11-18",
+    "method": "ONYX_SIMD_SKIP_ODD routes odd blocks to MPSGraph, comparing both paths within one run.",
+    "matrix_s": {
+      "all_simd": 40.31,
+      "odd_mps_even_simd": 34.03,
+      "all_mpsgraph": 26.93
+    },
+    "derived": {
+      "per_block_mps_s": 0.347,
+      "per_block_simd_s": 0.825,
+      "uniform_ratio": 2.38
+    },
+    "consistency": "The three decomposition equations agreed within 0.8 s and with the roughly 2× GPU busy-time comparison.",
+    "verdict": "The gap was uniform across blocks and persisted in the thermal control. The remaining hypothesis was in-context locality and scheduling versus MPSGraph graph optimization.",
+    "tool": "ONYX_SIMD_SKIP_ODD provides a repeatable mixed-path thermal-control experiment."
+  }
+}

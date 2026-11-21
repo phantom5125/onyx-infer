@@ -1,0 +1,185 @@
+{
+  "protocol": "onyx.operator-comparison.v1",
+  "target_id": "mac17-14-m5-max-36gb",
+  "device": "Apple M5 Max 32-core GPU, 36 GB",
+  "primary_metric": "wall_median_ms after one warmup; process-local steady state",
+  "comparisons": [
+    {
+      "case_id": "h3-linear-m1024-n5376-k5376",
+      "shape": {
+        "m": 1024,
+        "n": 5376,
+        "k": 5376,
+        "group_size": 64
+      },
+      "same_source_weights": false,
+      "quantization_format_note": "Independent affine quantization; performance-only comparison",
+      "onyx": {
+        "implementation": "onyx_q4_gemm_fp16acc32 tile16",
+        "wall_median_ms": 28.118667,
+        "wall_p95_ms": 28.503292,
+        "gpu_median_ms": 27.956833,
+        "correctness_scope": "32 outputs checked against CPU dequantized FP32 accumulation",
+        "correct": true,
+        "max_abs_error": 0.00146913528,
+        "samples_ms": [
+          28.019,
+          28.1771,
+          28.1131,
+          28.0762,
+          28.5033,
+          28.1795,
+          28.1911,
+          27.9654,
+          28.1187,
+          28.0146
+        ],
+        "source": "artifacts/benchmarks/onyx/q4-linear-1024x5376x5376.json"
+      },
+      "mlx": {
+        "implementation": "MLX 0.32.4 quantized_matmul",
+        "wall_median_ms": 1.7080419999999998,
+        "wall_p95_ms": 6.710084,
+        "samples_ms": [
+          6.710084,
+          3.9257500000000003,
+          2.696708,
+          2.021166,
+          1.911334,
+          1.471208,
+          1.430458,
+          1.415667,
+          1.465042,
+          1.50475
+        ],
+        "source": "artifacts/benchmarks/mlx/q4-linear-1024x5376x5376.json"
+      },
+      "onyx_over_mlx_time_ratio": 16.462514973285202
+    },
+    {
+      "case_id": "h3-qkv-m1024-n21504-k5376",
+      "shape": {
+        "m": 1024,
+        "n": 21504,
+        "k": 5376,
+        "group_size": 64
+      },
+      "same_source_weights": false,
+      "quantization_format_note": "Independent affine quantization; performance-only comparison",
+      "onyx": {
+        "implementation": "onyx_q4_gemm_fp16acc32 tile16",
+        "wall_median_ms": 109.772708,
+        "wall_p95_ms": 110.389833,
+        "gpu_median_ms": 109.563875,
+        "correctness_scope": "32 outputs checked against CPU dequantized FP32 accumulation",
+        "correct": true,
+        "max_abs_error": 0.00146913528,
+        "samples_ms": [
+          109.561,
+          109.73,
+          109.759,
+          109.773,
+          109.558,
+          109.754,
+          110.387,
+          110.39,
+          110.309,
+          110.231
+        ],
+        "source": "artifacts/benchmarks/onyx/q4-qkv-1024x21504x5376.json"
+      },
+      "mlx": {
+        "implementation": "MLX 0.32.4 quantized_matmul",
+        "wall_median_ms": 5.475854000000001,
+        "wall_p95_ms": 5.9901670000000005,
+        "samples_ms": [
+          5.778375,
+          5.258208000000001,
+          5.3422920000000005,
+          5.6097079999999995,
+          5.9901670000000005,
+          5.694083,
+          5.187583,
+          5.589875,
+          5.361833,
+          5.312333
+        ],
+        "source": "artifacts/benchmarks/mlx/q4-qkv-1024x21504x5376.json"
+      },
+      "onyx_over_mlx_time_ratio": 20.046682764003563
+    },
+    {
+      "case_id": "h3-text-q0-qproj-m69",
+      "shape": {
+        "m": 69,
+        "n": 8192,
+        "k": 5120,
+        "group_size": 64
+      },
+      "same_source_weights": true,
+      "quantization_format_note": "Identical Onyx tensor repacked for MLX",
+      "onyx": {
+        "implementation": "onyx_q4_gemm_fp16acc32 tile16",
+        "wall_median_ms": 3.289417,
+        "wall_p95_ms": 3.795959,
+        "gpu_median_ms": 3.091542,
+        "correctness_scope": "32 outputs checked against CPU dequantized FP32 accumulation",
+        "correct": true,
+        "max_abs_error": 0.000191092491,
+        "samples_ms": [
+          4.88821,
+          3.28942,
+          3.79596,
+          3.35271,
+          3.34692,
+          3.20562,
+          3.21296,
+          3.40146,
+          3.28475,
+          3.34371,
+          3.22738,
+          3.47821,
+          3.24667,
+          3.197,
+          3.22954,
+          3.42267,
+          3.21783,
+          3.21833,
+          3.20263,
+          3.38062
+        ],
+        "source": "artifacts/benchmarks/onyx/h3-text-q0-qproj-m69.json"
+      },
+      "mlx": {
+        "implementation": "MLX 0.32.4 quantized_matmul",
+        "wall_median_ms": 0.7731669999999999,
+        "wall_p95_ms": 1.5993330000000001,
+        "samples_ms": [
+          1.709042,
+          1.5993330000000001,
+          1.569291,
+          0.795667,
+          0.753541,
+          0.826542,
+          0.9777919999999999,
+          0.761042,
+          0.729375,
+          0.811834,
+          0.775417,
+          0.744917,
+          0.746375,
+          0.74475,
+          0.7765409999999999,
+          0.75975,
+          0.735791,
+          0.7928329999999999,
+          0.770917,
+          0.7651249999999999
+        ],
+        "source": "artifacts/benchmarks/mlx/h3-text-q0-qproj-m69.json"
+      },
+      "onyx_over_mlx_time_ratio": 4.254471543663917
+    }
+  ],
+  "scope_warning": "Operator results are not end-to-end image-generation results and do not demonstrate final image quality."
+}

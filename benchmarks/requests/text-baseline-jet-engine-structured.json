@@ -1,0 +1,61 @@
+{
+  "scene": "Turn the jet engine into a high-precision exploded structural rendering. Use a solid dark-gray background and an oblique overhead isometric view, with components floating apart along a diagonal axis from the upper right to the lower left: intake cowling, compressor blade discs, combustion chamber, turbine discs, central shaft, and exhaust nozzle in sequence. Divide the engine casing into curved panels suspended around the main shaft; distribute the electronic control box, fuel pump, accessory gears, fuel lines, and copper-colored wiring harness on either side. Use cool gray, silver, and matte white for the outer shell and casing, with warm gold and bronze for the turbine core and shaft. Keep components aligned and evenly spaced, with soft studio lighting and realistic metallic reflections.",
+  "instructions": "Use a portrait 2:3 technical diagram with no branding. Show eleven clear, medium-size white Chinese labels in two tidy columns with uncrossed white leader lines. Use the quoted text literally, once per label. Preserve every simplified Chinese character.",
+  "labels": [
+    {
+      "text": "进气罩",
+      "subject": "intake cowling",
+      "position": "left column"
+    },
+    {
+      "text": "压气机叶片盘",
+      "subject": "compressor blade discs",
+      "position": "left column"
+    },
+    {
+      "text": "燃烧室",
+      "subject": "combustion chamber",
+      "position": "left column"
+    },
+    {
+      "text": "涡轮盘",
+      "subject": "turbine discs",
+      "position": "left column"
+    },
+    {
+      "text": "中心主轴",
+      "subject": "central shaft",
+      "position": "left column"
+    },
+    {
+      "text": "尾喷管",
+      "subject": "exhaust nozzle",
+      "position": "left column"
+    },
+    {
+      "text": "机匣外壳",
+      "subject": "engine casing",
+      "position": "right column"
+    },
+    {
+      "text": "电子控制单元",
+      "subject": "electronic control unit",
+      "position": "right column"
+    },
+    {
+      "text": "燃油泵",
+      "subject": "fuel pump",
+      "position": "right column"
+    },
+    {
+      "text": "附件齿轮箱",
+      "subject": "accessory gearbox",
+      "position": "right column"
+    },
+    {
+      "text": "燃油管路",
+      "subject": "fuel lines",
+      "position": "right column"
+    }
+  ]
+}

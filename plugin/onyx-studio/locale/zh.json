@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Onyx Studio",
+    "description": "用本地 onyx-infer 引擎生成图像，并查看运行瓶颈、模型结构、量化方案与硬件利用率；还能导入整本书（TXT/MD/EPUB）做成一页文字一页插图的本地图文阅读器，插图由本地引擎按页生成，智能体可通过 onyx_generate / onyx_analyze / onyx_book 工具出图与批量配图。入口：整页工作台、左侧栏面板、右侧栏标签页。",
+    "detail": "docs/DETAIL.zh.md"
+  }
+}

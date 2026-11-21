@@ -1,0 +1,143 @@
+{
+  "$schema": "onyx.profiles.v1",
+  "registry_version": "1.0.0",
+  "description": "Execution profiles for one W4 model. Settings cover weight residency, caching, kernel selection, and measurement. Numerical changes require their own identity and quality evidence.",
+  "model_semantic": {
+    "numeric_profile": "w4.bf16.fp32-sensitive",
+    "quantization_profile": "onyx-w4s64-linear-v1",
+    "plan_id": "native.mpsgraph.q4.stream.v1",
+    "recipe_lock": {
+      "nfe": 6,
+      "cfg": false,
+      "note": "H3 PDD sampling belongs to the model recipe. A different step count or CFG requires a new recipe identity and quality evidence."
+    }
+  },
+  "knob_domain": {
+    "text_weights": [
+      "stream"
+    ],
+    "dit_weights": [
+      "stream"
+    ],
+    "vae_weights": [
+      "resident",
+      "stream"
+    ],
+    "vae_tiling": [
+      "tile16"
+    ],
+    "dit_block_cache": [
+      "none",
+      "lru"
+    ],
+    "q4_kernel": [
+      "mpsgraph",
+      "steel",
+      "simd"
+    ]
+  },
+  "knob_parameters": {
+    "dit_block_cache_bytes": {
+      "none": 0,
+      "lru": 25769803776
+    },
+    "dit_block_cache_bytes_note": "A 24 GiB LRU leaves room for activations and the system within the 28.08 GiB recommendation. It covers about 64% of the 37.47 GB DiT package.",
+    "q4_kernel_impl": {
+      "mpsgraph": "Production MPSGraph dequantization and matmul with FP32 dequantization.",
+      "steel": "MIT-licensed MLX Steel affine QMM port using FP16 MMA with FP32 accumulation.",
+      "simd": "Onyx SIMD kernel derived from the Steel layout, with transposed weight staging and branch-free accumulation. Historical isolated results were 4.99 ms versus 5.27 ms for Steel at 1024×5376×5376."
+    }
+  },
+  "knob_notes": {
+    "text_weights": "The 21.86 GB W4 text encoder requires streaming on the reference target.",
+    "dit_weights": "The 37.47 GB W4 DiT package streams one block at a time.",
+    "vae_weights": "The FP32 VAE is 2.34 GB. Resident mode caches tensors and streaming mode loads and releases weights by tile.",
+    "vae_tiling": "Existing overlap equivalence evidence covers tile16. A new geometry requires independent validation.",
+    "dit_block_cache": "Reuse original DiT weight bytes across the six sampling steps. The cache must preserve output bytes. Measure its benefit with an interleaved matrix."
+  },
+  "profiles": {
+    "max-quality": {
+      "title": "Max quality",
+      "summary": "The default verified W4A16 path with FP32 exceptions, FP32 VAE, and all six PDD evaluations.",
+      "knobs": {
+        "text_weights": "stream",
+        "dit_weights": "stream",
+        "vae_weights": "resident",
+        "vae_tiling": "tile16",
+        "dit_block_cache": "none",
+        "q4_kernel": "mpsgraph"
+      },
+      "gates": {
+        "output_replay_identical": true,
+        "profile_echo_must_match": true,
+        "peak_process_bytes_max": 30150672384,
+        "peak_process_note": "Use process-tree physical footprint with an RSS fallback, as in RunRecord. The 28.08 GiB limit comes from Metal on the reference machine.",
+        "min_samples": 3
+      },
+      "future": "Treat streamed W8 or BF16 weights as separate derived model identities with independent quality gates."
+    },
+    "memory-min": {
+      "title": "Minimum memory",
+      "summary": "Stream text and DiT weights by block and load VAE weights per tile to reduce peak residency.",
+      "knobs": {
+        "text_weights": "stream",
+        "dit_weights": "stream",
+        "vae_weights": "stream",
+        "vae_tiling": "tile16",
+        "dit_block_cache": "none",
+        "q4_kernel": "mpsgraph"
+      },
+      "gates": {
+        "output_replay_identical": true,
+        "profile_echo_must_match": true,
+        "peak_process_bytes_max": 2147483648,
+        "peak_process_note": "The provisional 2 GiB limit comes from the November 17 measurements at 1.79–2.00 GiB. Use physical footprint with an RSS fallback.",
+        "min_samples": 3,
+        "bitwise_equal_to": "max-quality",
+        "bitwise_note": "Weights and decoding are identical to max-quality. Changing residency must preserve the output bytes."
+      }
+    },
+    "speed-focus": {
+      "title": "Speed experiment",
+      "summary": "Evaluate a BF16 SIMD kernel and DiT cache with resident VAE weights. Interleave cold and warm measurements within their respective groups.",
+      "knobs": {
+        "text_weights": "stream",
+        "dit_weights": "stream",
+        "vae_weights": "resident",
+        "vae_tiling": "tile16",
+        "dit_block_cache": "lru",
+        "q4_kernel": "simd"
+      },
+      "gates": {
+        "output_replay_identical": true,
+        "profile_echo_must_match": true,
+        "peak_process_bytes_max": 30150672384,
+        "min_samples": 3,
+        "must_be_fastest_within": {
+          "compare_to": "all",
+          "margin_ratio": 0.03,
+          "verdict_when_missed": "inconclusive",
+          "verdict_when_slower_beyond_margin": "rejected",
+          "note": "Use interleaved medians. Report results within observed dispersion as inconclusive when the margin is missed."
+        },
+        "numeric_equal_to": {
+          "reference": "max-quality",
+          "max_abs_error": 0.05,
+          "note": "The Steel FP16 runtime probe at m=69 had maximum error 0.00028 on real weights. The declared absolute tolerance is 0.05. See docs/PROFILES.md."
+        }
+      }
+    }
+  },
+  "evidence": {
+    "tile_equivalence": "benchmarks/compare_tile32.py",
+    "optimization_rounds": [
+      "benchmarks/results/native-baseline-v1.json",
+      "benchmarks/results/native-round1-zero-cache.json",
+      "benchmarks/results/native-round2-direct-pread.json",
+      "benchmarks/results/native-round3-cpu-modulation.json",
+      "benchmarks/results/native-round4-fused-attention-views.json"
+    ],
+    "operator_reference": "benchmarks/results/m5-max-36gb-q4-operator-v1.json",
+    "stage_matrix": "benchmarks/results/profile-stage-matrix-v1.json"
+  }
+}

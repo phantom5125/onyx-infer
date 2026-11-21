@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Architecture and larger proposals
+    url: https://github.com/phantom5125/onyx-infer-open/discussions
+    about: Start a Discussion for new models, backends, protocol changes, schedulers, quantization formats, or major refactors.
+  - name: Kernel and Metal questions
+    url: https://github.com/phantom5125/onyx-infer-open/discussions
+    about: Discuss kernel variants, Metal performance, and native validation reports.

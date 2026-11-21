@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36" fill="none">
+  <defs>
+    <linearGradient id="onyx-g" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4f8fd6"/>
+      <stop offset="1" stop-color="#8a5cf6"/>
+    </linearGradient>
+  </defs>
+  <rect width="36" height="36" rx="9" fill="url(#onyx-g)"/>
+  <path d="M18 6.5l4.2 8.4L30.5 18l-8.3 3.1L18 29.5l-4.2-8.4L5.5 18l8.3-3.1z" fill="#fff" opacity=".94"/>
+  <circle cx="18" cy="18" r="3.1" fill="#4f8fd6"/>
+</svg>

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sixteen megapixels on 36 GB of unified memory — Onyx Infer</title>
+<meta name="description" content="4096×4096 direct generation — no upscaler — in 329.6 s with a 2.14 GB peak on a 36 GB Mac Studio. The memory choreography that makes it fit.">
+<link rel="icon" type="image/svg+xml" href="../assets/onyx-mark.svg">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<nav class="nav"><div class="nav-inner">
+  <a class="brand" href="../index.html"><svg viewBox="0 0 64 64" width="26" height="26" aria-hidden="true"><defs><linearGradient id="ma" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7a6e"/><stop offset="0.5" stop-color="#e5484d"/><stop offset="1" stop-color="#8f1220"/></linearGradient></defs><polygon points="32,4 56,18 56,46 32,60 8,46 8,18" fill="#131722" stroke="url(#ma)" stroke-width="3"/><polygon points="32,18 44,25 44,39 32,46 20,39 20,25" fill="url(#ma)" opacity="0.85"/></svg><span class="word">ONYX <b>INFER</b></span></a>
+  <div class="nav-links">
+    <a href="../index.html#engine">Engine</a>
+    <a href="../index.html#benchmarks">Benchmarks</a>
+    <a href="../blog/index.html">Blog</a>
+    <a class="gh" href="https://github.com/phantom5125/onyx-infer-open" target="_blank" rel="noopener">GitHub &#8599;</a>
+  </div>
+</div></nav>
+
+<main class="article article-wrap">
+  <header>
+    <div class="kicker">Memory</div>
+    <h1>Sixteen megapixels on 36 GB of unified memory</h1>
+    <div class="meta">2026-11-18 &middot; Onyx Infer engineering notes</div>
+    
+  </header>
+  <div class="prose">
+<h2>The budget is smaller than the weights</h2>
+<p>The target machine grants 28.08 GiB of recommended GPU working set and caps a single buffer at 21.06 GiB. Against that: a 21.86 GB W4 text pack and a 37.47 GB W4 DiT pack (high-precision AdaLN projections included). Neither pair fits resident at once; the DiT does not even fit by itself. "Unified memory" does not mean "no memory management" — it means the management is visible, plannable, and ours.</p>
+<h2>Phase residency, not one resident graph</h2>
+<p>The engine executes in phases with explicit handoffs:</p>
+<ol><li><strong>Text phase</strong> — the Qwen3-VL text tower streams block-by-block, keeps the layer-50 hidden</li></ol>
+<p>states, then releases the pack.</p>
+<ol><li><strong>DiT phase</strong> — the 37.47 GB pack streams block-by-block. Timestep and AdaLN projections</li></ol>
+<p>are precomputed once, their weights released; each transformer block's weights are evicted after use.</p>
+<ol><li><strong>VAE phase</strong> — the FP32 2D-ViT decoder (2.34 GB) runs with tiling on the 16×-downsampled</li></ol>
+<p>latent grid.</p>
+<h2>Attention must be chunked</h2>
+<p>At 4096×4096, H3's design — one image token per 32×32 pixel patch — yields (4096/32)² = <strong>16,384 image tokens</strong>, before text and reference tokens lengthen the sequence. A materialized attention matrix is out of the question at 16 MP; SDPA runs on chunked windows. The tile experiments behind this live in <code>benchmarks/results/m5-max-36gb-q4-tile32-v1.json</code>.</p>
+<h2>The result</h2>
+<p>The 4096×4096 teapot request: <strong>329.61 s</strong>, peak <strong>2,144,190,464 bytes (~2.14 GB)</strong>, full RunRecord stored and replayed. This is direct generation — the DiT saw a native 4K token grid — not a diffusion pass at 1024 followed by an upscaler, which is why structure and label text survive at 16 MP.</p>
+<h2>What we will not claim</h2>
+<p>W4 output at these resolutions passes our functional and visual checks on reference fixtures. That is not a broad quality-equivalence claim: multi-prompt evaluation, more resolutions and more seeds are queued in the Loop. Published numbers first; adjectives later.</p>
+  </div>
+  <p><a class="backlink" href="index.html">&#8592; All posts</a></p>
+</main>
+
+<footer class="site"><div class="wrap">
+  <div class="foot-grid">
+    <div class="col">
+      <h4>Project</h4>
+      <a href="../index.html">Home</a>
+      <a href="../blog/index.html">Blog</a>
+      <a href="https://github.com/phantom5125/onyx-infer-open" target="_blank" rel="noopener">GitHub repository</a>
+      <a href="https://github.com/phantom5125/onyx-infer-open/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a>
+    </div>
+    <div class="col">
+      <h4>Design docs</h4>
+      <a href="https://github.com/phantom5125/onyx-infer-open/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noopener">Architecture</a>
+      <a href="https://github.com/phantom5125/onyx-infer-open/blob/main/docs/PROTOCOLS.md" target="_blank" rel="noopener">Protocols (onyx.*.v1)</a>
+      <a href="https://github.com/phantom5125/onyx-infer-open/blob/main/docs/LOOP.md" target="_blank" rel="noopener">Optimization loop</a>
+      <a href="https://github.com/phantom5125/onyx-infer-open/blob/main/docs/V1_REVIEW.md" target="_blank" rel="noopener">v1 review</a>
+    </div>
+    <div class="col">
+      <h4>Evidence</h4>
+      <a href="https://github.com/phantom5125/onyx-infer-open/blob/main/benchmarks/results/native-v1-stability.json" target="_blank" rel="noopener">native-v1-stability.json</a>
+      <a href="https://github.com/phantom5125/onyx-infer-open/blob/main/benchmarks/results/native-round4-fused-attention-views.json" target="_blank" rel="noopener">round 4 measurements</a>
+      <a href="https://github.com/phantom5125/onyx-infer-open/blob/main/benchmarks/results/m5-max-36gb-q4-operator-v1.json" target="_blank" rel="noopener">Q4 operator comparison</a>
+    </div>
+  </div>
+  <p class="foot-note">Onyx Infer source code is available under the <a href="https://github.com/phantom5125/onyx-infer-open/blob/main/LICENSE">MIT License</a>. &copy; 2026 Onyx Infer contributors.</p>
+</div></footer>
+</body>
+</html>

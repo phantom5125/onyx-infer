@@ -1,0 +1,68 @@
+diff --git a/runtime/native/native.hpp b/runtime/native/native.hpp
+index af1a7b5..2a7578f 100644
+--- a/runtime/native/native.hpp
++++ b/runtime/native/native.hpp
+@@ -13,0 +14 @@
++#include <memory>
+@@ -70,0 +72,2 @@ class WeightStore {
++  std::map<std::string, std::unique_ptr<WeightStore>> shards_;
++  std::unordered_map<std::string, const WeightStore*> tensor_sources_;
+@@ -84,0 +88 @@ class WeightStore {
++  const WeightStore& tensor_source(const std::string& name) const;
+diff --git a/runtime/native/weight_store.mm b/runtime/native/weight_store.mm
+index f350d93..959035e 100644
+--- a/runtime/native/weight_store.mm
++++ b/runtime/native/weight_store.mm
+@@ -8,0 +9 @@
++#include <filesystem>
+@@ -112,0 +114,31 @@ void require_streaming_weights(const StageOptions& options, const char* stage, c
++  if (path.ends_with(".index.json")) {
++    @autoreleasepool {
++      NSData* data = [NSData dataWithContentsOfFile:[NSString stringWithUTF8String:path.c_str()]];
++      if (!data) throw std::runtime_error("Could not open weight index: " + path);
++      NSDictionary* index = json_object(data);
++      NSMutableDictionary* specs = [NSMutableDictionary new];
++      const auto parent = std::filesystem::path(path).parent_path();
++      NSString* base = index[@"base"];
++      if (base != nil) {
++        auto source = std::make_unique<WeightStore>(parent / base.UTF8String);
++        for (NSString* key in source->specs_) {
++          specs[key] = source->specs_[key];
++          tensor_sources_[key.UTF8String] = source.get();
++        }
++        shards_.emplace("", std::move(source));
++      }
++      NSDictionary* mapping = index[@"weight_map"];
++      for (NSString* key in mapping) {
++        NSString* filename = mapping[key];
++        const std::string shard = filename.UTF8String;
++        auto& source = shards_[shard];
++        if (!source) source = std::make_unique<WeightStore>(parent / shard);
++        NSDictionary* spec = source->specs_[key];
++        if (!spec) throw std::runtime_error("Tensor missing from shard: " + std::string(key.UTF8String));
++        specs[key] = spec;
++        tensor_sources_[key.UTF8String] = source.get();
++      }
++      specs_ = specs;
++    }
++    return;
++  }
+@@ -147,0 +180,5 @@ void require_streaming_weights(const StageOptions& options, const char* stage, c
++const WeightStore& WeightStore::tensor_source(const std::string& name) const {
++  const auto source = tensor_sources_.find(name);
++  return source == tensor_sources_.end() ? *this : *source->second;
++}
++
+@@ -216,0 +254 @@ void require_streaming_weights(const StageOptions& options, const char* stage, c
++  const WeightStore& source = tensor_source(name);
+@@ -230 +268,2 @@ void require_streaming_weights(const StageOptions& options, const char* stage, c
+-    const ssize_t result = pread(fd_, static_cast<uint8_t*>(buffer.contents) + completed, length - completed, data_begin_ + begin + completed);
++    const ssize_t result = pread(source.fd_, static_cast<uint8_t*>(buffer.contents) + completed, length - completed,
++                                 source.data_begin_ + begin + completed);
+@@ -255,0 +295 @@ void require_streaming_weights(const StageOptions& options, const char* stage, c
++  const WeightStore& source = tensor_source(name);
+@@ -268,2 +308,2 @@ void require_streaming_weights(const StageOptions& options, const char* stage, c
+-    const uint64_t offset = data_begin_ + begin + stride * static_cast<uint32_t>(ids[index]);
+-    const ssize_t result = pread(fd_, static_cast<uint8_t*>(data.mutableBytes) + index * stride, stride, offset);
++    const uint64_t offset = source.data_begin_ + begin + stride * static_cast<uint32_t>(ids[index]);
++    const ssize_t result = pread(source.fd_, static_cast<uint8_t*>(data.mutableBytes) + index * stride, stride, offset);
