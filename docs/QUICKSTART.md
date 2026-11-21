@@ -9,8 +9,8 @@ Review the [MiniMax-H3-Image license at the pinned ModelScope revision](https://
 ## Build the native runtime
 
 ```bash
-git clone --branch v0.4.0 https://github.com/phantom5125/onyx-infer-open.git
-cd onyx-infer-open
+git clone --branch v0.4.0 https://github.com/phantom5125/onyx-infer.git
+cd onyx-infer
 uv sync --frozen --no-dev
 
 xcrun --find metal

@@ -5,13 +5,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/phantom5125/onyx-infer-open/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/phantom5125/onyx-infer/ci.yml?label=CI" alt="CI"></a>
+  <a href="https://github.com/phantom5125/onyx-infer/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/phantom5125/onyx-infer/ci.yml?label=CI" alt="CI"></a>
   <img src="https://img.shields.io/badge/platform-Apple%20Silicon%20%C2%B7%20macOS%2026.2%2B%20%C2%B7%20Metal%204-blue" alt="Platform">
   <img src="https://img.shields.io/badge/C%2B%2B-20%20%C2%B7%20Metal%20MSL-blue" alt="C++20 / MSL">
   <img src="https://img.shields.io/badge/Python-3.12%2B-orange" alt="Python 3.12+">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license"></a>
   <a href="README.zh-CN.md">Chinese README</a>
-  <a href="https://phantom5125.github.io/onyx-infer-open/"><img src="https://img.shields.io/badge/site-phantom5125.github.io%2Fonyx--infer--open-8f1220" alt="Site"></a>
+  <a href="https://phantom5125.github.io/onyx-infer/"><img src="https://img.shields.io/badge/site-phantom5125.github.io%2Fonyx--infer-8f1220" alt="Site"></a>
 </p>
 
 # onyx-infer
@@ -122,7 +122,7 @@ The MLX reference environment is separate: `uv sync --extra reference`.
 | [docs/LORA_ADAPTERS.md](docs/LORA_ADAPTERS.md) | LoRA adapter notes |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution entry points |
 
-Project site & engineering blog: **https://phantom5125.github.io/onyx-infer-open/**
+Project site & engineering blog: **https://phantom5125.github.io/onyx-infer/**
 (sources in [`site/`](site/), blog built by [`tools/build_blog.py`](tools/build_blog.py)).
 
 ## Guides
@@ -147,6 +147,6 @@ If you find onyx-infer useful in your research, cite it as:
   title = {onyx-infer: native image generation for Apple Silicon},
   year = {2026},
   publisher = {GitHub},
-  url = {https://github.com/phantom5125/onyx-infer-open}
+  url = {https://github.com/phantom5125/onyx-infer}
 }
 ```

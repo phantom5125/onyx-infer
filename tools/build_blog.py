@@ -21,8 +21,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 POSTS_DIR = ROOT / "site" / "blog" / "posts"
 OUT_DIR = ROOT / "site" / "blog"
-SITE_URL = "https://phantom5125.github.io/onyx-infer-open"
-GITHUB = "https://github.com/phantom5125/onyx-infer-open"
+SITE_URL = "https://phantom5125.github.io/onyx-infer"
+GITHUB = "https://github.com/phantom5125/onyx-infer"
 
 # --------------------------------------------------------------------------
 # chrome
@@ -82,7 +82,7 @@ def chrome(rel: str, title: str, description: str, og_image: str | None, body: s
       <a href="{GITHUB}/blob/main/benchmarks/results/m5-max-36gb-q4-operator-v1.json" target="_blank" rel="noopener">Q4 operator comparison</a>
     </div>
   </div>
-  <p class="foot-note">Onyx Infer source code is available under the <a href="https://github.com/phantom5125/onyx-infer-open/blob/main/LICENSE">MIT License</a>. &copy; 2026 Onyx Infer contributors.</p>
+  <p class="foot-note">Onyx Infer source code is available under the <a href="https://github.com/phantom5125/onyx-infer/blob/main/LICENSE">MIT License</a>. &copy; 2026 Onyx Infer contributors.</p>
 </div></footer>
 </body>
 </html>

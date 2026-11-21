@@ -112,7 +112,7 @@ MLX 参照环境独立安装：`uv sync --extra reference`。
 | [docs/LORA_ADAPTERS.md](docs/zh-CN/LORA_ADAPTERS.md) | LoRA 适配器说明 |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 贡献入口 |
 
-项目主页与工程博客：**https://phantom5125.github.io/onyx-infer-open/**
+项目主页与工程博客：**https://phantom5125.github.io/onyx-infer/**
 （源码在 [`site/`](site/)，博客由 [`tools/build_blog.py`](tools/build_blog.py) 构建）。
 
 ## 指南
@@ -137,6 +137,6 @@ Onyx Infer 自有源码采用 [MIT 许可证](LICENSE)。仓库内的 MLX 代码
   title = {onyx-infer: native image generation for Apple Silicon},
   year = {2026},
   publisher = {GitHub},
-  url = {https://github.com/phantom5125/onyx-infer-open}
+  url = {https://github.com/phantom5125/onyx-infer}
 }
 ```
