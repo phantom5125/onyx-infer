@@ -76,7 +76,9 @@ int main() {
     onyx::WeightStore store(store_path, false);
 
     struct Case { uint32_t rows; const char* name; };
-    const Case cases[] = {{1024, "m1024"}, {16, "m16"}};
+    // m69 covers the multi-row-tile regime of the small-m dispatch bucket
+    // (rows<=128 -> vendored Steel kernel; q4-decode-splitk-v1 fallback).
+    const Case cases[] = {{1024, "m1024"}, {69, "m69"}, {16, "m16"}};
     bool all_pass = true;
     for (const Case& test : cases) {
       std::vector<uint16_t> activation(size_t(test.rows) * k);

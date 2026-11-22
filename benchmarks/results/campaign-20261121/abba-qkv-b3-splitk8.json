@@ -1,0 +1,25 @@
+{
+  "operator": "onyx.q4_gemm.v1",
+  "variant": "splitk8",
+  "device": "Apple M5 Max",
+  "shape": {"m": 16, "n": 21504, "k": 5376, "group_size": 64},
+  "correct": true,
+  "checked_outputs": 32,
+  "max_abs_error": 0.00244379044,
+  "max_relative_error": 0.00833153342,
+  "iterations": 10,
+  "gpu_median_ms": 1.571125,
+  "gpu_p95_ms": 6.976333,
+  "wall_median_ms": 2.371666,
+  "wall_p95_ms": 7.712667,
+  "effective_tflops": 2.354603,
+  "effective_bandwidth_gb_per_s": 41.936992,
+  "metal_allocated_bytes": 77627392,
+  "recommended_working_set_bytes": 30150672384,
+  "max_buffer_bytes": 22613000192
+,
+  "gpu_samples_ms": [6.97633,3.14813,1.48437,1.57113,1.51925,1.47479,1.54762,1.62679,1.44825,1.59275],
+  "wall_samples_ms": [7.71267,3.33913,1.70388,2.41567,2.37167,1.59263,1.72504,1.79496,1.68008,2.52375],
+  "arguments": [".build/onyx-metal-bench","--m","16","--n","21504","--k","5376","--group","64","--iterations","10","--variant","splitk8","--output","benchmarks/results/campaign-20261121/abba-qkv-b3-splitk8.json"],
+  "metallib": "/Users/daocheng/.zcode/worktrees/3da9/onyx-infer/.build/onyx_q4.metallib"
+}

@@ -322,3 +322,141 @@ kernel void onyx_q4_gemm_fp16acc32_mma64(
     }
   }
 }
+
+// kernel-agent/q4-decode-splitk-v1 (episode E1): split-k MMA for small M.
+// The mma kernels leave small-m shapes parallelism-starved (672-336
+// threadgroups over n only); E8 proved scalar split-k hits the ~8 TFLOPS
+// scalar-FMA ceiling, so the k dimension is split across threadgroups and
+// each slice runs the simdgroup-MMA staging pattern. Partials land as fp32
+// in scratch[split_k][m][n] — every element is written exactly once (no
+// atomics, no zero-init, bit-stable) — and a separate reduce encoder sums
+// slices and converts to fp16 in the same command buffer.
+kernel void onyx_q4_gemm_fp16acc32_splitk(
+    device const half* activation [[buffer(0)]],
+    device const uchar* packed_weights [[buffer(1)]],
+    device const float* scales [[buffer(2)]],
+    device float* partials [[buffer(8)]],
+    constant uint& m [[buffer(4)]],
+    constant uint& n [[buffer(5)]],
+    constant uint& k [[buffer(6)]],
+    constant uint& group_size [[buffer(7)]],
+    constant uint& split_k [[buffer(9)]],
+    uint3 tile_position [[threadgroup_position_in_grid]],
+    uint lane [[thread_index_in_threadgroup]]) {
+  constexpr uint TM = 16;
+  constexpr uint TN = 32;
+  constexpr uint BK = 8;
+  threadgroup half activation_tile[TM][BK];
+  threadgroup half weight_tile[BK][TN];
+  threadgroup float sum_tile[8][8];
+  const uint row_base = tile_position.y * TM;
+  const uint column_base = tile_position.x * TN;
+  const uint slice = tile_position.z;
+  const uint groups = k / group_size;
+  const uint slice_len = (k + split_k - 1) / split_k;
+  const uint slice_start = slice * slice_len;
+  const uint slice_end = min(slice_start + slice_len, k);
+  simdgroup_matrix<float, 8, 8> acc[2][4];
+  simdgroup_matrix<half, 8, 8> a_fragments[2];
+  simdgroup_matrix<half, 8, 8> b_fragments[4];
+  for (uint i = 0; i < 2; ++i) {
+    for (uint j = 0; j < 4; ++j) {
+      acc[i][j] = simdgroup_matrix<float, 8, 8>(0.0f);
+    }
+  }
+
+  for (uint tile_k = slice_start; tile_k < slice_end; tile_k += BK) {
+    // Stage A: lane<16 stages row lane, the 8 columns tile_k..+8. m>16 is
+    // covered by additional grid-y threadgroups, so only TM rows exist here.
+    if (lane < TM) {
+      for (uint j = 0; j < BK; ++j) {
+        const uint column = tile_k + j;
+        activation_tile[lane][j] =
+            row_base + lane < m && column < k ? activation[(row_base + lane) * k + column] : half(0.0h);
+      }
+    }
+    // Stage W^T: thread lane owns output column column_base+lane and the 8
+    // consecutive nibbles tile_k..+8 (uchar4 when the step is whole and the
+    // byte offset stays aligned, scalar loads otherwise).
+    const uint column = column_base + lane;
+    const bool full_step = (tile_k + BK) <= slice_end;
+    const uint base = column < n ? column * (k / 2) + tile_k / 2 : 0u;
+    uchar4 bytes = uchar4(0, 0, 0, 0);
+    if (column < n && full_step) {
+      if ((k % 8) == 0 && (tile_k % 8) == 0) {
+        bytes = *reinterpret_cast<device const uchar4*>(packed_weights + base);
+      } else {
+        bytes = uchar4(
+            packed_weights[base + 0], packed_weights[base + 1],
+            packed_weights[base + 2], packed_weights[base + 3]);
+      }
+    }
+    for (uint j = 0; j < BK; ++j) {
+      const uint column_k = tile_k + j;
+      int quantized = 0;
+      if (column < n && column_k < slice_end) {
+        uint byte;
+        if (full_step) {
+          byte = bytes[j / 2];
+        } else {
+          byte = packed_weights[column * (k / 2) + column_k / 2];
+        }
+        quantized = int((column_k & 1) ? (byte >> 4) : (byte & 15)) - 8;
+      }
+      const float scale = column < n && column_k < slice_end
+          ? scales[column * groups + column_k / group_size] : 0.0f;
+      weight_tile[j][lane] = half(float(quantized) * scale);
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    for (uint i = 0; i < 2; ++i) {
+      simdgroup_load(a_fragments[i], &activation_tile[i * 8][0], BK);
+    }
+    for (uint j = 0; j < 4; ++j) {
+      simdgroup_load(b_fragments[j], &weight_tile[0][j * 8], TN);
+    }
+    for (uint i = 0; i < 2; ++i) {
+      for (uint j = 0; j < 4; ++j) {
+        simdgroup_multiply_accumulate(acc[i][j], a_fragments[i], b_fragments[j], acc[i][j]);
+      }
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+  }
+
+  // Write this slice's fp32 partial tile. Every (slice, row<m, col<n) is
+  // covered by exactly one threadgroup, so reduce can sum blindly.
+  for (uint i = 0; i < 2; ++i) {
+    for (uint j = 0; j < 4; ++j) {
+      simdgroup_store(acc[i][j], &sum_tile[0][0], 8);
+      threadgroup_barrier(mem_flags::mem_threadgroup);
+      for (uint index = lane; index < 64; index += 32) {
+        const uint row = row_base + i * 8 + index / 8;
+        const uint column = column_base + j * 8 + index % 8;
+        if (row < m && column < n) {
+          partials[size_t(slice) * m * n + size_t(row) * n + column] = sum_tile[index / 8][index % 8];
+        }
+      }
+      threadgroup_barrier(mem_flags::mem_threadgroup);
+    }
+  }
+}
+
+// Sums the split-k partials and converts to fp16. One thread per output.
+kernel void onyx_q4_splitk_reduce(
+    device const float* partials [[buffer(0)]],
+    device half* output [[buffer(1)]],
+    constant uint& m [[buffer(2)]],
+    constant uint& n [[buffer(3)]],
+    constant uint& split_k [[buffer(4)]],
+    uint id [[thread_position_in_grid]]) {
+  if (id >= m * n) {
+    return;
+  }
+  const uint row = id / n;
+  const uint column = id % n;
+  float sum = 0.0f;
+  for (uint slice = 0; slice < split_k; ++slice) {
+    sum += partials[size_t(slice) * m * n + size_t(row) * n + column];
+  }
+  output[id] = half(sum);
+}

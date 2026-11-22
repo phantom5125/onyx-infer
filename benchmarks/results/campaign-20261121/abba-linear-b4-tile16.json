@@ -1,0 +1,25 @@
+{
+  "operator": "onyx.q4_gemm.v1",
+  "variant": "tile16",
+  "device": "Apple M5 Max",
+  "shape": {"m": 16, "n": 5376, "k": 5376, "group_size": 64},
+  "correct": true,
+  "checked_outputs": 32,
+  "max_abs_error": 0.00194168091,
+  "max_relative_error": 0.000411946,
+  "iterations": 10,
+  "gpu_median_ms": 2.257000,
+  "gpu_p95_ms": 2.332000,
+  "wall_median_ms": 2.520584,
+  "wall_p95_ms": 3.031875,
+  "effective_tflops": 0.409767,
+  "effective_bandwidth_gb_per_s": 7.355378,
+  "metal_allocated_bytes": 17088512,
+  "recommended_working_set_bytes": 30150672384,
+  "max_buffer_bytes": 22613000192
+,
+  "gpu_samples_ms": [2.25758,2.25983,2.332,2.257,2.26088,1.51808,0.599542,0.587333,0.558542,0.555625],
+  "wall_samples_ms": [2.82529,2.95121,2.53542,2.52058,3.03187,2.08521,0.825292,0.833084,0.741375,0.78875],
+  "arguments": [".build/onyx-metal-bench","--m","16","--n","5376","--k","5376","--group","64","--iterations","10","--variant","tile16","--output","benchmarks/results/campaign-20261121/abba-linear-b4-tile16.json"],
+  "metallib": "/Users/daocheng/.zcode/worktrees/3da9/onyx-infer/.build/onyx_q4.metallib"
+}

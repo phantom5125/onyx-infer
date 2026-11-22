@@ -130,6 +130,8 @@ add_test(NAME onyx_q4_gemm_mma_ungrouped COMMAND onyx-metal-bench --m 16 --n 64 
 add_test(NAME onyx_q4_gemm_ragged COMMAND onyx-metal-bench --m 17 --n 33 --k 30 --group 30 --iterations 5)
 add_test(NAME onyx_q4_gemm_ragged_mma COMMAND onyx-metal-bench --m 17 --n 33 --k 30 --group 30 --iterations 5 --variant mma)
 add_test(NAME onyx_q4_gemm_ragged_mma64 COMMAND onyx-metal-bench --m 17 --n 33 --k 30 --group 30 --iterations 5 --variant mma64)
+add_test(NAME onyx_q4_gemm_ragged_splitk COMMAND onyx-metal-bench --m 17 --n 33 --k 30 --group 30 --iterations 5 --variant splitk4)
+add_test(NAME onyx_q4_gemm_splitk_multitile COMMAND onyx-metal-bench --m 32 --n 64 --k 64 --group 64 --iterations 5 --variant splitk4)
 
 add_test(NAME onyx_q4_linear_mpsgraph COMMAND onyx-q4-linear-probe)
 set_tests_properties(onyx_q4_linear_mpsgraph PROPERTIES ENVIRONMENT "ONYX_Q4_LINEAR=mpsgraph")

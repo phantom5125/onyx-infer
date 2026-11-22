@@ -34,7 +34,14 @@ VariantConfig variant_config(const std::string& variant) {
   // See kernel-agent/contract.md, experiments E1–E8, for the MMA comparisons.
   if (variant == "mma") return {"onyx_q4_gemm_fp16acc32_mma", MTLSizeMake(32, 1, 1), 32, 32};    // 1 simdgroup/TG，32x32 tile
   if (variant == "mma64") return {"onyx_q4_gemm_fp16acc32_mma64", MTLSizeMake(128, 1, 1), 64, 64};  // 4 simdgroup，64x64 tile
+  if (variant.rfind("splitk", 0) == 0) return {"onyx_q4_gemm_fp16acc32_splitk", MTLSizeMake(32, 1, 1), 16, 32};  // split-k MMA for small m (TM=16, TN=32); k slices parsed from the name.
   throw std::runtime_error("Unknown kernel variant: " + variant);
+}
+
+// Split-k slice count for splitkN variants (e.g. "splitk4" -> 4); 0 otherwise.
+uint32_t split_k_for_variant(const std::string& variant) {
+  if (variant.rfind("splitk", 0) == 0) return uint32_t(std::stoul(variant.substr(6)));
+  return 0;
 }
 
 }  // namespace
@@ -207,6 +214,18 @@ int main(int argc, char** argv) {
       auto output_buffer = [device newBufferWithLength:size_t(padded_m) * options.n * sizeof(__fp16) options:MTLResourceStorageModeShared];
       if (!activation_buffer || !packed_buffer || !scale_buffer || !output_buffer) throw std::runtime_error("Metal allocation failed");
 
+      // Split-k variants accumulate fp32 partials in scratch (one grid-z
+      // layer per slice); the reduce encoder sums them into the fp16 output.
+      const uint32_t split_k = split_k_for_variant(options.variant);
+      id<MTLBuffer> partials_buffer = nil;
+      id<MTLComputePipelineState> reduce_pipeline = nil;
+      if (split_k > 0) {
+        partials_buffer = [device newBufferWithLength:size_t(split_k) * options.m * options.n * sizeof(float) options:MTLResourceStorageModeShared];
+        id<MTLFunction> reduce_function = [library newFunctionWithName:@"onyx_q4_splitk_reduce"];
+        reduce_pipeline = [device newComputePipelineStateWithFunction:reduce_function error:&error];
+        if (!partials_buffer || !reduce_pipeline) throw std::runtime_error("Metal allocation failed (splitk partials/reduce)");
+      }
+
       // Steel uses FP16 scales and affine biases.
       // The bias term maps Onyx (nibble - 8) * scale to the MLX affine form.
       const bool steel_variant = options.variant == "mlx-steel";
@@ -274,6 +293,36 @@ int main(int argc, char** argv) {
           [encoder setBytes:batch_strides_dummy length:sizeof(batch_strides_dummy) atIndex:13];
           [encoder setBytes:batch_strides_dummy length:sizeof(batch_strides_dummy) atIndex:14];
           [encoder setBytes:batch_strides_dummy length:sizeof(batch_strides_dummy) atIndex:15];
+          const MTLSize groups = MTLSizeMake((options.n + config.tile_n - 1) / config.tile_n, (options.m + config.tile_m - 1) / config.tile_m, 1);
+          [encoder dispatchThreadgroups:groups threadsPerThreadgroup:config.threads];
+          [encoder endEncoding];
+        } else if (split_k > 0) {
+          // Onyx split-k bindings: 0=activation, 1=packed, 2=scales, 4=m,
+          // 5=n, 6=k, 7=group size, 8=fp32 partials, 9=split_k. The reduce
+          // encoder joins the same command buffer so the GPU timestamp
+          // spans both passes.
+          [encoder setBuffer:activation_buffer offset:0 atIndex:0];
+          [encoder setBuffer:packed_buffer offset:0 atIndex:1];
+          [encoder setBuffer:scale_buffer offset:0 atIndex:2];
+          [encoder setBytes:&options.m length:sizeof(options.m) atIndex:4];
+          [encoder setBytes:&options.n length:sizeof(options.n) atIndex:5];
+          [encoder setBytes:&options.k length:sizeof(options.k) atIndex:6];
+          [encoder setBytes:&options.group length:sizeof(options.group) atIndex:7];
+          [encoder setBuffer:partials_buffer offset:0 atIndex:8];
+          [encoder setBytes:&split_k length:sizeof(split_k) atIndex:9];
+          const MTLSize groups = MTLSizeMake((options.n + config.tile_n - 1) / config.tile_n, (options.m + config.tile_m - 1) / config.tile_m, split_k);
+          [encoder dispatchThreadgroups:groups threadsPerThreadgroup:config.threads];
+          [encoder endEncoding];
+          id<MTLComputeCommandEncoder> reduce_encoder = [command computeCommandEncoder];
+          [reduce_encoder setComputePipelineState:reduce_pipeline];
+          [reduce_encoder setBuffer:partials_buffer offset:0 atIndex:0];
+          [reduce_encoder setBuffer:output_buffer offset:0 atIndex:1];
+          [reduce_encoder setBytes:&options.m length:sizeof(options.m) atIndex:2];
+          [reduce_encoder setBytes:&options.n length:sizeof(options.n) atIndex:3];
+          [reduce_encoder setBytes:&split_k length:sizeof(split_k) atIndex:4];
+          const MTLSize reduce_groups = MTLSizeMake((options.m * options.n + 255) / 256, 1, 1);
+          [reduce_encoder dispatchThreadgroups:reduce_groups threadsPerThreadgroup:MTLSizeMake(256, 1, 1)];
+          [reduce_encoder endEncoding];
         } else {
           // Onyx bindings: 0=activation, 1=packed, 2=scales, 3=output, 4=m, 5=n, 6=k, 7=group size.
           [encoder setBuffer:activation_buffer offset:0 atIndex:0];
@@ -284,10 +333,10 @@ int main(int argc, char** argv) {
           [encoder setBytes:&options.n length:sizeof(options.n) atIndex:5];
           [encoder setBytes:&options.k length:sizeof(options.k) atIndex:6];
           [encoder setBytes:&options.group length:sizeof(options.group) atIndex:7];
+          const MTLSize groups = MTLSizeMake((options.n + config.tile_n - 1) / config.tile_n, (options.m + config.tile_m - 1) / config.tile_m, 1);
+          [encoder dispatchThreadgroups:groups threadsPerThreadgroup:config.threads];
+          [encoder endEncoding];
         }
-        const MTLSize groups = MTLSizeMake((options.n + config.tile_n - 1) / config.tile_n, (options.m + config.tile_m - 1) / config.tile_m, 1);
-        [encoder dispatchThreadgroups:groups threadsPerThreadgroup:config.threads];
-        [encoder endEncoding];
         [command commit];
         [command waitUntilCompleted];
         if (command.status == MTLCommandBufferStatusError) {

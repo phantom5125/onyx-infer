@@ -168,3 +168,27 @@ zero-copy mlx bridge and full fused-block engine wiring are follow-ups.
   candidate. Either outcome wires dispatch via a CPU-reference probe
   (onyx_q4_linear_dispatch pattern); end-to-end runs stay pending human
   validation (no model on this machine).
+
+# Outcome (q4-decode-splitk-v1, 2026-11-21)
+
+Promoted as library-only: `onyx_q4_gemm_fp16acc32_splitk` + `onyx_q4_splitk_reduce`
+(deterministic split-k, fp32 partials, reduce encoder; TM16/TN32/BK8, SK from the
+variant name). Correct on every bench shape including the new ragged and
+multi-row-tile gates (ctest 15/15). Beats tile16 on decode-qkv (ABBA 4/4 clean
+blocks, ~1.2x); inconclusive vs tile16 on decode-linear; loses the vendored
+mlx-steel kernel ~1.9x isolated -> the contract fallback ran and was ALSO rejected
+at its integration point.
+
+Key lessons recorded:
+1. Split-k shortens the per-threadgroup critical path (time was nearly invariant
+   to n until a staging/bandwidth floor); SK=8 was the sweet spot at k5376.
+2. The decisive gate was the ENGINE-level probe, not the isolated bench: the
+   vendored steel kernel (0.837 ms isolated) regressed engine wall time vs the
+   MPSGraph incumbent (2.96 vs 2.55 ms at m16 after caching) because MPSGraph
+   fuses dequant+matmul and reuses compiled graphs. Isolated wins do not imply
+   integration wins; every promotion needs the engine-probe check.
+3. Thermal drift is severe under sustained benching (mlx-steel 0.837 -> 1.585 ms
+   within one session); magnitudes must carry machine thermal state.
+
+Runtime defaults unchanged. End-to-end (L1-L3) validation remains pending human
+runs with real W4 packages.
