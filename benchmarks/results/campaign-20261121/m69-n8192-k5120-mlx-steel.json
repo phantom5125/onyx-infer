@@ -1,0 +1,25 @@
+{
+  "operator": "onyx.q4_gemm.v1",
+  "variant": "mlx-steel",
+  "device": "Apple M5 Max",
+  "shape": {"m": 69, "n": 8192, "k": 5120, "group_size": 64},
+  "correct": true,
+  "checked_outputs": 32,
+  "max_abs_error": 0.00191354752,
+  "max_relative_error": 0.0193193654,
+  "iterations": 10,
+  "gpu_median_ms": 0.949833,
+  "gpu_p95_ms": 2.488417,
+  "wall_median_ms": 1.121250,
+  "wall_p95_ms": 2.628291,
+  "effective_tflops": 6.093848,
+  "effective_bandwidth_gb_per_s": 26.773135,
+  "metal_allocated_bytes": 55377920,
+  "recommended_working_set_bytes": 30150672384,
+  "max_buffer_bytes": 22613000192
+,
+  "gpu_samples_ms": [2.48842,2.27058,1.31604,1.09396,0.925875,0.927167,0.949833,0.858875,0.933292,0.845375],
+  "wall_samples_ms": [2.62829,2.44492,1.46054,1.28929,1.10546,1.10775,1.12125,1.00121,1.05575,0.943542],
+  "arguments": ["/Users/daocheng/.zcode/worktrees/3da9/onyx-infer/.build/onyx-metal-bench","--m","69","--n","8192","--k","5120","--group","64","--iterations","10","--variant","mlx-steel","--output","/tmp/campaign-matrix/m69-n8192-k5120-mlx-steel.json"],
+  "metallib": "/Users/daocheng/.zcode/worktrees/3da9/onyx-infer/.build/onyx_q4.metallib"
+}
