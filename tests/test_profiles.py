@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from onyx.native import main as native_main
+from onyx.native import main as native_main, resolve_dit_prefetch
 from onyx.profiles import (
     DEFAULT_REGISTRY_PATH,
     ProfileError,
@@ -102,6 +102,13 @@ def test_dit_cache_bytes_resolution():
     assert dit_cache_bytes(registry, "memory-min") == 0
     with pytest.raises(ProfileError):
         dit_cache_bytes(registry, "turbo")
+
+
+def test_dit_prefetch_defaults_to_streaming_and_respects_override():
+    assert resolve_dit_prefetch(None, 0)
+    assert not resolve_dit_prefetch(None, 1024)
+    assert resolve_dit_prefetch(True, 0)
+    assert not resolve_dit_prefetch(False, 0)
 
 
 @pytest.mark.parametrize("budget", ["-1", str(2**44)])

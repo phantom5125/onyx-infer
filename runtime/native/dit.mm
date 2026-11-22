@@ -277,6 +277,12 @@ std::vector<Tensor> modulation_parts(const Tensor& modulation, const Tensor& ind
   return result;
 }
 
+void prefetch_block(WeightStore& store, uint32_t layer) {
+  const std::string prefix = "blocks." + std::to_string(layer) + ".";
+  store.prefetch({prefix + "attn.qkv_proj.weight", prefix + "attn.out_proj.weight",
+                  prefix + "mlp.fc1.weight", prefix + "mlp.fc2.weight"});
+}
+
 }  // namespace
 
 Tensor denoise_image(const std::string& model, const std::string& embedding_path, const std::string& noise_path, const std::string& pdd_path, const std::string& output, uint32_t width, uint32_t height, const StageOptions& options) {
@@ -310,6 +316,7 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
   patches = session.reshape(patches, {24, static_cast<int64_t>(rows), 2, static_cast<int64_t>(columns), 2});
   patches = session.transpose(patches, {1, 3, 0, 2, 4});
   patches = session.reshape(patches, {static_cast<int64_t>(image_count), 96});
+  if (options.prefetch_weights) prefetch_block(store, 0);
   for (uint32_t step = 0; step < 6; ++step) {
     @autoreleasepool {
     Tensor image = session.linear(store, "video_patch_proj", patches);
@@ -318,11 +325,9 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
     for (uint32_t layer = 0; layer < kDiTBlocks; ++layer) {
       @autoreleasepool {
       if (options.prefetch_weights) {
-        if (layer > 0) store.finish_prefetch();
-        if (layer + 1 < kDiTBlocks) {
-          const std::string next = "blocks." + std::to_string(layer + 1) + ".";
-          store.prefetch({next + "attn.qkv_proj.weight", next + "attn.out_proj.weight",
-                          next + "mlp.fc1.weight", next + "mlp.fc2.weight"});
+        store.finish_prefetch();
+        if (layer + 1 < kDiTBlocks || step + 1 < 6) {
+          prefetch_block(store, (layer + 1) % kDiTBlocks);
         }
       }
       const std::string prefix = "blocks." + std::to_string(layer) + ".";

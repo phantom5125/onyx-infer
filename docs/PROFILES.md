@@ -34,7 +34,7 @@ Matrices bind to the registry SHA-256, the native binary hash, and the source re
 
 `onyx native-generate --profile <id>` resolves the registry, sends stage options, checks the returned settings, and records the resolved knobs and registry SHA-256. Each native stage requires explicit `--profile` and `--weights` arguments.
 
-Add `--dit-prefetch` to `onyx native-generate` to read the next DiT block's projection weights during GPU computation. The option defaults to off and requires an effective DiT weight-cache budget of zero. It can be combined with the on-disk modulation cache. [M4 measurements](OPTIMIZATION_CAMPAIGN.md#dit-weight-prefetch-on-macbook-air-m4)
+With a zero DiT weight-cache budget, `onyx native-generate` reads the next block's projection weights during GPU computation by default, including across sampling-step boundaries. Use `--no-dit-prefetch` to disable this overlap. A nonzero weight-cache budget disables prefetch by default; explicitly combining `--dit-prefetch` with a nonzero budget is rejected. Prefetch can be combined with the on-disk modulation cache. [M5 Max measurements](OPTIMIZATION_CAMPAIGN.md#dit-weight-prefetch-on-m5-max) · [M4 measurements](OPTIMIZATION_CAMPAIGN.md#dit-weight-prefetch-on-macbook-air-m4)
 
 ```bash
 uv run python benchmarks/run_profiles.py --sizes 1024x1024 --runs 3 --output artifacts/benchmarks/profile-stage-matrix.json

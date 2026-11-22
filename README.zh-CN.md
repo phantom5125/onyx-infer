@@ -28,7 +28,7 @@ group-wise W4 量化、分阶段驻留、逐 block 流式、分块注意力，�
 ## 优化榜单
 
 所有配置都在 M5 Max 36 GB 上使用同一条 1024×1024 茶壶请求（seed 42，六步采样）。
-四项优化的 PNG 都与基线逐字节一致。测量文件记录了样本数、输出哈希和提交版本。
+各项优化的 PNG 都与基线逐字节一致。测量文件记录了样本数、输出哈希和提交版本。
 
 | 配置 | 墙钟时间中位数 | 峰值内存 | 相对基线 | 测量 |
 |---|---:|---:|---:|---|
@@ -36,7 +36,8 @@ group-wise W4 量化、分阶段驻留、逐 block 流式、分块注意力，�
 | 分组 Q4 零点缓存 | 42.63 s | 3.18 GiB | 0.99× | [测量](benchmarks/results/native-round1-zero-cache.json) |
 | 权重直读 Metal 缓冲区 | 38.74 s | 1.70 GiB | 1.09× | [测量](benchmarks/results/native-round2-direct-pread.json) |
 | 共享内存 BF16 调制打包 | 37.50 s | 1.70 GiB | 1.13× | [测量](benchmarks/results/native-round3-cpu-modulation.json) |
-| 融合 DiT 注意力和张量视图 | **34.65 s** | 1.86 GiB | **1.22×** | [测量](benchmarks/results/native-round4-fused-attention-views.json) |
+| 融合 DiT 注意力和张量视图 | 34.65 s | 1.86 GiB | 1.22× | [测量](benchmarks/results/native-round4-fused-attention-views.json) |
+| DiT 流式权重预取（默认） | **32.81 s** | 1.79 GiB | **1.29×** | [测量](benchmarks/results/m5-max-36gb-dit-prefetch-default-v1.json) |
 
 完整记录见[茶壶基准文章](site/blog/posts/four-rounds-one-byte-identical-teapot.md)。
 
@@ -61,7 +62,7 @@ group-wise W4 量化、分阶段驻留、逐 block 流式、分块注意力，�
 
 | 测量项 | 数值 | 来源 |
 | --- | --- | --- |
-| 1024×1024 原生生成 | 34.65 s median（text 3.83 / DiT 26.02 / VAE 4.41），峰值约 2.0 GB | `native-round4-fused-attention-views.json` |
+| 1024×1024 原生生成 | 32.81 s median（text 5.25 / DiT 22.95 / VAE 4.65），峰值 1.79 GiB | `m5-max-36gb-dit-prefetch-default-v1.json` |
 | 4096×4096 茶壶基准 | 329.61 s，该次运行采样到的进程树峰值 RSS 为 2.14 GB，已回放验证 | [native-v1-stability.json](benchmarks/results/native-v1-stability.json) |
 | 数值保真 | 文本塔相关系数 0.9999987；VAE 像素相关系数 0.999993 | `native-baseline-v1.json` |
 | Q4 GEMM vs MLX（已发布的差距） | 同形状 1024×5376×5376 下 28.12 ms vs 1.71 ms，16.5× | `m5-max-36gb-q4-operator-v1.json` |
