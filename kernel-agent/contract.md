@@ -130,4 +130,41 @@ Highlights over 0.1.0a0:
   promoted and rejected candidates, fp32-referenced stage validation of the
   fused mlx block (26.9 ms/block, 2.17x over the per-op composition).
 - Known limits: decode-qkv gap vs MLX requires an MMA+split-k small-m kernel;
-  zero-copy mlx bridge and full fused-block engine wiring are follow-ups.
+zero-copy mlx bridge and full fused-block engine wiring are follow-ups.
+
+# Task Contract: q4 decode split-k small-M candidate
+
+- Task name: `q4-decode-splitk-v1`
+- Objective: Close the small/mid-M native gap by a split-k MMA kernel for
+  m<=128 q4 GEMM shapes. Fresh 2026-11-21 matrix (M5 Max 36 GB, this harness,
+  gpu_median_ms, group 64) shows the incumbent tile16 loses every small-m
+  shape to the in-tree mlx-steel kernel, and the native dispatch (rows>=512
+  -> mma64, else MPSGraph) leaves m16/m32/m69 with no native option:
+  - m16 n5376 k5376 (decode-linear): tile16 1.093, simd 0.308, steel 0.469
+  - m16 n21504 k5376 (decode-qkv): tile16 1.825, mma 2.088, simd 1.396, steel 0.837
+  - m32 n21504 k5376: tile16 3.598, simd 1.200, steel 1.095
+  - m69 n8192 k5120 (text qproj): tile16 3.264, mma 2.707, steel 0.950
+  Matrix JSONs: benchmarks/results/campaign-20261121/.
+- Approach: deterministic split-k — parallelize over k slices, per-slice fp32
+  partials in scratch, one reduce+convert encoder in the same command buffer
+  (no atomics, bit-stable). E8 proved scalar-FMA split-k tops out near
+  8 TFLOPS; E9 proved register-side dequant impossible, so weights are
+  pre-staged to fp16 in threadgroup memory per slice (mma kernel pattern).
+- Baselines: ABBA vs tile16 (incumbent native small-m kernel); bar to beat:
+  mlx-steel gpu_median on the same shape. E7/E8 failure map applies (n-capped
+  parallelism, scalar-FMA ceiling); E9 applies (no thread_elements dequant).
+- Correctness: onyx-metal-bench CPU-reference gate (abs <= 0.05 + 0.005*|v|)
+  on all ctest shapes incl. new ragged gates (m17 n33 k30 g30); max_relative
+  error must stay <= 1e-2 (fp16-dequant class, same as current mma at qkv).
+- Constraints: packing format unchanged; existing kernels untouched;
+  new kernel + bench variant registration + scratch reuse; dispatchable as
+  one command buffer from `tools/metal_bench.mm --variant splitk16`.
+- Validation: full ctest green; ABBA 4 blocks x 10 iterations per shape.
+- Promotion criteria: strict gpu_median improvement over tile16 on every
+  dispatch-bucket shape AND over mlx-steel on at least the decode-qkv shape,
+  with matching correctness. Fallback if not beaten within budget: promote
+  per-shape dispatch of the existing mlx-steel kernel for 33<=m<512 and the
+  small-m buckets (still 2-3x isolated over tile16), recorded as separate
+  candidate. Either outcome wires dispatch via a CPU-reference probe
+  (onyx_q4_linear_dispatch pattern); end-to-end runs stay pending human
+  validation (no model on this machine).

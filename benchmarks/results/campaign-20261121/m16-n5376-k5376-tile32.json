@@ -1,0 +1,25 @@
+{
+  "operator": "onyx.q4_gemm.v1",
+  "variant": "tile32",
+  "device": "Apple M5 Max",
+  "shape": {"m": 16, "n": 5376, "k": 5376, "group_size": 64},
+  "correct": true,
+  "checked_outputs": 32,
+  "max_abs_error": 0.00194168091,
+  "max_relative_error": 0.000411946,
+  "iterations": 10,
+  "gpu_median_ms": 1.004042,
+  "gpu_p95_ms": 3.112875,
+  "wall_median_ms": 1.178625,
+  "wall_p95_ms": 3.331250,
+  "effective_tflops": 0.921121,
+  "effective_bandwidth_gb_per_s": 16.534262,
+  "metal_allocated_bytes": 17088512,
+  "recommended_working_set_bytes": 30150672384,
+  "max_buffer_bytes": 22613000192
+,
+  "gpu_samples_ms": [3.11288,2.13825,1.28492,1.24983,1.00404,0.713125,0.671,0.709,0.671542,0.625375],
+  "wall_samples_ms": [3.33125,2.35913,1.47263,1.42275,1.17863,0.892625,0.846958,0.858,0.812333,0.784875],
+  "arguments": ["/Users/daocheng/.zcode/worktrees/3da9/onyx-infer/.build/onyx-metal-bench","--m","16","--n","5376","--k","5376","--group","64","--iterations","10","--variant","tile32","--output","/tmp/campaign-matrix/m16-n5376-k5376-tile32.json"],
+  "metallib": "/Users/daocheng/.zcode/worktrees/3da9/onyx-infer/.build/onyx_q4.metallib"
+}
