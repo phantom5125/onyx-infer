@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def run_once(output_root, plan_id, case_path, native_bin=None, target=None, dit_prefetch=False):
+def run_once(output_root, plan_id, case_path, native_bin=None, target=None, dit_prefetch=None):
     package = json.loads((ROOT / "artifacts/models/h3-w4/package-report.json").read_text())
     command = [
         sys.executable, "-m", "onyx.replay",
@@ -32,8 +32,8 @@ def run_once(output_root, plan_id, case_path, native_bin=None, target=None, dit_
     ]
     if target is not None:
         command[3:3] = ["--target", str(target)]
-    if dit_prefetch:
-        command.append("--dit-prefetch")
+    if dit_prefetch is not None:
+        command.append("--dit-prefetch" if dit_prefetch else "--no-dit-prefetch")
     result = subprocess.run(command, cwd=ROOT, check=True, capture_output=True, text=True)
     print(result.stdout, end="", flush=True)
     run = json.loads(result.stdout)
@@ -58,9 +58,10 @@ def main():
     parser.add_argument("--case", type=Path, default=ROOT / "benchmarks/requests/teapot-1024.json")
     parser.add_argument("--native-bin", type=Path)
     parser.add_argument("--target", type=Path, help="Device capabilities JSON recorded in each RunRecord")
-    parser.add_argument("--dit-prefetch", action="store_true")
+    parser.add_argument("--dit-prefetch", action=argparse.BooleanOptionalAction, default=None)
     args = parser.parse_args()
-    plan_id = args.plan_id or ("native.mpsgraph.q4.prefetch.v1" if args.dit_prefetch else "native.mpsgraph.q4.stream.v1")
+    plan_id = args.plan_id or ("native.mpsgraph.q4.stream.v1" if args.dit_prefetch is False
+                               else "native.mpsgraph.q4.prefetch.v1")
     output_root = ROOT / "artifacts/benchmarks/onyx-native-h3"
     runs = [run_once(output_root, plan_id, args.case, args.native_bin, args.target, args.dit_prefetch)
             for _ in range(args.runs)]

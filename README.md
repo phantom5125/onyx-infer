@@ -33,7 +33,7 @@ and an engine that plans memory explicitly instead of hoping unified memory sort
 ## Optimization leaderboard
 
 Each row uses the same 1024×1024 teapot request on the M5 Max with 36 GB of unified memory
-(seed 42, six sampling steps). All four candidates matched the baseline PNG byte for byte.
+(seed 42, six sampling steps). All candidates matched the baseline PNG byte for byte.
 The benchmark records include sample counts, output hashes, and the source revision.
 
 | Configuration | Median wall time | Peak memory | Speed vs. baseline | Evidence |
@@ -42,7 +42,8 @@ The benchmark records include sample counts, output hashes, and the source revis
 | Grouped Q4 zero-point cache | 42.63 s | 3.18 GiB | 0.99× | [Measurement](benchmarks/results/native-round1-zero-cache.json) |
 | Direct reads into Metal buffers | 38.74 s | 1.70 GiB | 1.09× | [Measurement](benchmarks/results/native-round2-direct-pread.json) |
 | Shared-memory BF16 modulation packing | 37.50 s | 1.70 GiB | 1.13× | [Measurement](benchmarks/results/native-round3-cpu-modulation.json) |
-| Fused DiT attention and tensor views | **34.65 s** | 1.86 GiB | **1.22×** | [Measurement](benchmarks/results/native-round4-fused-attention-views.json) |
+| Fused DiT attention and tensor views | 34.65 s | 1.86 GiB | 1.22× | [Measurement](benchmarks/results/native-round4-fused-attention-views.json) |
+| Streaming DiT prefetch (default) | **32.81 s** | 1.79 GiB | **1.29×** | [Measurement](benchmarks/results/m5-max-36gb-dit-prefetch-default-v1.json) |
 
 The [teapot benchmark write-up](site/blog/posts/four-rounds-one-byte-identical-teapot.md)
 explains each change, including the zero-point cache regression.
@@ -71,7 +72,7 @@ leaderboard above. We publish the gaps next to the wins.
 
 | Measurement | Value | Source |
 | --- | --- | --- |
-| 1024×1024 native generation | 34.65 s median (text 3.83 / DiT 26.02 / VAE 4.41), 1.86 GiB peak | `native-round4-fused-attention-views.json` |
+| 1024×1024 native generation | 32.81 s median (text 5.25 / DiT 22.95 / VAE 4.65), 1.79 GiB peak | `m5-max-36gb-dit-prefetch-default-v1.json` |
 | 4096×4096 teapot benchmark run | 329.61 s, sampled process-tree peak RSS 2.14 GB, replay verified | [native-v1-stability.json](benchmarks/results/native-v1-stability.json) |
 | Numerical fidelity | text-tower corr 0.9999987; VAE pixel corr 0.999993 | `native-baseline-v1.json` |
 | Q4 GEMM vs MLX (published gap) | 28.12 ms vs 1.71 ms median on 1024×5376×5376 — 16.5× | `m5-max-36gb-q4-operator-v1.json` |

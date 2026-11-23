@@ -52,9 +52,17 @@ int main(int argc, char** argv) {
           onyx::StageOptions copy = options;
           copy.cache_bytes = optional_bytes(argc, argv, "--cache-bytes");
           copy.modulation_cache_dir = argument(argc, argv, "--modulation-cache", false);
-          copy.prefetch_weights = std::any_of(argv + 2, argv + argc, [](std::string_view arg) {
-            return arg == "--prefetch-weights";
-          });
+          copy.prefetch_weights = copy.cache_bytes == 0;
+          if (std::any_of(argv + 2, argv + argc, [](std::string_view arg) {
+                return arg == "--prefetch-weights";
+              })) {
+            copy.prefetch_weights = true;
+          }
+          if (std::any_of(argv + 2, argv + argc, [](std::string_view arg) {
+                return arg == "--no-prefetch-weights";
+              })) {
+            copy.prefetch_weights = false;
+          }
           return copy;
         }();
         onyx::denoise_image(

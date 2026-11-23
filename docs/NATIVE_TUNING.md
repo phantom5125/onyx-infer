@@ -7,7 +7,7 @@ Use the default `max-quality` profile with a built native engine and a staged W4
 | `--modulation-cache <directory>` | Reuses the six-step BF16 AdaLN tables across prompts, seeds, and image sizes | About 55.5 MiB per compatible table on disk |
 | `--dit-cache-mib <MiB>` | Keeps packed DiT weights in memory for reuse across the six steps of one request | A configurable in-memory budget. Zero streams the weights. |
 
-With a zero weight-cache budget, `--dit-prefetch` can overlap the next DiT block's weight reads with the current block's computation. This switch defaults to off and works with the on-disk modulation cache. [M4 prefetch comparison](OPTIMIZATION_CAMPAIGN.md#dit-weight-prefetch-on-macbook-air-m4)
+With a zero weight-cache budget, DiT weight prefetch is enabled by default and overlaps the next block's reads with the current block's computation, including across sampling-step boundaries. Use `--no-dit-prefetch` for the serial-read path. A nonzero weight-cache budget disables prefetch unless it is explicitly requested. Prefetch works with the on-disk modulation cache. [Prefetch comparisons](OPTIMIZATION_CAMPAIGN.md#dit-weight-prefetch-on-m5-max)
 
 The modulation cache keys entries by the model file identity, PDD schedule, native build, GPU, and macOS version. A missing entry or checksum failure triggers recomputation. Entries are disposable and can be removed to reclaim space. Each request reports its modulation-cache status, including `miss` after computing and saving a table and `hit` after loading one. A request also reports `write_failed` if it could compute the table but could not save it. Check the cache directory and permissions if this status recurs.
 

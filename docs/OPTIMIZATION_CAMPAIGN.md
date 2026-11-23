@@ -41,6 +41,19 @@ With the same 1024×1024 request, same native binary, and a warm modulation tabl
 
 The 4096×4096 stress run produced the same PNG hash with this budget. It increased system swap by about 853 MiB and took 318.46 s overall, including 105.26 s in VAE. Keep the default weight budget for 16 MP on this machine. [Paired measurements and stress run](../benchmarks/results/m5-max-36gb-dit-weight-residency-v1.json)
 
+## DiT weight prefetch on M5 Max
+
+Profiling the `f8f73f8` streaming baseline on the 36 GiB M5 Max attributed the 33.14 s DiT stage to 14.20 s of weight reads and 12.98 s of Q4 linear operations. The six steps read 85,656,876,608 bytes. Modulated RMSNorm, fused attention, gated activation, and gated residuals accounted for another 3.20 s. The existing one-block prefetch was opt-in and restarted at each sampling-step boundary.
+
+The candidate enables prefetch by default with a zero weight-cache budget and keeps the one-block pipeline active across step boundaries. Three samples per mode used the same binary and request in off/on/on/off/off/on order, with profiling disabled.
+
+| Prefetch | End-to-end samples | Median total | Median DiT | Peak process-tree RSS |
+| --- | --- | ---: | ---: | ---: |
+| Disabled | 42.34 / 42.24 / 42.16 s | 42.24 s | 32.00 s | 1.794 GiB |
+| Enabled | 32.81 / 32.81 / 33.11 s | **32.81 s** | **22.95 s** | 1.794 GiB |
+
+The median fell 22.3% end to end and 28.3% in DiT. All six PNGs had SHA-256 `4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1`. Prefetch waits were 17–23 ms per request. A paired 4096×4096 run with the same binary also produced byte-identical PNGs (SHA-256 `0b9761b2416b57639d9fe387a528136c072b867fa54f394399a651be36557e3f`); those single runs are correctness and memory evidence, not a 4K performance claim. Use `--no-dit-prefetch` to recover serial reads; a nonzero weight-cache budget keeps prefetch disabled unless explicitly requested. [Samples, binary hash, and reproduction commands](../benchmarks/results/m5-max-36gb-dit-prefetch-default-v1.json)
+
 ## DiT weight prefetch on MacBook Air M4
 
 The 1024×1024 teapot retest used an M4 with 10 GPU cores, 24 GiB of unified memory, macOS 26.2, and battery power. Each configuration had one warmup and three measured runs in rotating order. All runs used the same W4 pack, `max-quality` profile, seed 42, and six PDD evaluations.
@@ -51,11 +64,11 @@ The 1024×1024 teapot retest used an M4 with 10 GPU cores, 24 GiB of unified mem
 | Prefetch branch, disabled | 179.54 / 196.47 / 171.72 s | 179.54 s | 148.80 s | 1.79 GiB |
 | Prefetch branch, enabled | 177.23 / 184.61 / 159.54 s | 177.23 s | 145.17 s | 1.79 GiB |
 
-Enabling prefetch lowered the median by 1.3% on the same binary. The median with prefetch disabled was 2.6% higher than the release. The sample ranges overlap across all three configurations, so this run cannot establish either a repeatable speedup or a default-path regression. An earlier two-sample comparison per mode on AC power measured a 6.5% lower median with prefetch. The two comparisons used different power conditions and sample counts. The M5 Max still needs its own comparison.
+Enabling prefetch lowered the median by 1.3% on the same binary. The median with prefetch disabled was 2.6% higher than the release. The sample ranges overlap across all three configurations, so this run cannot establish either a repeatable speedup or a default-path regression. An earlier two-sample comparison per mode on AC power measured a 6.5% lower median with prefetch. The two comparisons used different power conditions and sample counts. The separate M5 Max comparison above showed a clear improvement on that device.
 
 All teapot PNG hashes matched. Earlier paired Moka pot and jet engine outputs also matched byte for byte. The Moka pot title remained legible, and the dense Chinese labels retained the same spelling errors in both outputs. The prefetch path reorders weight reads for one block ahead and uses the same numerical path. The memory column reports sampled process RSS. Metal allocations are recorded separately at DiT step boundaries. [Per-run timings, hashes, and build details](../benchmarks/results/m4-air-24gb-dit-prefetch-v1.json)
 
-To measure prefetch with the local W4 package, use the following command. Omit `--dit-prefetch` for the control, and alternate the modes for repeated measurements.
+To measure prefetch with the local W4 package, use the following command. Pass `--no-dit-prefetch` for the control, and alternate the modes for repeated measurements.
 
 ```bash
 uv run python benchmarks/run_native.py --case benchmarks/requests/teapot-1024.json \

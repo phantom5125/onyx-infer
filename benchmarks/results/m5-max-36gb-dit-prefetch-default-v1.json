@@ -1,0 +1,67 @@
+{
+  "protocol": "onyx.native-optimization.v1",
+  "change": "Enable streaming DiT weight prefetch by default and continue the one-block pipeline across sampling-step boundaries",
+  "baseline_revision": "f8f73f895be1adca00818b807847ea1447373832",
+  "candidate_binary_sha256": "ac7fed225606a5d55ec38b66abd43282c2791a446d0665c243d4d909c33974f8",
+  "device": {
+    "model_identifier": "Mac17,14",
+    "chip": "Apple M5 Max",
+    "physical_memory_bytes": 38654705664,
+    "os_version": "27.2.1",
+    "os_build": "26B131"
+  },
+  "profile": "max-quality",
+  "case": "h3-teapot-1024-seed42-v1",
+  "method": "Same candidate binary and W4 package; three samples per mode in off/on/on/off/off/on order; profiling disabled; zero DiT weight-cache budget",
+  "baseline_prefetch_disabled": {
+    "samples_seconds": [42.342914583, 42.237702375, 42.159826833],
+    "seconds_median": 42.237702375,
+    "stage_seconds_median": {
+      "text": 5.256069958,
+      "dit": 31.995654584,
+      "vae": 4.7861775
+    },
+    "peak_bytes_max": 1926463488
+  },
+  "candidate_prefetch_enabled": {
+    "samples_seconds": [32.809251208, 32.810684458, 33.1072555],
+    "seconds_median": 32.810684458,
+    "stage_seconds_median": {
+      "text": 5.247670833,
+      "dit": 22.945310667,
+      "vae": 4.65448075
+    },
+    "dit_prefetch_wait_samples_seconds": [0.022571, 0.019796, 0.016761],
+    "peak_bytes_max": 1925775360
+  },
+  "speedup": 1.2873154911,
+  "latency_reduction": 0.2231896478,
+  "dit_latency_reduction": 0.2828616584,
+  "all_outputs_identical": true,
+  "output_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+  "stress_4096": {
+    "case": "h3-teapot-4096-seed42-v1",
+    "method": "Same candidate binary, one run per mode; correctness and memory checks only, no performance claim",
+    "prefetch_disabled": {
+      "seconds": 331.86348375,
+      "peak_bytes": 3046227968
+    },
+    "prefetch_enabled": {
+      "seconds": 307.977805125,
+      "peak_bytes": 2717433856
+    },
+    "all_outputs_identical": true,
+    "output_sha256": "0b9761b2416b57639d9fe387a528136c072b867fa54f394399a651be36557e3f"
+  },
+  "tests": {
+    "python_passed": 68,
+    "metal_ctest_passed": 18,
+    "schema_compatibility": "0 additive changes"
+  },
+  "reproduce": {
+    "order": ["off", "on", "on", "off", "off", "on"],
+    "off": "uv run python benchmarks/run_native.py --label dit-prefetch-off --runs 1 --no-dit-prefetch",
+    "on": "uv run python benchmarks/run_native.py --label dit-prefetch-on --runs 1 --dit-prefetch"
+  },
+  "notes": "Raw RunRecords and per-run summaries are produced under artifacts/benchmarks/onyx-native-h3/."
+}
