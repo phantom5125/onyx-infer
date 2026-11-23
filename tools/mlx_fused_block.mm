@@ -11,6 +11,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <random>
 #include <vector>
 
@@ -19,9 +20,11 @@ namespace mx = mlx::core;
 int main(int argc, char** argv) {
   const int iterations = argc > 1 ? std::stoi(argv[1]) : 10;
   @autoreleasepool {
+    // Allow an override when MLX cannot locate the metallib beside its library.
+    if (const char* metallib_path = std::getenv("MLX_METALLIB_PATH"); metallib_path && *metallib_path) {
+      mx::metal::set_metallib_path(metallib_path);
+    }
     mx::set_default_device(mx::Device(mx::Device::gpu));
-    mx::metal::set_metallib_path(
-        "/Users/daocheng/workspace/onyx-infer-kernel-agent/.venv/lib/python3.13/site-packages/mlx/lib/mlx.metallib");
     const int m = argc > 2 ? std::stoi(argv[2]) : 1024;
     constexpr int hidden = 5376;
     constexpr int ffn = 14336;

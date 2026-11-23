@@ -110,7 +110,7 @@ kernel void onyx_q4_gemm_fp16acc32_tile32(
   }
 }
 
-// simdgroup-MMA candidate (kernel-agent/q4-mma-v1).
+// simdgroup-MMA candidate (benchmarks/kernel-experiments/q4-mma-v1.md).
 // One simdgroup (32 threads) per threadgroup computes a 32x32 output tile.
 // k is stepped by 8: activations are staged as fp16; packed nibbles are
 // unpacked, scaled in fp32, rounded once to fp16, and fed to the MMA units.
@@ -146,7 +146,7 @@ kernel void onyx_q4_gemm_fp16acc32_mma(
   for (uint tile_k = 0; tile_k < k; tile_k += BK) {
     // Stage A: thread lane owns row row_base+lane, columns tile_k..+8.
     // Uncoalesced across threads but absorbed by L2; empirically faster
-    // than a 32-iteration coalesced staging loop (see kernel-agent notes).
+    // than a 32-iteration coalesced staging loop in the Q4 MMA benchmark.
     for (uint j = 0; j < BK; ++j) {
       const uint row = row_base + lane;
       const uint column = tile_k + j;
@@ -213,7 +213,7 @@ kernel void onyx_q4_gemm_fp16acc32_mma(
   }
 }
 
-// kernel-agent/q4-mma-v2 (episode E2): 64x64 output tile, four simdgroups
+// Q4 MMA experiment E2: 64x64 output tile, four simdgroups
 // per threadgroup, each owning one 32x32 quadrant. Cuts global A/W re-reads
 // 4x versus the 32x32 kernel; staging covers the full tile per simdgroup.
 kernel void onyx_q4_gemm_fp16acc32_mma64(
@@ -323,7 +323,7 @@ kernel void onyx_q4_gemm_fp16acc32_mma64(
   }
 }
 
-// kernel-agent/q4-decode-splitk-v1 (episode E1): split-k MMA for small M.
+// Small-M split-K MMA (benchmarks/kernel-experiments/q4-decode-splitk-v1.md).
 // The mma kernels leave small-m shapes parallelism-starved (672-336
 // threadgroups over n only); E8 proved scalar split-k hits the ~8 TFLOPS
 // scalar-FMA ceiling, so the k dimension is split across threadgroups and

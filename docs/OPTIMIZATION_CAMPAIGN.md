@@ -2,6 +2,8 @@
 
 The campaign compared Onyx kernels with the MIT-licensed MLX Steel affine QMM implementation. The custom SIMD candidate improved isolated kernels, and cached MPSGraph remained the fastest measured end-to-end H3 path. [Kernel evidence](../benchmarks/results/m5-max-36gb-q4-kernel-variants-v1.json)
 
+The experiment archive records the Q4 MMA and small-M split-K cases, their acceptance criteria, and the evidence behind each decision. [Kernel experiment contracts](../benchmarks/kernel-experiments/README.md)
+
 ## Production and isolated measurements
 
 | Configuration | DiT stage | End-to-end per image | Observation |

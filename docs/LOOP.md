@@ -8,6 +8,8 @@ Freeze an OptimizationCase, build a candidate from a clean checkout, run progres
 
 Typical changes include layout, fusion, tiling, residency, and kernel selection. Each candidate includes an exact patch, a comparison baseline, and the evidence needed for the next experiment.
 
+Use the Q4 cases as examples when writing a kernel experiment contract. [Kernel experiments](../benchmarks/kernel-experiments/README.md)
+
 ## 2. Persistent records
 
 - **OptimizationCase** pins the case ID, model semantic identity and source revision, inputs, shapes, recipe, seeds and RNG, device, baseline, tolerances, benchmark method, metric, budget, and stop criteria. Distinguish operator probes, 4 MP functional work, and 16 MP stress tests.
