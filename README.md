@@ -10,8 +10,11 @@
   <img src="https://img.shields.io/badge/C%2B%2B-20%20%C2%B7%20Metal%20MSL-blue" alt="C++20 / MSL">
   <img src="https://img.shields.io/badge/Python-3.12%2B-orange" alt="Python 3.12+">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license"></a>
-  <a href="README.zh-CN.md">Chinese README</a>
-  <a href="https://phantom5125.github.io/onyx-infer/"><img src="https://img.shields.io/badge/site-phantom5125.github.io%2Fonyx--infer-8f1220" alt="Site"></a>
+</p>
+<p align="center">
+  <a href="README.zh-CN.md">中文 README</a>
+  &middot;
+  <a href="https://phantom5125.github.io/onyx-infer/">Project site</a>
 </p>
 
 # onyx-infer
