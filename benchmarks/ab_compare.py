@@ -17,6 +17,7 @@ import hashlib
 import json
 import os
 import shlex
+import shutil
 import statistics
 import subprocess
 import sys
@@ -69,6 +70,37 @@ class PeakSampler:
         return self.peak
 
 
+def load_snapshot():
+    """Return the one-minute load average and the busiest processes, to expose contended samples."""
+    processes = sorted(psutil.process_iter(["pid", "name", "cmdline", "cpu_percent"]), key=lambda p: p.info["cpu_percent"] or 0.0)
+    busiest = [{"pid": p.info["pid"], "name": p.info["name"], "cpu_percent": round(p.info["cpu_percent"] or 0.0, 1)} for p in processes[-3:]]
+    return {"loadavg_1m": round(os.getloadavg()[0], 2), "busiest": busiest}
+
+
+def native_stage_pids(exclude=()):
+    """List PIDs of native stage processes, which are GPU work that would contend with a sample."""
+    found = []
+    for process in psutil.process_iter(["pid", "cmdline"]):
+        if process.info["pid"] in exclude or not process.info["cmdline"]:
+            continue
+        try:
+            if process.info["cmdline"][0].endswith("/onyx-native") and process.info["cmdline"][1:2] and process.info["cmdline"][1] in ("dit", "text", "vae"):
+                found.append(process.info["pid"])
+        except psutil.Error:
+            continue
+    return found
+
+
+def wait_for_idle(timeout):
+    """Block until no native stage process is running, so each sample gets the GPU alone."""
+    began = time.monotonic()
+    while native_stage_pids():
+        if time.monotonic() - began > timeout:
+            break
+        time.sleep(3)
+    return time.monotonic() - began
+
+
 def run_arm(arm, common, request, output, work):
     command = [sys.executable, "-m", "onyx.native", "--models", common.models, "--prompt", request["prompt"],
                "--output", str(output), "--width", str(request["size"]["width"]),
@@ -80,6 +112,9 @@ def run_arm(arm, common, request, output, work):
     for item in arm["env"]:
         key, _, value = item.partition("=")
         environment[key] = value
+    psutil.cpu_percent(interval=None)  # Prime the per-process counters.
+    idle_wait = wait_for_idle(common.idle_timeout)
+    before = load_snapshot()
     began = time.monotonic()
     process = subprocess.Popen(command, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=environment)
     sampler = PeakSampler(process.pid)
@@ -87,6 +122,7 @@ def run_arm(arm, common, request, output, work):
     stdout, stderr = process.communicate()
     peak = sampler.finish()
     wall = time.monotonic() - began
+    foreign_after = native_stage_pids(exclude=(process.pid,))
     if process.returncode:
         raise RuntimeError(f"{arm['name']} failed:\n{stderr[-4000:]}")
     record = json.loads(stdout.strip().splitlines()[-1])
@@ -112,7 +148,8 @@ def run_arm(arm, common, request, output, work):
     return {"arm": arm["name"], "wall_seconds": wall, "total_seconds": record["total_seconds"],
             "stage_seconds": record["stage_seconds"], "token_count": record["token_count"],
             "peak_rss_bytes": peak, "png_sha256": digest, "png_bytes": Path(output).stat().st_size,
-            "stages": stages}
+            "stages": stages, "idle_wait_seconds": round(idle_wait, 1),
+            "foreign_native_after": foreign_after, "load_before": before, "load_after": load_snapshot()}
 
 
 def main():
@@ -131,6 +168,9 @@ def main():
     parser.add_argument("--cache-dir", action="append", default=[],
                         help="Directory to create before each run, for modulation caches")
     parser.add_argument("--output", type=Path, default=ROOT / "artifacts/benchmarks/ab")
+    parser.add_argument("--keep-outputs", type=Path, help="Directory to copy each measured PNG into, named by arm and round")
+    parser.add_argument("--idle-timeout", type=int, default=1800,
+                        help="Seconds to wait for other native stage processes before running a sample anyway")
     args = parser.parse_args()
 
     arms = []
@@ -150,7 +190,7 @@ def main():
         arms[names.index(target)]["env"].append(f"{key}={value}")
     request = case_request(args.case)
     common = argparse.Namespace(models=str(Path(args.models).resolve()), profile=args.profile, args=args.native_arg,
-                                cache_dirs=args.cache_dir)
+                                cache_dirs=args.cache_dir, idle_timeout=args.idle_timeout)
 
     runs = []
     with tempfile.TemporaryDirectory(prefix="onyx-ab-") as temporary:
@@ -164,6 +204,10 @@ def main():
                 record = run_arm(arm, common, request, Path(temporary) / f"{arm['name']}.png", Path(temporary))
                 record["round"] = round_index
                 runs.append(record)
+                if args.keep_outputs:
+                    args.keep_outputs.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(Path(temporary) / f"{arm['name']}.png",
+                                    args.keep_outputs / f"{args.label}-{arm['name']}-{round_index}.png")
                 stages = " / ".join(f"{name} {seconds:.2f}" for name, seconds in record["stage_seconds"].items())
                 print(f"  total {record['total_seconds']:.2f} s  ({stages})  sha {record['png_sha256'][:12]}", flush=True)
 
@@ -176,6 +220,7 @@ def main():
                  "stage_seconds_median": {name: statistics.median(record["stage_seconds"][name] for record in samples)
                                           for name in samples[0]["stage_seconds"]},
                  "peak_rss_bytes_max": max(record["peak_rss_bytes"] for record in samples),
+                 "contended_rounds": [record["round"] for record in samples if record.get("foreign_native_after")],
                  "binary": arm["binary"], "args": arm["args"], "env": arm["env"],
                  "output_sha256": sorted({record["png_sha256"] for record in samples})}
         entry["all_outputs_identical"] = len(entry["output_sha256"]) == 1

@@ -42,3 +42,26 @@ first sampling step computes each AdaLN table just before its block uses it.
 - Cold model files deliver 6.4 GiB/s regardless of reader count, so I/O volume, not
   reader parallelism, bounds what remains: the 26 GB AdaLN pass takes at least 3.9 s.
 - Evidence: `benchmarks/results/campaign-20261123/round1-prefetch-pipeline.json`.
+
+## Outcome, round 2: VAE tiles decode in batches
+
+Promoted as a numeric change: the VAE decoder takes 25 tiles per pass instead of one.
+The tile geometry and the overlap blending are unchanged.
+
+- Same binary with the batch size switched by environment, interleaved A/B: VAE
+  4.18 → 2.05 s median, total 24.22 → 22.08 s (1.10×). The DiT stage matches across arms.
+- The PNG is no longer byte-identical to round 1. Batched matrix products sum in a
+  different order: 36 of 3,145,728 channel values differ by one level of 255, MAE
+  4.5e-8, PSNR 97.5 dB. Replay within the batched decoder is identical.
+- Gate declared for this round: at most one 8-bit level per channel value and at
+  most 0.01% of the values differing.
+- `ONYX_VAE_BATCH=1` restores one tile at a time and the earlier output bytes.
+- Evidence: `benchmarks/results/campaign-20261123/round2-vae-tile-batching.json`.
+
+## Measurement note: another session on the same machine
+
+A second session ran native benchmarks from another worktree during this campaign.
+Two samples of a first round-2 session overlapped it and ran 50% slower, so that
+session was discarded. `benchmarks/ab_compare.py` now waits before each sample
+until no other native stage process runs and records any that appear, which makes
+a contended sample visible in the report.

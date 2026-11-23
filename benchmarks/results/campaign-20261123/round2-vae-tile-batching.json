@@ -1,0 +1,248 @@
+{
+  "protocol": "onyx.native-optimization.v1",
+  "campaign": "local-single-image-20261123",
+  "round": 2,
+  "change": "Decode VAE tiles in batches of 25 instead of one at a time. A 1024x1024 image made about 14,000 graph executions with 261 rows per matrix product; batches multiply the rows of every matrix product and cut the dispatch count 25-fold. ONYX_VAE_BATCH=1 restores one tile at a time.",
+  "base_commit": "75d73d7",
+  "case": "h3-teapot-1024-seed42-v1",
+  "profile": "max-quality",
+  "device": {
+    "model_identifier": "Mac17,14",
+    "chip": "Apple M5 Max",
+    "gpu_cores": 32,
+    "physical_memory_bytes": 38654705664,
+    "os_version": "27.2.1"
+  },
+  "native_binary": {
+    "baseline_sha256": "f842f84d9a862cdc7051abbc2fc654027d311ef34e3131232b2735de5e6fc37b",
+    "candidate_sha256": "f842f84d9a862cdc7051abbc2fc654027d311ef34e3131232b2735de5e6fc37b",
+    "same_binary": true
+  },
+  "method": "Same machine and W4 package; arms alternate in rotating order after per-arm warmups. Arm order: round 1: serial, batched | round 2: batched, serial | round 3: serial, batched",
+  "baseline": {
+    "binary": ".build/onyx-native",
+    "native_args": [],
+    "environment": "ONYX_VAE_BATCH=1",
+    "samples_seconds": [
+      24.220014708989765,
+      24.110232791979797,
+      24.51314737496432
+    ],
+    "seconds_median": 24.220014708989765,
+    "stage_seconds_median": {
+      "text": 2.2246863750042394,
+      "dit": 17.81174670800101,
+      "vae": 4.183830499998294
+    },
+    "peak_bytes_max": 2303328256,
+    "output_sha256": [
+      "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1"
+    ],
+    "all_outputs_identical": true,
+    "runs": [
+      {
+        "seconds": 24.220014708989765,
+        "stage_seconds": {
+          "text": 2.2160990410484374,
+          "dit": 17.81174670800101,
+          "vae": 4.183830499998294
+        },
+        "peak_rss_bytes": 2303328256,
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "dit_step_seconds": [
+          5.643,
+          2.386,
+          2.316,
+          2.336,
+          2.347,
+          2.33
+        ],
+        "dit_native_seconds": 17.757122,
+        "dit_prefetch_wait_seconds": 2.067718,
+        "dit_read_bytes": 85656876608
+      },
+      {
+        "seconds": 24.110232791979797,
+        "stage_seconds": {
+          "text": 2.2293347499798983,
+          "dit": 17.712707500031684,
+          "vae": 4.15842887503095
+        },
+        "peak_rss_bytes": 2238480384,
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "dit_step_seconds": [
+          5.65,
+          2.346,
+          2.31,
+          2.322,
+          2.303,
+          2.329
+        ],
+        "dit_native_seconds": 17.640519,
+        "dit_prefetch_wait_seconds": 2.08078,
+        "dit_read_bytes": 85656876608
+      },
+      {
+        "seconds": 24.51314737496432,
+        "stage_seconds": {
+          "text": 2.2246863750042394,
+          "dit": 17.96924125001533,
+          "vae": 4.309973833034746
+        },
+        "peak_rss_bytes": 2023702528,
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "dit_step_seconds": [
+          5.627,
+          2.428,
+          2.361,
+          2.373,
+          2.375,
+          2.361
+        ],
+        "dit_native_seconds": 17.911223,
+        "dit_prefetch_wait_seconds": 2.017129,
+        "dit_read_bytes": 85656876608
+      }
+    ]
+  },
+  "candidate": {
+    "binary": ".build/onyx-native",
+    "native_args": [],
+    "environment": [],
+    "samples_seconds": [
+      22.076909249997698,
+      22.38695108401589,
+      21.9153369590058
+    ],
+    "seconds_median": 22.076909249997698,
+    "stage_seconds_median": {
+      "text": 2.2178398339892738,
+      "dit": 17.874578916002065,
+      "vae": 2.050932666985318
+    },
+    "peak_bytes_max": 2255880192,
+    "output_sha256": [
+      "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac"
+    ],
+    "all_outputs_identical": true,
+    "runs": [
+      {
+        "seconds": 22.076909249997698,
+        "stage_seconds": {
+          "text": 2.216157959017437,
+          "dit": 17.874578916002065,
+          "vae": 1.976452208997216
+        },
+        "peak_rss_bytes": 2201780224,
+        "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+        "dit_step_seconds": [
+          5.636,
+          2.427,
+          2.341,
+          2.307,
+          2.372,
+          2.352
+        ],
+        "dit_native_seconds": 17.814455,
+        "dit_prefetch_wait_seconds": 2.097669,
+        "dit_read_bytes": 85656876608
+      },
+      {
+        "seconds": 22.38695108401589,
+        "stage_seconds": {
+          "text": 2.2178398339892738,
+          "dit": 18.108823749993462,
+          "vae": 2.050932666985318
+        },
+        "peak_rss_bytes": 2212134912,
+        "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+        "dit_step_seconds": [
+          5.682,
+          2.426,
+          2.354,
+          2.375,
+          2.405,
+          2.42
+        ],
+        "dit_native_seconds": 18.054293,
+        "dit_prefetch_wait_seconds": 2.154091,
+        "dit_read_bytes": 85656876608
+      },
+      {
+        "seconds": 21.9153369590058,
+        "stage_seconds": {
+          "text": 2.2922381249954924,
+          "dit": 17.518388417025562,
+          "vae": 2.089247624971904
+        },
+        "peak_rss_bytes": 2255880192,
+        "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+        "dit_step_seconds": [
+          5.577,
+          2.347,
+          2.27,
+          2.291,
+          2.266,
+          2.307
+        ],
+        "dit_native_seconds": 17.458428,
+        "dit_prefetch_wait_seconds": 2.095281,
+        "dit_read_bytes": 85656876608
+      }
+    ]
+  },
+  "speedup_vs_baseline": 1.0970745240977196,
+  "latency_reduction": 0.08848489502347867,
+  "output_sha256": [
+    "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac"
+  ],
+  "outputs_match_baseline": false,
+  "decision": "accepted",
+  "notes": [
+    "Both arms are the same binary. The DiT stage is unchanged and matches across arms.",
+    "The PNG is not byte-identical to round 1: 36 of 3,145,728 channel values differ, each by one level of 255. Repeated runs of each arm reproduce their own PNG.",
+    "A first session was discarded: two serial samples overlapped a native benchmark from another session on the same machine, which the tool now detects and waits out."
+  ],
+  "attribution": {
+    "numeric_effect": {
+      "mechanism": "Batched matrix products sum in a different order than one-tile products, so FP32 results round to a different 8-bit level at a few pixels.",
+      "channel_values": 3145728,
+      "differing_channel_values": 36,
+      "differing_fraction": 1.1444091796875e-05,
+      "max_abs_difference_levels": 1,
+      "differing_pixels": 36,
+      "image_metrics": {
+        "shape": [
+          1024,
+          1024,
+          3
+        ],
+        "mae": 4.48787886853097e-08,
+        "rmse": 1.3266319864198623e-05,
+        "psnr_db": 97.54499071276896,
+        "pixel_identical": false,
+        "pixel_correlation": 0.9999999984608245,
+        "scope": "Similarity between two implementations, not an absolute image-quality score"
+      }
+    },
+    "gate": {
+      "max_abs_channel_error_levels": 1,
+      "max_differing_fraction": 0.0001,
+      "passed": true
+    },
+    "vae_stage_seconds_serial": [
+      4.18,
+      4.16,
+      4.31
+    ],
+    "vae_stage_seconds_batched": [
+      1.98,
+      2.05,
+      2.09
+    ],
+    "graph_executions_per_image": {
+      "serial": 14091,
+      "batched": 564
+    }
+  }
+}

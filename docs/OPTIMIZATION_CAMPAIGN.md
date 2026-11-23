@@ -23,6 +23,17 @@ All six PNGs had the same SHA-256, and both arms read 85,656,876,608 weight byte
 
 Cold model files deliver about 6.4 GiB/s on this machine with any number of reader threads, so the remaining I/O time follows from the bytes read. The AdaLN projections alone stream 26 GB, and an on-disk modulation cache skips them.
 
+### Round 2: decode VAE tiles in batches
+
+The VAE decoder ran one 16×16 latent tile at a time, so a 1024×1024 image made about 14,000 small graph executions with 261 rows in each matrix product. Tiles now decode in batches of 25 in raster order, which multiplies the rows of every matrix product and cuts the dispatch count 25-fold. The tile geometry and the overlap blending are unchanged, and `ONYX_VAE_BATCH=1` restores one tile at a time.
+
+| Build | End-to-end samples | Median total | DiT | VAE | Peak RSS |
+| --- | --- | ---: | ---: | ---: | ---: |
+| One tile at a time | 24.22 / 24.11 / 24.51 s | 24.22 s | 17.81 s | 4.18 s | 2.15 GiB |
+| Batches of 25 | 22.08 / 22.39 / 21.92 s | **22.08 s** | 17.87 s | 2.05 s | 2.10 GiB |
+
+Both arms are the same binary with the batch size switched by environment. **This round changes the output bytes.** Batched matrix products sum in a different order, so the PNG differs from the earlier rounds: 36 of 3,145,728 channel values differ, each by one level of 255 (MAE 4.5e-8, PSNR 97.5 dB). Repeated runs of the batched decoder reproduce the same PNG. [Round record](../benchmarks/results/campaign-20261123/round2-vae-tile-batching.json)
+
 ## Production and isolated measurements
 
 | Configuration | DiT stage | End-to-end per image | Observation |
@@ -129,4 +140,4 @@ python -m onyx package-w4 --source artifacts/models/h3-image-source --original-m
 python3 tools/profile_quality_gate.py --candidate speed-focus
 ```
 
-Diagnostic environment variables include `ONYX_SIMD_SKIP_ODD=1` for mixed-path measurements, `ONYX_SIMD_NOWAIT=1` for deferred waits, `ONYX_GPU_COUNTERS=1` for counter probes on eligible devices, `ONYX_PREFETCH_THREADS=<n>` for the number of background readers, and `ONYX_PREFETCH_TRACE=1` to list each weight that a stage still reads synchronously.
+Diagnostic environment variables include `ONYX_SIMD_SKIP_ODD=1` for mixed-path measurements, `ONYX_SIMD_NOWAIT=1` for deferred waits, `ONYX_GPU_COUNTERS=1` for counter probes on eligible devices, `ONYX_PREFETCH_THREADS=<n>` for the number of background readers, `ONYX_PREFETCH_TRACE=1` to list each weight that a stage still reads synchronously, and `ONYX_VAE_BATCH=<n>` for the number of VAE tiles per decoder batch, where 1 reproduces the output bytes of the builds before round 2.

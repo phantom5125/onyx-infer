@@ -11,7 +11,7 @@ The profiles share the same W4 model, six-evaluation PDD recipe, and model ident
 | `speed-focus` | Stream | Resident | `tile16` | LRU, 24 GiB | Off | BF16 SIMD |
 
 - The 21.86 GB text and 37.47 GB DiT packages stream on the 36 GB reference machine. The native stage rejects a resident request for either component.
-- VAE streaming reads and releases weights by tile. The resident path caches weights. Overlap equivalence evidence covers `tile16`. Evaluate a new tile geometry independently.
+- VAE streaming reads and releases weights by tile. The resident path caches weights. Overlap equivalence evidence covers `tile16`. Evaluate a new tile geometry independently. Tiles decode in batches of 25 with the `tile16` geometry and blending unchanged, which changes the output bytes from earlier builds by one 8-bit level at a few channel values. [Round 2](OPTIMIZATION_CAMPAIGN.md#local-single-image-campaign)
 - The default MPSGraph Q4 path uses FP32 dequantization. `speed-focus` tests the BF16 SIMD kernel with the DiT weight cache. The vendored Steel FP16 port is available to probes.
 - The LRU reuses original packed weights across six DiT steps. A 24 GiB limit covers about 64% of the DiT package. The cache test checks equivalent bytes across streaming, LRU, and resident access. Its lifetime relies on synchronous MPSGraph completion.
 - The `weight_prefetch` knob streams the next block's weights while the GPU computes the current one. It requires streaming, holds one extra block in memory, and leaves the output bytes unchanged. `memory-min` keeps it off to stay near its peak-memory gate, and `speed-focus` caches weights instead. [Round 1 measurements](OPTIMIZATION_CAMPAIGN.md#local-single-image-campaign)
