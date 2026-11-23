@@ -57,3 +57,5 @@ Keep the GPU and machine available for the measurement. Give each invocation a u
 Reports under `artifacts/ci/` include the source revision, dirty state, target, commands, return codes, durations, and log tails. Kernel reports also include correctness, shapes, and wall-time and GPU medians. Native reports include latency, peak memory, and output hash consistency. Per-run records and PNGs live at `artifacts/benchmarks/onyx-native-h3/<case-id>/<run-id>/`.
 
 Attach the JSON and Markdown files to pull requests or use the workflow artifacts. Include the measured shapes, hardware, output hashes, and any cases still to be verified.
+
+For every precision-sensitive change, also upload the original baseline and candidate PNGs directly to the pull request so reviewers can inspect them without running the model. Keep the request, model, seed, resolution, sampling steps, and execution profile fixed; record both revisions and output hashes beside the images. A hash proves identity, not visual quality, so it does not replace the image evidence. See [Generated-image evidence](../CONTRIBUTING.md#generated-image-evidence).

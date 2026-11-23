@@ -10,8 +10,11 @@
   <img src="https://img.shields.io/badge/C%2B%2B-20%20%C2%B7%20Metal%20MSL-blue" alt="C++20 / MSL">
   <img src="https://img.shields.io/badge/Python-3.12%2B-orange" alt="Python 3.12+">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license"></a>
-  <a href="README.zh-CN.md">Chinese README</a>
-  <a href="https://phantom5125.github.io/onyx-infer/"><img src="https://img.shields.io/badge/site-phantom5125.github.io%2Fonyx--infer-8f1220" alt="Site"></a>
+</p>
+<p align="center">
+  <a href="README.zh-CN.md">中文 README</a>
+  &middot;
+  <a href="https://phantom5125.github.io/onyx-infer/">Project site</a>
 </p>
 
 # onyx-infer
@@ -23,6 +26,21 @@ Generate **4096×4096 images directly on Apple Silicon** with MiniMax-H3-Image. 
 The six-step 4096×4096 teapot benchmark took 329.6 s on the 36 GB M5 Max. The 1024×1024 benchmark took a median 175 s on a 24 GB M4 MacBook Air on battery. [M5 Max benchmark](benchmarks/results/native-v1-stability.json) · [M4 Air benchmark](benchmarks/results/m4-air-24gb-dit-prefetch-v1.json)
 
 PyTorch and Diffusers support offline import and reference validation. Native generation uses MPSGraph and Metal kernels.
+
+## Generated on Apple Silicon
+
+Resized previews of actual Onyx output, with the original generation resolution noted in each caption.
+
+<table>
+  <tr>
+    <td align="center" width="50%"><img src="site/assets/gallery/pelican-bicycle.jpg" width="480" alt="Pelican riding a red bicycle by the sea"><br><b>Pelican on a bicycle</b><br><sub>4096×4096 · direct 16 MP generation</sub></td>
+    <td align="center" width="50%"><img src="site/assets/gallery/red-agate.jpg" width="480" alt="Polished red agate with translucent mineral bands"><br><b>Red agate</b><br><sub>4096×4096 · direct 16 MP generation</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="site/assets/gallery/moon-surface.jpg" width="480" alt="Detailed lunar surface with crisp craters against a black sky"><br><b>Lunar surface</b><br><sub>4096×4096 · direct 16 MP generation</sub></td>
+    <td align="center"><img src="site/assets/gallery/moka-pot-w4.jpg" width="480" alt="Moka pot blueprint with the exact title MOKA POT"><br><b>Moka pot blueprint</b><br><sub>1024×1024 · W4 · exact short title</sub></td>
+  </tr>
+</table>
 
 ## Why it exists
 

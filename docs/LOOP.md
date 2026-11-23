@@ -28,7 +28,7 @@ Run the least expensive checks first. A failed gate ends evaluation before expen
 | L2 Replay | Same model, noise, plan, and build | Async scheduling, arena reuse, and atomic operations |
 | L3 End-to-end | Final images from fixed requests and resource budgets | Release candidates and numeric changes |
 
-A bitwise result is scoped to its build, device, and plan. Numerical equivalence uses predefined operation- and dtype-specific tolerances. Quantization and larger numerical changes require an image set and quality review.
+A bitwise result is scoped to its build, device, and plan. Numerical equivalence uses predefined operation- and dtype-specific tolerances. Quantization and larger numerical changes require an image set and quality review. Every candidate that could affect numerical accuracy or visual output must attach viewable baseline and candidate generation PNGs to its pull request, even when replay hashes match. The fixed-request controls and review record follow the [generated-image evidence rules](../CONTRIBUTING.md#generated-image-evidence).
 
 ## 4. Measurement
 

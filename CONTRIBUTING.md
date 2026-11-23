@@ -44,6 +44,18 @@ python tools/native_validate.py --suite h3 --case teapot-4096 --label pr-123-nat
 
 GitHub-hosted macOS runners handle L0 and L1. Maintainers and contributors with suitable Apple Silicon hardware can run L2 and L3. Attach the reports from `artifacts/ci/` to the pull request and name the cases that need maintainer hardware. The source revision and binary in a report need to match the proposed change. Setup and workflow details are in [Hardware and local validation](docs/VALIDATION.md).
 
+## Generated-image evidence
+
+Any pull request that could change numerical accuracy or visual output must include generated-image evidence. This applies to kernels, MPSGraph changes, dtypes, quantization, model import, execution order, sampling, caching, streaming, memory planning, VAE, and image post-processing—even when operator tests pass or byte-identical output is expected.
+
+- Generate baseline and candidate images from the same request, model, seed, resolution, sampling steps, and execution profile. A new capability without a baseline should explain that exception.
+- Upload the original candidate PNG directly to the pull request so it renders in the discussion. For an existing pipeline, upload the baseline PNG beside it; a local path or output hash alone is not visual evidence.
+- Use the native 1024×1024 case for general execution changes. Add a text-rendering case when conditioning, quantization, or decoding could affect lettering, and the 4096×4096 case for large-shape, attention, VAE, or memory changes.
+- Record the base and candidate revisions, hardware, request, seed, resolution, profile, and both SHA-256 hashes next to the images. Attach the corresponding `onyx.ci.v1` reports and explain every expected visual difference.
+- If suitable hardware is unavailable, leave the evidence item unchecked and request maintainer validation. Do not claim that visual accuracy has been verified until someone has inspected the generated output.
+
+Attach ad hoc evidence images and reports to the pull request or workflow instead of committing them. Curated, compressed examples used by documentation are separate from this per-change evidence.
+
 ## Pull request checklist
 
 - Keep commits focused and exclude models, generated reports, local environments, logs, and credentials.
