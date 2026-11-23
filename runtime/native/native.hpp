@@ -150,6 +150,10 @@ class GraphSession {
   Tensor silu(const Tensor& x);
   Tensor gated_activation(const Tensor& x);
   Tensor gated_residual(const Tensor& x, const Tensor& value, const Tensor& gate);
+  // Gather one [tokens, width] tensor per AdaLN part from `rows`, which holds the parts of
+  // the image modality followed by those of the text modality. Token index 0 selects the
+  // image rows and 1 the text rows.
+  std::vector<Tensor> modulation_parts(const Tensor& rows, const Tensor& indices);
   Tensor cast(const Tensor& x, MPSDataType dtype);
   void enable_profiling(bool enabled) { profile_enabled_ = enabled; }
   std::string profile_json() const;
@@ -184,6 +188,11 @@ class GraphSession {
   };
   std::unordered_map<std::string, MlxQ4Weights> mlx_weight_cache_;
 #endif
+  std::vector<Tensor> run_outputs(const std::string& key,
+                                  const std::vector<Tensor>& inputs,
+                                  const std::vector<std::vector<int64_t>>& output_shapes,
+                                  MPSDataType output_dtype,
+                                  NSArray<MPSGraphTensor*>* (^build)(MPSGraph*, NSArray<MPSGraphTensor*>*));
   Tensor run(const std::string& key,
              const std::vector<Tensor>& inputs,
              const std::vector<int64_t>& output_shape,

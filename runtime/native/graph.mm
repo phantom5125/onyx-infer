@@ -3,6 +3,7 @@
 #import <MPSNDArray/MPSNDArray.h>
 #import <MetalPerformanceShadersGraph/MPSGraphActivationOps.h>
 #import <MetalPerformanceShadersGraph/MPSGraphArithmeticOps.h>
+#import <MetalPerformanceShadersGraph/MPSGraphGatherOps.h>
 #import <MetalPerformanceShadersGraph/MPSGraphMatrixMultiplicationOps.h>
 #import <MetalPerformanceShadersGraph/MPSGraphMemoryOps.h>
 #import <MetalPerformanceShadersGraph/MPSGraphNormalizationOps.h>
@@ -94,18 +95,29 @@ Tensor GraphSession::run(const std::string& key,
                          const std::vector<int64_t>& output_shape,
                          MPSDataType output_dtype,
                          MPSGraphTensor* (^build)(MPSGraph*, NSArray<MPSGraphTensor*>*)) {
+  const std::vector<Tensor> results = run_outputs(
+      key, inputs, {output_shape}, output_dtype,
+      ^NSArray<MPSGraphTensor*>*(MPSGraph* graph, NSArray<MPSGraphTensor*>* input) { return @[build(graph, input)]; });
+  return results.front();
+}
+
+std::vector<Tensor> GraphSession::run_outputs(const std::string& key,
+                                              const std::vector<Tensor>& inputs,
+                                              const std::vector<std::vector<int64_t>>& output_shapes,
+                                              MPSDataType output_dtype,
+                                              NSArray<MPSGraphTensor*>* (^build)(MPSGraph*, NSArray<MPSGraphTensor*>*)) {
   const auto profile_start = std::chrono::steady_clock::now();
   std::string full_key = key;
   for (const Tensor& input : inputs) full_key += shape_key(input);
-  full_key += shape_key(Tensor{nil, output_shape, output_dtype});
+  for (const std::vector<int64_t>& shape : output_shapes) full_key += shape_key(Tensor{nil, shape, output_dtype});
   @autoreleasepool {
     NSDictionary* entry = graphs_[[NSString stringWithUTF8String:full_key.c_str()]];
     MPSGraph* graph;
-    MPSGraphTensor* target;
+    NSArray<MPSGraphTensor*>* targets;
     NSArray<MPSGraphTensor*>* placeholders;
     if (entry) {
       graph = entry[@"graph"];
-      target = entry[@"target"];
+      targets = entry[@"targets"];
       placeholders = entry[@"inputs"];
     } else {
       graph = [MPSGraph new];
@@ -115,9 +127,9 @@ Tensor GraphSession::run(const std::string& key,
                                               dataType:inputs[index].dtype
                                                   name:[NSString stringWithFormat:@"x%zu", index]]];
       }
-      target = build(graph, created);
-      if (!target) throw std::runtime_error("Could not build graph: " + key);
-      graphs_[[NSString stringWithUTF8String:full_key.c_str()]] = @{@"graph": graph, @"target": target, @"inputs": created};
+      targets = build(graph, created);
+      if (!targets) throw std::runtime_error("Could not build graph: " + key);
+      graphs_[[NSString stringWithUTF8String:full_key.c_str()]] = @{@"graph": graph, @"targets": targets, @"inputs": created};
       placeholders = created;
     }
     NSMutableDictionary* feeds = [NSMutableDictionary new];
@@ -135,18 +147,46 @@ Tensor GraphSession::run(const std::string& key,
       }
       feeds[placeholders[index]] = data;
     }
-    Tensor result{nil, output_shape, output_dtype};
-    result.buffer = [queue_.device newBufferWithLength:result.byte_size() options:MTLResourceStorageModeShared];
-    if (!result.buffer) throw std::runtime_error("Metal output allocation failed");
-    auto output_data = [[MPSGraphTensorData alloc] initWithMTLBuffer:result.buffer shape:ns_shape(output_shape) dataType:output_dtype];
-    [graph runWithMTLCommandQueue:queue_ feeds:feeds targetOperations:nil resultsDictionary:@{target: output_data}];
+    std::vector<Tensor> results;
+    NSMutableDictionary* outputs = [NSMutableDictionary new];
+    for (size_t index = 0; index < output_shapes.size(); ++index) {
+      Tensor result{nil, output_shapes[index], output_dtype};
+      result.buffer = [queue_.device newBufferWithLength:result.byte_size() options:MTLResourceStorageModeShared];
+      if (!result.buffer) throw std::runtime_error("Metal output allocation failed");
+      outputs[targets[index]] = [[MPSGraphTensorData alloc] initWithMTLBuffer:result.buffer shape:ns_shape(result.shape)
+                                                                     dataType:output_dtype];
+      results.push_back(result);
+    }
+    [graph runWithMTLCommandQueue:queue_ feeds:feeds targetOperations:nil resultsDictionary:outputs];
     if (profile_enabled_) {
       auto& entry = profile_[key];
       entry.first += 1;
       entry.second += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - profile_start).count();
     }
-    return result;
+    return results;
   }
+}
+
+std::vector<Tensor> GraphSession::modulation_parts(const Tensor& rows, const Tensor& indices) {
+  // Token index m selects row m * (rows / 2) + part for each part, so the six parts of the
+  // image modality come first and those of the text modality follow. Gathering them on the GPU
+  // replaces six per-token CPU copies, and the values equal those copies bit for bit.
+  const int64_t tokens = indices.shape[0];
+  const int64_t width = rows.shape[1];
+  const int64_t parts = rows.shape[0] / 2;
+  std::vector<std::vector<int64_t>> shapes(parts, std::vector<int64_t>{tokens, width});
+  return run_outputs("modulation-parts", {rows, indices}, shapes, rows.dtype,
+                     ^NSArray<MPSGraphTensor*>*(MPSGraph* graph, NSArray<MPSGraphTensor*>* input) {
+    NSMutableArray<MPSGraphTensor*>* gathered = [NSMutableArray new];
+    MPSGraphTensor* stride = [graph constantWithScalar:parts shape:@[@1] dataType:MPSDataTypeInt32];
+    MPSGraphTensor* base = [graph multiplicationWithPrimaryTensor:input[1] secondaryTensor:stride name:nil];
+    for (int64_t part = 0; part < parts; ++part) {
+      MPSGraphTensor* offset = [graph constantWithScalar:part shape:@[@1] dataType:MPSDataTypeInt32];
+      MPSGraphTensor* index = [graph additionWithPrimaryTensor:base secondaryTensor:offset name:nil];
+      [gathered addObject:[graph gatherWithUpdatesTensor:input[0] indicesTensor:index axis:0 batchDimensions:0 name:nil]];
+    }
+    return gathered;
+  });
 }
 
 

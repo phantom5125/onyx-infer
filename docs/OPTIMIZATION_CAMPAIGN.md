@@ -34,6 +34,19 @@ The VAE decoder ran one 16×16 latent tile at a time, so a 1024×1024 image made
 
 Both arms are the same binary with the batch size switched by environment. **This round changes the output bytes.** Batched matrix products sum in a different order, so the PNG differs from the earlier rounds: 36 of 3,145,728 channel values differ, each by one level of 255 (MAE 4.5e-8, PSNR 97.5 dB). Repeated runs of the batched decoder reproduce the same PNG. [Round record](../benchmarks/results/campaign-20261123/round2-vae-tile-batching.json)
 
+### Round 3: gather the AdaLN modulation on the GPU
+
+Each block and step used to build six per-token modulation buffers on the CPU: six allocations and about 70 MB of copies per block, or 21 GB of copies and 1,800 allocations per image. Every token belongs to one of two modalities, so one graph execution now gathers the six rows that each token needs, with the same values as the copies. The norm that opens a block also moves to the end of the previous block, where it follows the gated residual.
+
+| Build | End-to-end samples | Median total | DiT | Peak RSS |
+| --- | --- | ---: | ---: | ---: |
+| Round 1 | 26.23 / 26.73 / 26.70 s | 26.70 s | 19.94 s | 2.12 GiB |
+| Round 3, gather | 25.38 / 25.92 / 24.96 s | **25.38 s** | 18.33 s | 1.82 GiB |
+
+Both arms decode one VAE tile at a time, so only the gather differs. All six PNGs keep the SHA-256 of the earlier rounds. Sampling steps two to six fell from 2.7–3.0 s to 2.3–2.4 s each, while the first step is bounded by weight reads and did not move. The VAE stage moved between 4.2 s and 5.3 s in both arms. [Round record](../benchmarks/results/campaign-20261123/round3-modulation-gather.json)
+
+A single graph for each gated residual and the norm that follows it was tried and rejected. It changed the PNG, because the fused graph keeps the residual sum at higher precision before the norm reads it, and steps two to six took 2.4–2.6 s in one uncontended run, no better than the separate graphs. The two operations stay separate executions.
+
 ## Production and isolated measurements
 
 | Configuration | DiT stage | End-to-end per image | Observation |

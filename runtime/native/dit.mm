@@ -289,24 +289,26 @@ std::pair<Tensor, Tensor> rope_angles(WeightStore& store, uint64_t text_count, u
   return {make_tensor(shape, MPSDataTypeBFloat16, cosine), make_tensor(shape, MPSDataTypeBFloat16, sine)};
 }
 
-std::vector<Tensor> modulation_parts(const Tensor& modulation, const Tensor& indices) {
-  const uint64_t rows = indices.shape[0];
-  const uint64_t row_bytes = 5376 * sizeof(uint16_t);
-  id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-  const uint16_t* source = static_cast<const uint16_t*>(modulation.data());
-  const int32_t* modalities = static_cast<const int32_t*>(indices.buffer.contents);
-  std::vector<Tensor> result(6, Tensor{nil, {static_cast<int64_t>(rows), 5376}, MPSDataTypeBFloat16});
-  for (uint64_t part = 0; part < 6; ++part) {
-    Tensor& output = result[part];
-    output.buffer = [device newBufferWithLength:output.byte_size() options:MTLResourceStorageModeShared];
-    if (!output.buffer) throw std::runtime_error("Modulation allocation failed");
-    uint16_t* destination = static_cast<uint16_t*>(output.buffer.contents);
-    for (uint64_t row = 0; row < rows; ++row) {
-      const uint64_t source_index = (static_cast<uint64_t>(modalities[row]) * 6 + part) * 5376;
-      std::memcpy(destination + row * 5376, source + source_index, row_bytes);
-    }
-  }
-  return result;
+// The six AdaLN parts that one block applies at the current step, one row per token.
+struct ModulationParts {
+  Tensor shift_msa;
+  Tensor scale_msa;
+  Tensor gate_msa;
+  Tensor shift_mlp;
+  Tensor scale_mlp;
+  Tensor gate_mlp;
+};
+
+ModulationParts gather_parts(GraphSession& session, const Tensor& table, uint32_t step, const Tensor& token_indices) {
+  // A block table holds six steps of 12 rows. In each step, rows 0-5 modulate image tokens
+  // and rows 6-11 text tokens. The graph picks each token's rows, which replaces six
+  // per-token CPU copies with the same values.
+  constexpr int64_t width = 5376;
+  Tensor rows = table;
+  rows.byte_offset += table.byte_size() / 6 * step;
+  rows.shape = {12, width};
+  const auto parts = session.modulation_parts(rows, token_indices);
+  return {parts[0], parts[1], parts[2], parts[3], parts[4], parts[5]};
 }
 
 }  // namespace
@@ -354,6 +356,9 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
   Tensor indices = make_tensor({static_cast<int64_t>(sequence_count), 1}, MPSDataTypeInt32, std::vector<float>(sequence_count, 0));
   auto* index_data = static_cast<int32_t*>(indices.buffer.contents);
   for (uint64_t index = 0; index < sequence_count; ++index) index_data[index] = index < text_count ? 1 : 0;
+  // Token indices select between image rows and text rows during the modulation gather.
+  Tensor token_indices = indices;
+  token_indices.shape = {static_cast<int64_t>(sequence_count)};
   const Tensor one = scalar(1.0f, MPSDataTypeBFloat16);
   Tensor patches = load_tensor(noise_path, "latent");
   patches = session.reshape(patches, {24, static_cast<int64_t>(rows), 2, static_cast<int64_t>(columns), 2});
@@ -373,31 +378,35 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
     Tensor image = session.linear(store, "video_patch_proj", patches);
     image = session.cast(image, MPSDataTypeBFloat16);
     Tensor x = session.concat({text, image}, 0);
+    // The AdaLN tables of the first sampling step arrive one block at a time.
+    if (lazy_modulation && step == 0 && !modulations[0].buffer) {
+      modulations[0] = modulation_table(session, store, 0, temb);
+    }
+    ModulationParts parts = gather_parts(session, modulations[0], step, token_indices);
+    // The norm that opens each block follows the gated residual that closed the one before.
+    Tensor h = session.modulated_rms_norm(x, store.tensor("blocks.0.norm1.weight"), parts.scale_msa, parts.shift_msa, 1e-5);
     for (uint32_t layer = 0; layer < kDiTBlocks; ++layer) {
       @autoreleasepool {
       if (layer + 1 < kDiTBlocks || step + 1 < 6) queue_block((layer + 1) % kDiTBlocks);
       if (lazy_modulation && step == 0) {
-        // The first step fills the tables; the other five reuse them.
+        // The first step fills the tables and the other five reuse them. The next block's
+        // table is needed at the end of this block, where its first norm already begins.
         queue_modulation_table(store, layer + 2);
-        if (!modulations[layer].buffer) modulations[layer] = modulation_table(session, store, layer, temb);
+        if (layer + 1 < kDiTBlocks && !modulations[layer + 1].buffer) {
+          modulations[layer + 1] = modulation_table(session, store, layer + 1, temb);
+        }
       }
       const std::string prefix = "blocks." + std::to_string(layer) + ".";
-      Tensor modulation = modulations[layer];
-      modulation.byte_offset += modulation.byte_size() / 6 * step;
-      modulation.shape = {3, 6, 5376};
-      const auto parts = modulation_parts(modulation, indices);
-      const Tensor& shift_msa = parts[0];
-      const Tensor& scale_msa = parts[1];
-      const Tensor& gate_msa = parts[2];
-      const Tensor& shift_mlp = parts[3];
-      const Tensor& scale_mlp = parts[4];
-      const Tensor& gate_mlp = parts[5];
-      Tensor h = session.modulated_rms_norm(x, store.tensor(prefix + "norm1.weight"), scale_msa, shift_msa, 1e-5);
       Tensor attended = qkv_attention(session, store, prefix + "attn", h, &cosine, &sine);
-      x = session.gated_residual(x, attended, gate_msa);
-      h = session.modulated_rms_norm(x, store.tensor(prefix + "norm2.weight"), scale_mlp, shift_mlp, 1e-5);
+      x = session.gated_residual(x, attended, parts.gate_msa);
+      h = session.modulated_rms_norm(x, store.tensor(prefix + "norm2.weight"), parts.scale_mlp, parts.shift_mlp, 1e-5);
       Tensor hidden = mlp(session, store, prefix + "mlp", h);
-      x = session.gated_residual(x, hidden, gate_mlp);
+      x = session.gated_residual(x, hidden, parts.gate_mlp);
+      if (layer + 1 < kDiTBlocks) {
+        parts = gather_parts(session, modulations[layer + 1], step, token_indices);
+        h = session.modulated_rms_norm(x, store.tensor("blocks." + std::to_string(layer + 1) + ".norm1.weight"),
+                                       parts.scale_msa, parts.shift_msa, 1e-5);
+      }
       }
     }
     if (lazy_modulation && step == 0 && !modulations[kDiTBlocks].buffer) {

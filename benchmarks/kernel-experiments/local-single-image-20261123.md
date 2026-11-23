@@ -58,6 +58,18 @@ The tile geometry and the overlap blending are unchanged.
 - `ONYX_VAE_BATCH=1` restores one tile at a time and the earlier output bytes.
 - Evidence: `benchmarks/results/campaign-20261123/round2-vae-tile-batching.json`.
 
+## Outcome, round 3: AdaLN modulation gathered on the GPU
+
+Promoted: one MPSGraph gather per block replaces six per-token CPU copies of the
+modulation rows, which cost about 70 MB of copies and six allocations per block
+and step.
+
+- Interleaved against the round-1 binary with the VAE unbatched in both arms:
+  DiT 19.94 → 18.33 s median, steps two to six 2.7–3.0 → 2.3–2.4 s, peak RSS
+  2.12 → 1.82 GiB. The PNG keeps the SHA-256 of round 1.
+- Rejected: a fused gated-residual-plus-norm graph. It changed the PNG and
+  showed no gain beyond noise, so a numeric change bought nothing.
+
 ## Measurement note: another session on the same machine
 
 A second session ran native benchmarks from another worktree during this campaign.

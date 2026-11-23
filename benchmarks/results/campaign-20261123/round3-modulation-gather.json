@@ -1,0 +1,206 @@
+{
+  "protocol": "onyx.native-optimization.v1",
+  "campaign": "local-single-image-20261123",
+  "round": 3,
+  "change": "Gather the six AdaLN modulation rows per token in one graph execution. Each block and step used to allocate six per-token buffers on the CPU and copy 70 MB into them, about 21 GB of copies and 1,800 allocations per image. The gathered values equal those copies bit for bit.",
+  "base_commit": "f33ee98",
+  "case": "h3-teapot-1024-seed42-v1",
+  "profile": "max-quality",
+  "device": {
+    "model_identifier": "Mac17,14",
+    "chip": "Apple M5 Max",
+    "gpu_cores": 32,
+    "physical_memory_bytes": 38654705664,
+    "os_version": "27.2.1"
+  },
+  "native_binary": {
+    "baseline_sha256": "3ba04003ca7abfd5eff73a8c8d5f5a7fdf67fb83e4d160f6b64843c61e619ac7",
+    "candidate_sha256": "f842f84d9a862cdc7051abbc2fc654027d311ef34e3131232b2735de5e6fc37b",
+    "same_binary": false
+  },
+  "method": "Same machine and W4 package; arms alternate in rotating order after per-arm warmups. Arm order: round 1: base, gather | round 2: gather, base | round 3: base, gather",
+  "baseline": {
+    "binary": ".build/round1-bin/onyx-native",
+    "native_args": [],
+    "environment": [],
+    "samples_seconds": [
+      26.229677707946394,
+      26.731634041992947,
+      26.69758554198779
+    ],
+    "seconds_median": 26.69758554198779,
+    "stage_seconds_median": {
+      "text": 2.244181459012907,
+      "dit": 19.944384665985126,
+      "vae": 4.323235583025962
+    },
+    "peak_bytes_max": 2273689600,
+    "output_sha256": [
+      "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1"
+    ],
+    "all_outputs_identical": true,
+    "runs": [
+      {
+        "seconds": 26.229677707946394,
+        "stage_seconds": {
+          "text": 2.244181459012907,
+          "dit": 19.652185832965188,
+          "vae": 4.323235583025962
+        },
+        "peak_rss_bytes": 2041102336,
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "dit_step_seconds": [
+          5.589,
+          2.727,
+          2.68,
+          2.719,
+          2.726,
+          2.705
+        ],
+        "dit_native_seconds": 19.540689,
+        "dit_prefetch_wait_seconds": 1.45847,
+        "dit_read_bytes": 85656876608
+      },
+      {
+        "seconds": 26.731634041992947,
+        "stage_seconds": {
+          "text": 2.255705833027605,
+          "dit": 19.944384665985126,
+          "vae": 4.521899499988649
+        },
+        "peak_rss_bytes": 2013446144,
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "dit_step_seconds": [
+          5.694,
+          2.728,
+          2.713,
+          2.82,
+          2.739,
+          2.733
+        ],
+        "dit_native_seconds": 19.823313,
+        "dit_prefetch_wait_seconds": 1.142149,
+        "dit_read_bytes": 85656876608
+      },
+      {
+        "seconds": 26.69758554198779,
+        "stage_seconds": {
+          "text": 2.2201288329670206,
+          "dit": 20.25602891697781,
+          "vae": 4.2118472079746425
+        },
+        "peak_rss_bytes": 2273689600,
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "dit_step_seconds": [
+          5.733,
+          3.034,
+          2.865,
+          2.693,
+          2.702,
+          2.714
+        ],
+        "dit_native_seconds": 20.130366,
+        "dit_prefetch_wait_seconds": 1.235686,
+        "dit_read_bytes": 85656876608
+      }
+    ]
+  },
+  "candidate": {
+    "binary": ".build/onyx-native",
+    "native_args": [],
+    "environment": "ONYX_VAE_BATCH=1",
+    "samples_seconds": [
+      25.38445850001881,
+      25.917631625023205,
+      24.963433834025636
+    ],
+    "seconds_median": 25.38445850001881,
+    "stage_seconds_median": {
+      "text": 2.2332480829791166,
+      "dit": 18.327640458999667,
+      "vae": 4.81319924996933
+    },
+    "peak_bytes_max": 1949827072,
+    "output_sha256": [
+      "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1"
+    ],
+    "all_outputs_identical": true,
+    "runs": [
+      {
+        "seconds": 25.38445850001881,
+        "stage_seconds": {
+          "text": 2.233645166037604,
+          "dit": 18.327640458999667,
+          "vae": 4.81319924996933
+        },
+        "peak_rss_bytes": 1949827072,
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "dit_step_seconds": [
+          5.709,
+          2.447,
+          2.401,
+          2.437,
+          2.429,
+          2.401
+        ],
+        "dit_native_seconds": 18.218889,
+        "dit_prefetch_wait_seconds": 2.019368,
+        "dit_read_bytes": 85656876608
+      },
+      {
+        "seconds": 25.917631625023205,
+        "stage_seconds": {
+          "text": 2.23045270901639,
+          "dit": 18.386886749998666,
+          "vae": 5.290825915988535
+        },
+        "peak_rss_bytes": 1814773760,
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "dit_step_seconds": [
+          5.721,
+          2.488,
+          2.475,
+          2.379,
+          2.371,
+          2.442
+        ],
+        "dit_native_seconds": 18.280404,
+        "dit_prefetch_wait_seconds": 1.961456,
+        "dit_read_bytes": 85656876608
+      },
+      {
+        "seconds": 24.963433834025636,
+        "stage_seconds": {
+          "text": 2.2332480829791166,
+          "dit": 18.203176875016652,
+          "vae": 4.51728779100813
+        },
+        "peak_rss_bytes": 1814724608,
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "dit_step_seconds": [
+          5.773,
+          2.448,
+          2.398,
+          2.341,
+          2.327,
+          2.365
+        ],
+        "dit_native_seconds": 18.057761,
+        "dit_prefetch_wait_seconds": 1.87462,
+        "dit_read_bytes": 85656876608
+      }
+    ]
+  },
+  "speedup_vs_baseline": 1.0517295668122293,
+  "latency_reduction": 0.04918523586725865,
+  "output_sha256": [
+    "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1"
+  ],
+  "outputs_match_baseline": true,
+  "decision": "accepted",
+  "notes": [
+    "The candidate is the round-3 build with ONYX_VAE_BATCH=1, so the VAE stage runs one tile at a time in both arms and only the gather differs.",
+    "The VAE stage moved between 4.2 s and 5.3 s in both arms with the memory pressure of the machine; the DiT stage is consistent in every pair.",
+    "A fused gated-residual-plus-norm graph was rejected in this round: it changed the PNG bytes, because the fused graph keeps the residual sum at higher precision before the norm reads it."
+  ]
+}
