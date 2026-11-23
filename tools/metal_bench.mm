@@ -31,7 +31,7 @@ VariantConfig variant_config(const std::string& variant) {
   if (variant == "tile32") return {"onyx_q4_gemm_fp16acc32_tile32", MTLSizeMake(16, 16, 1), 32, 32};
   if (variant == "simd") return {"onyx_q4_gemm_simd_bn32_bk32", MTLSizeMake(32, 2, 2), 32, 32};
   if (variant == "mlx-steel") return {"affine_qmm_t_float16_t_gs_64_b_4_hgs_0_alN_0_batch_0_bm_32_bn_32", MTLSizeMake(32, 2, 2), 32, 32};  // Four simdgroups cover four quadrants.
-  // See kernel-agent/contract.md, experiments E1–E8, for the MMA comparisons.
+  // See benchmarks/kernel-experiments/q4-mma-v1.md for the MMA comparisons.
   if (variant == "mma") return {"onyx_q4_gemm_fp16acc32_mma", MTLSizeMake(32, 1, 1), 32, 32};    // 1 simdgroup/TG，32x32 tile
   if (variant == "mma64") return {"onyx_q4_gemm_fp16acc32_mma64", MTLSizeMake(128, 1, 1), 64, 64};  // 4 simdgroup，64x64 tile
   if (variant.rfind("splitk", 0) == 0) return {"onyx_q4_gemm_fp16acc32_splitk", MTLSizeMake(32, 1, 1), 16, 32};  // split-k MMA for small m (TM=16, TN=32); k slices parsed from the name.

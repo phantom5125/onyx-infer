@@ -403,8 +403,8 @@ Tensor GraphSession::linear(WeightStore& store, const std::string& prefix, const
     }
   }
 
-  // The opt-in FP16 backends preserve the kernel-agent dispatch. BF16
-  // tensors must never be passed to the FP16 MMA kernel.
+  // The opt-in FP16 backends follow the measured shape dispatch. Keep BF16
+  // tensors on BF16-compatible paths.
 #ifdef ONYX_MLX_BACKEND
   if ((mode == "mlx" || mode == "auto") && x.dtype == MPSDataTypeFloat16 &&
       (group_size == 32 || group_size == 64 || group_size == 128) && k % group_size == 0) {
