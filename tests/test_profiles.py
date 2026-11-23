@@ -9,6 +9,7 @@ from onyx.native import (
     main as native_main,
     prune_modulation_cache,
     resolve_modulation_cache,
+    resolve_dit_prefetch,
     resolve_weight_prefetch,
 )
 from onyx.profiles import (
@@ -144,6 +145,35 @@ def test_prune_modulation_cache_keeps_the_newest_entries(tmp_path: Path):
     assert prune_modulation_cache(tmp_path, keep=2) == names[:2]
     assert sorted(path.name for path in tmp_path.iterdir()) == sorted(names[2:] + ["notes.txt"])
     assert prune_modulation_cache(tmp_path, keep=2) == []
+
+
+def test_dit_prefetch_yields_to_the_weight_cache_unless_requested():
+    # The profile default: prefetch while streaming, and let a weight cache replace it.
+    assert resolve_dit_prefetch(True, None, False, 0)
+    assert not resolve_dit_prefetch(True, None, False, 10240 * 2**20)
+    # An explicit request wins in both directions.
+    assert resolve_dit_prefetch(False, True, False, 0)
+    assert not resolve_dit_prefetch(True, False, False, 0)
+    assert not resolve_dit_prefetch(True, False, False, 10240 * 2**20)
+    assert resolve_dit_prefetch(False, None, True, 0)
+    # Requesting prefetch next to a cache returns True, which main() turns into an error.
+    assert resolve_dit_prefetch(True, True, False, 10240 * 2**20)
+    assert resolve_dit_prefetch(True, None, True, 10240 * 2**20)
+
+
+def test_weight_cache_budget_replaces_dit_prefetch(capsys):
+    # The documented tuning, --dit-cache-mib 10240 with the default profile, must parse. The
+    # run then stops at the missing tokenizer of the fixture instead of at an argument error.
+    with pytest.raises(Exception) as error:
+        native_main(["--models", "fixture", "--prompt", "test", "--output", "fixture.png", "--dit-cache-mib", "10240"])
+    assert "prefetch" not in str(error.value)
+    assert "prefetch" not in capsys.readouterr().err
+    # Asking for both is still an error.
+    with pytest.raises(SystemExit) as exit:
+        native_main(["--models", "fixture", "--prompt", "test", "--output", "fixture.png",
+                     "--dit-cache-mib", "10240", "--dit-prefetch"])
+    assert exit.value.code == 2
+    assert "requires a zero DiT weight-cache budget" in capsys.readouterr().err
 
 
 def test_dit_cache_bytes_resolution():

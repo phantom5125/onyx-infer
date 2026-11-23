@@ -74,7 +74,7 @@ def main(argv=None):
         if not 0 <= args.dit_cache_mib < 2**44:
             parser.error("--dit-cache-mib must be a nonnegative budget representable in 64-bit bytes")
         dit_weight_cache_bytes = args.dit_cache_mib * 2**20
-    dit_prefetch = text_prefetch or args.dit_prefetch
+    dit_prefetch = resolve_dit_prefetch(text_prefetch, args.prefetch_weights, args.dit_prefetch, dit_weight_cache_bytes)
     prefetch = {"text": text_prefetch, "dit": dit_prefetch}
     if dit_prefetch and dit_weight_cache_bytes:
         parser.error("DiT weight prefetch requires a zero DiT weight-cache budget")
@@ -158,6 +158,19 @@ def main(argv=None):
     }))
 
 
+def resolve_dit_prefetch(knob_prefetch: bool, requested: bool | None, dit_requested: bool, cache_bytes: int) -> bool:
+    """Return whether the DiT stage reads the next block's weights ahead of the GPU.
+
+    A nonzero weight-cache budget replaces prefetch in the DiT stage unless the request asks
+    for prefetch explicitly, which the caller rejects.
+    """
+    if dit_requested or requested is True:
+        return True
+    if requested is False:
+        return False
+    return knob_prefetch and cache_bytes == 0
+
+
 def stage_details(stage: str, stdout: str) -> dict:
     """Return the JSON line that a native stage printed about itself."""
     for line in stdout.splitlines():
@@ -193,7 +206,9 @@ def verify_stage_echo(stage: str, stdout: str, profile: str, weights: str, cache
     if details.get("weights") not in (None, weights):
         raise RuntimeError(f"Native {stage} echoed weights {details.get('weights')!r}, requested {weights!r}")
     if stage in ("text", "dit") and details.get("prefetch_weights", False) != prefetch:
-        raise RuntimeError(f"Native {stage} echoed prefetch {details.get('prefetch_weights')!r}, requested {prefetch}")
+        raise RuntimeError(f"Native {stage} echoed prefetch {details.get('prefetch_weights')!r}, requested {prefetch}. "
+                           "A native build without weight prefetch echoes nothing for it: rebuild the engine "
+                           "or pass --no-prefetch-weights.")
     if stage == "dit":
         cache_echo = details.get("weight_cache") or {}
         if cache_echo.get("budget") != cache_bytes:
