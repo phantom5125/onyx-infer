@@ -1,9 +1,16 @@
 import copy
+import os
 from pathlib import Path
 
 import pytest
 
-from onyx.native import main as native_main, resolve_weight_prefetch
+from onyx.native import (
+    DEFAULT_MODULATION_CACHE,
+    main as native_main,
+    prune_modulation_cache,
+    resolve_modulation_cache,
+    resolve_weight_prefetch,
+)
 from onyx.profiles import (
     DEFAULT_REGISTRY_PATH,
     ProfileError,
@@ -117,6 +124,26 @@ def test_resolve_weight_prefetch_follows_profile_unless_requested():
     assert not resolve_weight_prefetch("next", False)
     with pytest.raises(ProfileError):
         resolve_weight_prefetch("maybe", None)
+
+
+def test_resolve_modulation_cache_defaults_to_the_user_cache():
+    chosen = Path("/tmp/chosen-modulation")
+    assert resolve_modulation_cache(None, False) == DEFAULT_MODULATION_CACHE
+    assert resolve_modulation_cache(chosen, False) == chosen
+    assert resolve_modulation_cache(None, True) is None
+    assert resolve_modulation_cache(chosen, True) is None
+
+
+def test_prune_modulation_cache_keeps_the_newest_entries(tmp_path: Path):
+    names = [f"{index:064x}.adaln" for index in range(4)]
+    for index, name in enumerate(names):
+        entry = tmp_path / name
+        entry.write_bytes(b"x")
+        os.utime(entry, (1000 + index, 1000 + index))
+    (tmp_path / "notes.txt").write_text("not an entry")
+    assert prune_modulation_cache(tmp_path, keep=2) == names[:2]
+    assert sorted(path.name for path in tmp_path.iterdir()) == sorted(names[2:] + ["notes.txt"])
+    assert prune_modulation_cache(tmp_path, keep=2) == []
 
 
 def test_dit_cache_bytes_resolution():

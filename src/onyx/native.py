@@ -15,6 +15,32 @@ from onyx.profiles import ProfileError, dit_cache_bytes, load_registry, registry
 
 
 ROOT = Path(__file__).resolve().parents[2]
+# Regenerable tables belong in the user cache. An entry binds one native build, so every
+# rebuild of the engine leaves the previous entry behind at about 55.5 MiB.
+DEFAULT_MODULATION_CACHE = Path.home() / "Library" / "Caches" / "onyx-infer" / "modulation"
+MODULATION_CACHE_KEEP = 2
+
+
+def resolve_modulation_cache(requested: Path | None, disabled: bool) -> Path | None:
+    """Return the modulation cache directory, or None to compute the tables on every request."""
+    if disabled:
+        return None
+    return requested if requested is not None else DEFAULT_MODULATION_CACHE
+
+
+def prune_modulation_cache(directory: Path, keep: int = MODULATION_CACHE_KEEP) -> list[str]:
+    """Delete the oldest modulation entries beyond `keep` and return their names, oldest first.
+
+    Only the default directory is pruned. A directory that the caller chose may hold
+    entries that it wants to keep.
+    """
+    entries = sorted((path for path in directory.glob("*.adaln") if path.is_file()),
+                     key=lambda path: path.stat().st_mtime, reverse=True)
+    removed = []
+    for stale in reversed(entries[keep:]):
+        stale.unlink()
+        removed.append(stale.name)
+    return removed
 
 
 def main(argv=None):
@@ -27,7 +53,10 @@ def main(argv=None):
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--native-bin", type=Path, default=ROOT / ".build/onyx-native")
     parser.add_argument("--profile", default="max-quality", help="Execution profile from config/profiles/profiles.v1.json")
-    parser.add_argument("--modulation-cache", type=Path, help="Directory for reusable DiT timestep modulation tables")
+    parser.add_argument("--modulation-cache", type=Path,
+                        help="Directory for reusable DiT timestep modulation tables (default: ~/Library/Caches/onyx-infer/modulation)")
+    parser.add_argument("--no-modulation-cache", action="store_true",
+                        help="Compute the DiT modulation tables on every request and write no cache")
     parser.add_argument("--dit-cache-mib", type=int, help="Override the DiT weight-cache budget in MiB")
     parser.add_argument("--dit-prefetch", action="store_true", help="Read the next DiT block's weights during GPU computation, whatever the profile requests")
     parser.add_argument("--prefetch-weights", action=argparse.BooleanOptionalAction, default=None,
@@ -49,6 +78,7 @@ def main(argv=None):
     prefetch = {"text": text_prefetch, "dit": dit_prefetch}
     if dit_prefetch and dit_weight_cache_bytes:
         parser.error("DiT weight prefetch requires a zero DiT weight-cache budget")
+    modulation_cache = resolve_modulation_cache(args.modulation_cache, args.no_modulation_cache)
     environment = os.environ.copy()
     environment["ONYX_Q4_LINEAR"] = profile_knobs["q4_kernel"]
     binary = args.native_bin.resolve()
@@ -62,6 +92,8 @@ def main(argv=None):
     began = time.monotonic()
     timings = {}
     stage_logs = {}
+    modulation_cache_status = None
+    pruned = []
     with tempfile.TemporaryDirectory(prefix="onyx-native-") as temporary:
         work = Path(temporary)
         (work / "tokens.json").write_text(json.dumps({"ids": ids, "count": len(ids)}))
@@ -88,8 +120,8 @@ def main(argv=None):
             declared_cache = dit_weight_cache_bytes if name == "dit" else 0
             if name == "dit":
                 command.extend(["--cache-bytes", str(declared_cache)])
-                if args.modulation_cache is not None:
-                    command.extend(["--modulation-cache", str(args.modulation_cache.resolve())])
+                if modulation_cache is not None:
+                    command.extend(["--modulation-cache", str(modulation_cache.resolve())])
             if name in prefetch:
                 command.append("--prefetch-weights" if prefetch[name] else "--no-prefetch-weights")
             start = time.monotonic()
@@ -98,7 +130,14 @@ def main(argv=None):
             stage_logs[name] = {"stdout": result.stdout, "stderr": result.stderr}
             if result.returncode:
                 raise RuntimeError(f"Native {name} failed: {result.stderr.strip()}")
-            verify_stage_echo(name, result.stdout, args.profile, declared_weights, declared_cache, prefetch.get(name, False))
+            verify_stage_echo(name, result.stdout, args.profile, declared_weights, declared_cache, prefetch.get(name, False),
+                              name == "dit" and modulation_cache is not None)
+            if name == "dit":
+                modulation_cache_status = stage_details("dit", result.stdout).get("modulation_cache")
+        if modulation_cache_status == "miss" and modulation_cache is not None and \
+                modulation_cache.resolve() == DEFAULT_MODULATION_CACHE.resolve():
+            # The default directory holds only the newest entries of the current build.
+            pruned = prune_modulation_cache(modulation_cache)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         partial = args.output.with_suffix(args.output.suffix + ".part")
         shutil.copyfile(work / "image.png", partial)
@@ -110,11 +149,28 @@ def main(argv=None):
         "profile_registry_sha256": registry_digest(),
         "dit_weight_cache_bytes": dit_weight_cache_bytes,
         "weight_prefetch": prefetch,
+        "modulation_cache": {"directory": str(modulation_cache) if modulation_cache is not None else None,
+                             "status": modulation_cache_status, "pruned": pruned},
         "token_count": len(ids),
         "stage_seconds": timings,
         "stage_logs": stage_logs,
         "total_seconds": time.monotonic() - began,
     }))
+
+
+def stage_details(stage: str, stdout: str) -> dict:
+    """Return the JSON line that a native stage printed about itself."""
+    for line in stdout.splitlines():
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            details = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if details.get("stage") == stage:
+            return details
+    return {}
 
 
 def resolve_weight_prefetch(knob: str, requested: bool | None) -> bool:
@@ -127,30 +183,24 @@ def resolve_weight_prefetch(knob: str, requested: bool | None) -> bool:
 
 
 def verify_stage_echo(stage: str, stdout: str, profile: str, weights: str, cache_bytes: int = 0,
-                      prefetch: bool = False) -> None:
+                      prefetch: bool = False, modulation_cache: bool = False) -> None:
     """Verify that the native stage reports the requested profile and settings."""
-    for line in stdout.splitlines():
-        line = line.strip()
-        if not line.startswith("{"):
-            continue
-        try:
-            details = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if details.get("stage") != stage:
-            continue
-        if details.get("profile") != profile:
-            raise RuntimeError(f"Native {stage} echoed profile {details.get('profile')!r}, requested {profile!r}")
-        if details.get("weights") not in (None, weights):
-            raise RuntimeError(f"Native {stage} echoed weights {details.get('weights')!r}, requested {weights!r}")
-        if stage == "dit":
-            cache_echo = details.get("weight_cache") or {}
-            if cache_echo.get("budget") != cache_bytes:
-                raise RuntimeError(f"Native dit echoed cache budget {cache_echo.get('budget')!r}, requested {cache_bytes}")
-        if stage in ("text", "dit") and details.get("prefetch_weights", False) != prefetch:
-            raise RuntimeError(f"Native {stage} echoed prefetch {details.get('prefetch_weights')!r}, requested {prefetch}")
-        return
-    raise RuntimeError(f"Native {stage} did not echo a stage JSON line; cannot verify profile {profile!r}")
+    details = stage_details(stage, stdout)
+    if not details:
+        raise RuntimeError(f"Native {stage} did not echo a stage JSON line; cannot verify profile {profile!r}")
+    if details.get("profile") != profile:
+        raise RuntimeError(f"Native {stage} echoed profile {details.get('profile')!r}, requested {profile!r}")
+    if details.get("weights") not in (None, weights):
+        raise RuntimeError(f"Native {stage} echoed weights {details.get('weights')!r}, requested {weights!r}")
+    if stage in ("text", "dit") and details.get("prefetch_weights", False) != prefetch:
+        raise RuntimeError(f"Native {stage} echoed prefetch {details.get('prefetch_weights')!r}, requested {prefetch}")
+    if stage == "dit":
+        cache_echo = details.get("weight_cache") or {}
+        if cache_echo.get("budget") != cache_bytes:
+            raise RuntimeError(f"Native dit echoed cache budget {cache_echo.get('budget')!r}, requested {cache_bytes}")
+        status = details.get("modulation_cache")
+        if modulation_cache != (status != "disabled"):
+            raise RuntimeError(f"Native dit echoed modulation cache {status!r}, requested {modulation_cache}")
 
 
 if __name__ == "__main__":

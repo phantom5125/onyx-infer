@@ -62,6 +62,17 @@ The gain is much smaller than the earlier operator comparison suggested, because
 
 Two MPSGraph changes were tried at the engine entry. Dequantizing straight to a 16-bit type gave wrong results and is rejected. Moving the transpose off the weight is bit-identical, 6–10% slower at 1093 rows and 8–12% faster at 16384 rows. It stays behind `ONYX_Q4_GRAPH=f32-t` until the 16 MP path is measured end to end.
 
+### Round 5: modulation cache on by default
+
+The six-step AdaLN tables depend only on the model and the schedule. The default request nevertheless recomputed them, which streams 26 GB of projection weights, and the optional `--modulation-cache` stayed off unless a directory was passed. The launcher now caches the tables in `~/Library/Caches/onyx-infer/modulation`, keeps the two newest entries there, and passes `--no-modulation-cache` through for requests that want the tables computed every time.
+
+| Setting | End-to-end samples | Median total | DiT | Peak RSS |
+| --- | --- | ---: | ---: | ---: |
+| `--no-modulation-cache` | 22.54 / 22.78 / 22.71 s | 22.71 s | 18.19 s | 2.19 GiB |
+| Default, cache hit | 19.35 / 19.55 / 19.08 s | **19.35 s** | 14.84 s | 1.80 GiB |
+
+Both arms are the round-4 binary with `max-quality`. A hit reads 59.5 GB of weights instead of 85.7 GB and brings the first sampling step from 5.7 s down to the 2.4 s of the other five. All six PNGs share one SHA-256. The first request with a new engine build is a miss and costs the same as the baseline. [Round record](../benchmarks/results/campaign-20261123/round5-default-modulation-cache.json)
+
 ## Production and isolated measurements
 
 | Configuration | DiT stage | End-to-end per image | Observation |

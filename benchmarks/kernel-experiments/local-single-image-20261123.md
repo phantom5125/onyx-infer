@@ -90,6 +90,18 @@ and dispatched directly by the engine through Metal Performance Primitives.
   transpose off the weight (bit-identical, faster only at 16384 rows).
 - Evidence: `benchmarks/results/campaign-20261123/round4-nax-q4-kernel.json`.
 
+## Outcome, round 5: modulation cache on by default
+
+Promoted: the launcher caches the AdaLN tables in the user cache directory,
+keeps the two newest entries, and offers `--no-modulation-cache`.
+
+- Same binary with the cache switched by flag, interleaved: 22.71 → 19.35 s
+  median (1.17×), DiT 18.19 → 14.84 s. Weight bytes read 85.7 → 59.5 GB and the
+  first sampling step 5.7 → 2.4 s.
+- The PNG keeps the SHA-256 of the uncached path. A first request with a new
+  engine build is a miss and costs the same as before.
+- Evidence: `benchmarks/results/campaign-20261123/round5-default-modulation-cache.json`.
+
 ## Measurement note: another session on the same machine
 
 A second session ran native benchmarks from another worktree during this campaign.

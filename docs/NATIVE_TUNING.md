@@ -4,12 +4,15 @@ Use the default `max-quality` profile with a built native engine and a staged W4
 
 | Option | Scope | Cost on the tested model |
 | --- | --- | --- |
-| `--modulation-cache <directory>` | Reuses the six-step BF16 AdaLN tables across prompts, seeds, and image sizes | About 55.5 MiB per compatible table on disk |
+| `--modulation-cache <directory>` | Moves the six-step BF16 AdaLN tables to another directory. The cache is on by default. | About 55.5 MiB per compatible table on disk |
+| `--no-modulation-cache` | Computes the AdaLN tables on every request and keeps no cache | The first sampling step then streams 26 GB of projection weights |
 | `--dit-cache-mib <MiB>` | Keeps packed DiT weights in memory for reuse across the six steps of one request | A configurable in-memory budget. Zero streams the weights. |
 
 Weight prefetch is part of the default `max-quality` profile: the text and DiT stages read the next block's weights while the GPU computes the current one. Pass `--no-prefetch-weights` to compare against serial reads. The DiT stage prefetches only with a zero weight-cache budget, so `--dit-cache-mib` above zero replaces prefetch with the cache. [Round 1 measurements](OPTIMIZATION_CAMPAIGN.md#local-single-image-campaign)
 
-Without a modulation cache, the first sampling step computes each AdaLN table just before its block uses it, which streams the 26 GB of projection weights alongside the block weights. That step is bounded by disk reads and takes about 5.5 s on the reference machine where the other five take about 2.7 s each. A modulation cache removes those reads as well as the table computation.
+The modulation cache is on by default and lives in `~/Library/Caches/onyx-infer/modulation`. Each entry binds one native build, so the launcher keeps the two newest entries of that directory and deletes older ones after it writes a new one. A directory chosen with `--modulation-cache` is never pruned.
+
+Without a modulation cache, the first sampling step computes each AdaLN table just before its block uses it, which streams the 26 GB of projection weights alongside the block weights. That step is bounded by disk reads and takes about 5.5 s on the reference machine where the other five take about 2.2–2.7 s each. The first request with a new native build pays the same cost and writes the entry; later requests load it. [Round 5 measurements](OPTIMIZATION_CAMPAIGN.md#local-single-image-campaign)
 
 The modulation cache keys entries by the model file identity, PDD schedule, native build, GPU, and macOS version. A missing entry or checksum failure triggers recomputation. Entries are disposable and can be removed to reclaim space. Each request reports its modulation-cache status, including `miss` after computing and saving a table and `hit` after loading one. A request also reports `write_failed` if it could compute the table but could not save it. Check the cache directory and permissions if this status recurs.
 

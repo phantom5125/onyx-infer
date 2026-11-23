@@ -110,7 +110,7 @@ Use `memory-min` for all-streaming weights or `speed-focus` to try the BF16 SIMD
 
 [Onyx Studio](plugin/onyx-studio/README.md) adds local image generation, engine inspection, and an illustrated book reader to DeepSeek Harness.
 
-For repeated native generation, pass `--modulation-cache <directory>` to reuse the six-step DiT modulation tables across prompts, seeds, and image sizes. The first request builds the tables. Later requests can reuse them, and the DiT stage reports the cache status.
+The six-step DiT modulation tables depend only on the model and the schedule, so `native-generate` caches them by default in `~/Library/Caches/onyx-infer/modulation` and reuses them across prompts, seeds, and image sizes. The first request with a new engine build computes them, which streams the 26 GB of AdaLN projection weights. Later requests load the table. `--modulation-cache <directory>` moves the cache and `--no-modulation-cache` turns it off.
 
 For 1024×1024 requests on the 36 GiB benchmark machine, `--dit-cache-mib 10240` speeds up the default MPSGraph path by keeping repeatedly read weights in memory. Native output reports the applied budget. At 16 MP, the same budget increased system swap. [Tuning and verification](docs/NATIVE_TUNING.md)
 

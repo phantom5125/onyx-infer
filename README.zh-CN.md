@@ -97,7 +97,7 @@ group-wise W4 量化、分阶段驻留、逐 block 流式、分块注意力，�
 
 [Onyx Studio](plugin/onyx-studio/README.md) 为 DeepSeek Harness 提供本地出图、引擎观测和图文阅读器。
 
-连续出图时可给 `native-generate` 加上 `--modulation-cache <目录>`，在不同提示词、种子和画幅之间复用六步 DiT 调制表。首次请求生成表，后续请求复用，DiT 日志记录命中状态。
+六步 DiT 调制表只取决于模型和采样计划，因此 `native-generate` 默认把它缓存在 `~/Library/Caches/onyx-infer/modulation`，在不同提示词、种子和画幅之间复用。换用新的引擎构建后，首次请求需要计算调制表并读入 26 GB 的 AdaLN 投影权重，之后的请求直接加载。`--modulation-cache <目录>` 可更换缓存位置，`--no-modulation-cache` 关闭缓存。
 
 在 36 GiB 基准机上，1024×1024 请求可通过 `--dit-cache-mib 10240` 缓存反复读取的权重，加速默认 MPSGraph 路径。原生日志会报告实际预算。同一预算在 16 MP 对照中增加了系统 swap。[缓存调优与验证](docs/NATIVE_TUNING.md)
 
