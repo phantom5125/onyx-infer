@@ -8,12 +8,16 @@
 #import <mlx/mlx.h>
 #endif
 
+#include <condition_variable>
+#include <deque>
+#include <exception>
 #include <functional>
-#include <future>
 #include <list>
 #include <map>
 #include <mutex>
+#include <set>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -58,7 +62,10 @@ class WeightStore {
   Tensor scale(const std::string& name);
   Tensor embedding(const std::string& name, const std::vector<int32_t>& ids);
   std::string file_identity() const;
-  void prefetch(std::vector<std::string> names);
+  // Queue background reads for the tensors stored as prefix + suffix, with the scales of a
+  // quantized tensor read right after it. Streaming only. tensor() and scale() take the
+  // results and wait for a read that is still in flight.
+  void prefetch(const std::string& prefix, const std::vector<std::string>& suffixes);
   void finish_prefetch();
   double prefetch_wait_seconds() const { return prefetch_wait_ns_ / 1e9; }
   uint64_t bytes_read() const { return bytes_read_; }
@@ -74,6 +81,8 @@ class WeightStore {
   int fd_;
   uint64_t data_begin_;
   NSDictionary* specs_;
+  std::vector<std::string> names_;  // Sorted tensor names.
+  id<MTLDevice> device_;
   bool resident_;
   uint64_t cache_budget_;
   uint64_t cache_bytes_ = 0;
@@ -88,9 +97,26 @@ class WeightStore {
   uint64_t read_ns_ = 0;
   std::map<std::string, uint64_t> read_bytes_by_name_;
   std::mutex read_stats_mutex_;
-  uint64_t prefetch_wait_ns_ = 0;
+  // Reader pipeline. The reader threads share only the queue, the in-flight count, the
+  // results, and the errors. The caches above stay on the calling thread.
+  struct Request {
+    std::string name;
+    bool scales = false;
+  };
+  Tensor read_scale(const std::string& name);
+  Tensor take_prefetched(const std::string& key);
+  void read_loop();
+  std::mutex prefetch_mutex_;
+  std::condition_variable work_available_;
+  std::condition_variable result_ready_;
+  std::deque<Request> prefetch_queue_;
+  std::set<std::string> prefetch_pending_;  // Queued, in flight, or ready and not yet taken
   std::map<std::string, Tensor> prefetched_;
-  std::future<std::map<std::string, Tensor>> prefetch_;
+  std::map<std::string, std::exception_ptr> prefetch_errors_;
+  size_t prefetch_active_ = 0;
+  bool prefetch_stop_ = false;
+  std::vector<std::thread> prefetch_readers_;
+  uint64_t prefetch_wait_ns_ = 0;
   Tensor read(const std::string& name, const std::string& field, bool scales);
 };
 

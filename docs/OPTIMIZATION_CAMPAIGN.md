@@ -4,6 +4,25 @@ The campaign compared Onyx kernels with the MIT-licensed MLX Steel affine QMM im
 
 The experiment archive records the Q4 MMA and small-M split-K cases, their acceptance criteria, and the evidence behind each decision. [Kernel experiment contracts](../benchmarks/kernel-experiments/README.md)
 
+## Local single-image campaign
+
+Five rounds on one working condition: a single 1024×1024 request on the M5 Max with 36 GB, the default `max-quality` profile, no on-disk caches, and weights streaming from the internal SSD. Each round is measured with the engine-level interleaved A/B in `benchmarks/ab_compare.py` against the binary of the previous round: one warmup and three measured runs per arm in rotating order, with output hashes compared. [Round records](../benchmarks/results/campaign-20261123/)
+
+The f90b0ce baseline took 42.68 s in a profiled run. DiT took 32.79 s, of which 13.97 s was serial weight reads, 12.44 s Q4 linears, and 4.2 s other graph operations. The text stage took 5.14 s with 3.10 s of reads, and the VAE 4.73 s.
+
+### Round 1: overlap weight reads with GPU compute
+
+The weight store now queues background reads. Two reader threads stay one block ahead of the GPU for every DiT block tensor, for each text encoder layer, and for the AdaLN projections, and the pipeline continues across sampling steps. Without an on-disk modulation cache, the first sampling step computes each AdaLN table just before its block uses it, so its 520 MB projection weight streams alongside the block weights instead of in a serial pass.
+
+| Build | End-to-end samples | Median total | Text | DiT | VAE | Peak RSS |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| f90b0ce, prefetch off | 41.74 / 41.88 / 41.95 s | 41.88 s | 5.23 s | 31.98 s | 4.71 s | 1.79 GiB |
+| Round 1, prefetch on | 26.40 / 26.23 / 26.27 s | **26.27 s** | 2.23 s | 19.64 s | 4.39 s | 1.86 GiB |
+
+All six PNGs had the same SHA-256, and both arms read 85,656,876,608 weight bytes. A second interleaved session measured 38.86 → 27.45 s (1.42×) on a warmer page cache, so compare arms within a session and not across sessions. [Round record](../benchmarks/results/campaign-20261123/round1-prefetch-pipeline.json)
+
+Cold model files deliver about 6.4 GiB/s on this machine with any number of reader threads, so the remaining I/O time follows from the bytes read. The AdaLN projections alone stream 26 GB, and an on-disk modulation cache skips them.
+
 ## Production and isolated measurements
 
 | Configuration | DiT stage | End-to-end per image | Observation |
@@ -110,4 +129,4 @@ python -m onyx package-w4 --source artifacts/models/h3-image-source --original-m
 python3 tools/profile_quality_gate.py --candidate speed-focus
 ```
 
-Diagnostic environment variables include `ONYX_SIMD_SKIP_ODD=1` for mixed-path measurements, `ONYX_SIMD_NOWAIT=1` for deferred waits, and `ONYX_GPU_COUNTERS=1` for counter probes on eligible devices.
+Diagnostic environment variables include `ONYX_SIMD_SKIP_ODD=1` for mixed-path measurements, `ONYX_SIMD_NOWAIT=1` for deferred waits, `ONYX_GPU_COUNTERS=1` for counter probes on eligible devices, `ONYX_PREFETCH_THREADS=<n>` for the number of background readers, and `ONYX_PREFETCH_TRACE=1` to list each weight that a stage still reads synchronously.

@@ -1,0 +1,251 @@
+{
+  "protocol": "onyx.native-optimization.v1",
+  "campaign": "local-single-image-20261123",
+  "round": 1,
+  "change": "Stream the next block's weights through a background reader pipeline while the GPU computes: every tensor of a DiT block including scales and norms, each text encoder layer, and the AdaLN projections. Without an on-disk modulation cache the first sampling step computes each AdaLN table just before its block uses it, so the 520 MB projection weights stream alongside the block weights instead of in a serial pass. Enabled by the new weight_prefetch profile knob for max-quality.",
+  "base_commit": "f90b0ce",
+  "case": "h3-teapot-1024-seed42-v1",
+  "profile": "max-quality",
+  "device": {
+    "model_identifier": "Mac17,14",
+    "chip": "Apple M5 Max",
+    "gpu_cores": 32,
+    "physical_memory_bytes": 38654705664,
+    "os_version": "27.2.1",
+    "os_build": "26B131"
+  },
+  "native_binary": {
+    "baseline_sha256": "79910267e635e9985cedfd0f29f5eb714e7ff7ce479589340360c3ff1cc00007",
+    "candidate_sha256": "3ba04003ca7abfd5eff73a8c8d5f5a7fdf67fb83e4d160f6b64843c61e619ac7",
+    "note": "The candidate hash is the build of the committed round-1 source."
+  },
+  "method": "Same machine and W4 package. One warmup per arm, then three measured runs per arm in rotating order (base/cand, cand/base, base/cand). The baseline is the f90b0ce build run with weight prefetch off, which is its default.",
+  "baseline": {
+    "samples_seconds": [
+      41.73746775003383,
+      41.88026983401505,
+      41.95277570904
+    ],
+    "seconds_median": 41.88026983401505,
+    "stage_seconds_median": {
+      "text": 5.225107874954119,
+      "dit": 31.979118125047535,
+      "vae": 4.7124207080341876
+    },
+    "peak_bytes_max": 1926774784,
+    "output_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+    "all_outputs_identical": true,
+    "runs": [
+      {
+        "seconds": 41.73746775003383,
+        "stage_seconds": {
+          "text": 5.312161082983948,
+          "dit": 31.785260499978904,
+          "vae": 4.629521541995928
+        },
+        "peak_rss_bytes": 1825210368,
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "dit_native_seconds": 31.704217,
+        "dit_modulation_seconds": null,
+        "dit_prefetch_wait_seconds": 0.0,
+        "dit_step_seconds": [],
+        "dit_read_bytes": 85656876608,
+        "text_native_seconds": 5.27556,
+        "text_prefetch_wait_seconds": 0.0
+      },
+      {
+        "seconds": 41.88026983401505,
+        "stage_seconds": {
+          "text": 5.0739258750109,
+          "dit": 31.979118125047535,
+          "vae": 4.816444833006244
+        },
+        "peak_rss_bytes": 1896808448,
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "dit_native_seconds": 31.891075,
+        "dit_modulation_seconds": null,
+        "dit_prefetch_wait_seconds": 0.0,
+        "dit_step_seconds": [],
+        "dit_read_bytes": 85656876608,
+        "text_native_seconds": 5.035675,
+        "text_prefetch_wait_seconds": 0.0
+      },
+      {
+        "seconds": 41.95277570904,
+        "stage_seconds": {
+          "text": 5.225107874954119,
+          "dit": 32.005344999954104,
+          "vae": 4.7124207080341876
+        },
+        "peak_rss_bytes": 1926774784,
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "dit_native_seconds": 31.921754,
+        "dit_modulation_seconds": null,
+        "dit_prefetch_wait_seconds": 0.0,
+        "dit_step_seconds": [],
+        "dit_read_bytes": 85656876608,
+        "text_native_seconds": 5.188998,
+        "text_prefetch_wait_seconds": 0.0
+      }
+    ]
+  },
+  "candidate": {
+    "samples_seconds": [
+      26.398922790947836,
+      26.225475041021127,
+      26.265455124957953
+    ],
+    "seconds_median": 26.265455124957953,
+    "stage_seconds_median": {
+      "text": 2.22987145796651,
+      "dit": 19.64333104196703,
+      "vae": 4.387621457979549
+    },
+    "peak_bytes_max": 1998012416,
+    "output_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+    "all_outputs_identical": true,
+    "runs": [
+      {
+        "seconds": 26.398922790947836,
+        "stage_seconds": {
+          "text": 2.22987145796651,
+          "dit": 19.72055279102642,
+          "vae": 4.4390178339672275
+        },
+        "peak_rss_bytes": 1956298752,
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "dit_native_seconds": 19.626101,
+        "dit_modulation_seconds": 0.03045,
+        "dit_prefetch_wait_seconds": 1.523462,
+        "dit_step_seconds": [
+          5.589,
+          2.744,
+          2.714,
+          2.721,
+          2.728,
+          2.743
+        ],
+        "dit_read_bytes": 85656876608,
+        "text_native_seconds": 2.196243,
+        "text_prefetch_wait_seconds": 0.103926
+      },
+      {
+        "seconds": 26.225475041021127,
+        "stage_seconds": {
+          "text": 2.2386800419772044,
+          "dit": 19.59779145900393,
+          "vae": 4.379765665973537
+        },
+        "peak_rss_bytes": 1904312320,
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "dit_native_seconds": 19.502618,
+        "dit_modulation_seconds": 0.027877,
+        "dit_prefetch_wait_seconds": 1.60315,
+        "dit_step_seconds": [
+          5.57,
+          2.733,
+          2.688,
+          2.719,
+          2.708,
+          2.678
+        ],
+        "dit_read_bytes": 85656876608,
+        "text_native_seconds": 2.203187,
+        "text_prefetch_wait_seconds": 0.210142
+      },
+      {
+        "seconds": 26.265455124957953,
+        "stage_seconds": {
+          "text": 2.2246733749634586,
+          "dit": 19.64333104196703,
+          "vae": 4.387621457979549
+        },
+        "peak_rss_bytes": 1998012416,
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "dit_native_seconds": 19.547797,
+        "dit_modulation_seconds": 0.031047,
+        "dit_prefetch_wait_seconds": 1.579736,
+        "dit_step_seconds": [
+          5.602,
+          2.747,
+          2.68,
+          2.68,
+          2.717,
+          2.721
+        ],
+        "dit_read_bytes": 85656876608,
+        "text_native_seconds": 2.189848,
+        "text_prefetch_wait_seconds": 0.146534
+      }
+    ]
+  },
+  "speedup_vs_baseline": 1.5945000623354741,
+  "latency_reduction": 0.37284417628978084,
+  "output_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+  "decision": "accepted",
+  "repeat_session": {
+    "note": "A second interleaved session with the same logic in an interim build that also carried prefetch trace statements. Its binary was overwritten before being hashed, so it is a repeatability check and not the headline.",
+    "baseline": {
+      "samples_seconds": [
+        38.903,
+        38.858,
+        38.617
+      ],
+      "seconds_median": 38.858,
+      "stage_seconds_median": {
+        "text": 3.756,
+        "dit": 27.98,
+        "vae": 7.078
+      },
+      "peak_gib": 1.853
+    },
+    "candidate": {
+      "samples_seconds": [
+        27.364,
+        27.491,
+        27.448
+      ],
+      "seconds_median": 27.448,
+      "stage_seconds_median": {
+        "text": 2.21,
+        "dit": 18.494,
+        "vae": 6.672
+      },
+      "peak_gib": 2.23
+    },
+    "speedup_vs_baseline": 1.415695132614398
+  },
+  "attribution": {
+    "baseline_profile": {
+      "total_seconds": 42.68,
+      "text": 5.144,
+      "dit": 32.787,
+      "vae": 4.734,
+      "text_weight_read_seconds": 3.1,
+      "dit_weight_read_seconds": 13.97,
+      "dit_weight_read_bytes": 85656876608,
+      "dit_q4_linear_seconds": 12.438
+    },
+    "cold_read_ceiling": "6.4 GiB/s from the model files with one, two, four, or eight reader threads and with Metal shared buffers or malloc as the target",
+    "candidate_dit_steps_seconds": [
+      5.602,
+      2.747,
+      2.68,
+      2.68,
+      2.717,
+      2.721
+    ],
+    "candidate_dit_prefetch_wait_seconds": 1.58
+  },
+  "tests": {
+    "python_passed": 69,
+    "metal_ctest_passed": 14,
+    "weight_store_prefetch_pipeline": "pass"
+  },
+  "reproduce": "uv run python benchmarks/ab_compare.py --label r1 --rounds 3 --warmup 1 --arm \"base <f90b0ce build> --no-prefetch-weights\" --arm \"cand .build/onyx-native\"",
+  "notes": [
+    "The baseline moved between sessions from 38.86 s to 41.88 s with the page-cache state of the model files; the candidate moved from 27.45 s to 26.27 s. Interleaved arms share the cache state, so compare arms within a session.",
+    "Peak memory rises by about 70 MiB in the headline session because the reader holds the next block while the current one is in use.",
+    "The AdaLN tables depend only on the timesteps. An on-disk modulation cache skips their 26 GB of projection weights altogether."
+  ]
+}

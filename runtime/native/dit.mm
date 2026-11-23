@@ -16,6 +16,12 @@ namespace onyx {
 namespace {
 
 constexpr uint32_t kDiTBlocks = 50;
+// Weights one DiT block consumes, in the order the block reads them.
+const std::vector<std::string> kBlockTensors = {
+    "norm1.weight", "attn.qkv_proj.weight", "attn.q_norm.weight", "attn.k_norm.weight",
+    "attn.out_proj.weight", "norm2.weight", "mlp.fc1.weight", "mlp.fc2.weight"};
+// Weight and bias appended to a linear-layer name, such as an AdaLN projection.
+const std::vector<std::string> kLinearSuffixes = {".weight", ".bias"};
 const std::vector<int64_t> kBlockModulationShape = {6, 3, 6, 5376};
 const std::vector<int64_t> kFinalModulationShape = {6, 1, 2, 5376};
 constexpr size_t kBlockModulationBytes = 6 * 3 * 6 * 5376 * sizeof(uint16_t);
@@ -74,19 +80,45 @@ Tensor original_projection(GraphSession& session, WeightStore& store, const std:
   return session.reshape(value, final ? kFinalModulationShape : kBlockModulationShape);
 }
 
-std::vector<Tensor> compute_modulations(GraphSession& session, WeightStore& store, const std::vector<float>& sigmas) {
+Tensor time_embedding(GraphSession& session, WeightStore& store, const std::vector<float>& sigmas, bool prefetch) {
   Tensor temb = timestep_projection(sigmas);
+  if (prefetch) store.prefetch("time_embedder.", {"proj_in.weight", "proj_in.bias", "proj_out.weight", "proj_out.bias"});
   temb = session.linear(store, "time_embedder.proj_in", temb);
   temb = session.silu(temb);
-  temb = session.linear(store, "time_embedder.proj_out", temb);
+  return session.linear(store, "time_embedder.proj_out", temb);
+}
 
+// The AdaLN table of block `layer`, or of the final layer when layer == kDiTBlocks.
+Tensor modulation_table(GraphSession& session, WeightStore& store, uint32_t layer, const Tensor& temb) {
+  return layer < kDiTBlocks
+      ? original_projection(session, store, "blocks." + std::to_string(layer), temb, false)
+      : original_projection(session, store, "final_layer", temb, true);
+}
+
+// Queue the weights of table `layer`. Nothing is queued past the final layer.
+void queue_modulation_table(WeightStore& store, uint32_t layer) {
+  if (layer > kDiTBlocks) return;
+  store.prefetch(layer < kDiTBlocks ? "blocks." + std::to_string(layer) + ".adaln_proj.linear"
+                                    : "final_layer.adaln_proj.linear",
+                 kLinearSuffixes);
+}
+
+std::vector<Tensor> compute_modulations(GraphSession& session, WeightStore& store, const std::vector<float>& sigmas,
+                                        bool prefetch) {
+  const Tensor temb = time_embedding(session, store, sigmas, prefetch);
+  // Each projection streams a 520 MB BF16 weight. Two stay in flight so that the reads
+  // overlap instead of pacing the projections.
+  if (prefetch) {
+    queue_modulation_table(store, 0);
+    queue_modulation_table(store, 1);
+  }
   std::vector<Tensor> modulations;
-  for (uint32_t layer = 0; layer < kDiTBlocks; ++layer) {
+  for (uint32_t layer = 0; layer <= kDiTBlocks; ++layer) {
     @autoreleasepool {
-      modulations.push_back(original_projection(session, store, "blocks." + std::to_string(layer), temb, false));
+      if (prefetch) queue_modulation_table(store, layer + 2);
+      modulations.push_back(modulation_table(session, store, layer, temb));
     }
   }
-  modulations.push_back(original_projection(session, store, "final_layer", temb, true));
   return modulations;
 }
 
@@ -168,10 +200,10 @@ bool save_modulations(NSString* directory, NSString* path, const Digest& key, co
 }
 
 std::vector<Tensor> get_modulations(GraphSession& session, WeightStore& store, const std::vector<float>& sigmas,
-                                   id<MTLDevice> device, const std::string& cache_dir, const char*& cache_status) {
+                                   id<MTLDevice> device, const std::string& cache_dir, bool prefetch, const char*& cache_status) {
   if (cache_dir.empty()) {
     cache_status = "disabled";
-    return compute_modulations(session, store, sigmas);
+    return compute_modulations(session, store, sigmas, prefetch);
   }
   @autoreleasepool {
     NSString* directory = [NSString stringWithUTF8String:cache_dir.c_str()];
@@ -179,9 +211,9 @@ std::vector<Tensor> get_modulations(GraphSession& session, WeightStore& store, c
     NSData* binary = binary_path ? [NSData dataWithContentsOfFile:binary_path options:NSDataReadingMappedIfSafe error:nil] : nil;
     const std::string weights = store.file_identity();
     if (!directory || !binary.length || binary.length > UINT32_MAX || weights.empty() || !modulation_weights_are_raw(store)) {
-      cache_status = "unavailable";
-      return compute_modulations(session, store, sigmas);
-    }
+    cache_status = "unavailable";
+    return compute_modulations(session, store, sigmas, prefetch);
+  }
 
     const auto key = modulation_cache_key(device, weights, sigmas, binary);
     NSString* path = modulation_cache_path(directory, key);
@@ -191,7 +223,7 @@ std::vector<Tensor> get_modulations(GraphSession& session, WeightStore& store, c
       return result;
     }
 
-    result = compute_modulations(session, store, sigmas);
+    result = compute_modulations(session, store, sigmas, prefetch);
     cache_status = weights == store.file_identity() && save_modulations(directory, path, key, result) ? "miss" : "write_failed";
     return result;
   }
@@ -277,12 +309,6 @@ std::vector<Tensor> modulation_parts(const Tensor& modulation, const Tensor& ind
   return result;
 }
 
-void prefetch_block(WeightStore& store, uint32_t layer) {
-  const std::string prefix = "blocks." + std::to_string(layer) + ".";
-  store.prefetch({prefix + "attn.qkv_proj.weight", prefix + "attn.out_proj.weight",
-                  prefix + "mlp.fc1.weight", prefix + "mlp.fc2.weight"});
-}
-
 }  // namespace
 
 Tensor denoise_image(const std::string& model, const std::string& embedding_path, const std::string& noise_path, const std::string& pdd_path, const std::string& output, uint32_t width, uint32_t height, const StageOptions& options) {
@@ -299,7 +325,24 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
   WeightStore pdd(pdd_path);
   const auto sigmas = read_sigmas(model);
   const char* modulation_cache_status = nullptr;
-  const auto modulations = get_modulations(session, store, sigmas, device, options.modulation_cache_dir, modulation_cache_status);
+  const auto modulation_began = std::chrono::steady_clock::now();
+  // Without an on-disk modulation cache, the first sampling step computes each table right
+  // before its block uses it. The 520 MB projection weights then stream alongside the block
+  // weights instead of in a serial pass ahead of sampling.
+  const bool lazy_modulation = options.modulation_cache_dir.empty() && options.prefetch_weights;
+  std::vector<Tensor> modulations;
+  Tensor temb{};
+  if (lazy_modulation) {
+    modulation_cache_status = "disabled";
+    temb = time_embedding(session, store, sigmas, true);
+    modulations.assign(kDiTBlocks + 1, Tensor{});
+    queue_modulation_table(store, 0);
+    queue_modulation_table(store, 1);
+  } else {
+    modulations = get_modulations(session, store, sigmas, device, options.modulation_cache_dir,
+                                  options.prefetch_weights, modulation_cache_status);
+  }
+  const double modulation_seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - modulation_began).count();
   const Tensor& final_modulation = modulations.back();
   Tensor text = prepare_text(session, store, load_tensor(embedding_path, "embedding"));
   const uint32_t rows = height / 32;
@@ -316,19 +359,27 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
   patches = session.reshape(patches, {24, static_cast<int64_t>(rows), 2, static_cast<int64_t>(columns), 2});
   patches = session.transpose(patches, {1, 3, 0, 2, 4});
   patches = session.reshape(patches, {static_cast<int64_t>(image_count), 96});
-  if (options.prefetch_weights) prefetch_block(store, 0);
+  // Keep the reader one block ahead. The pipeline stays full across sampling-step boundaries,
+  // where the next step's patch projection and block 0 follow the last block.
+  const auto queue_block = [&](uint32_t layer) {
+    if (!options.prefetch_weights) return;
+    if (layer == 0) store.prefetch("video_patch_proj", kLinearSuffixes);
+    store.prefetch("blocks." + std::to_string(layer) + ".", kBlockTensors);
+  };
+  queue_block(0);
   for (uint32_t step = 0; step < 6; ++step) {
     @autoreleasepool {
+    const auto step_began = std::chrono::steady_clock::now();
     Tensor image = session.linear(store, "video_patch_proj", patches);
     image = session.cast(image, MPSDataTypeBFloat16);
     Tensor x = session.concat({text, image}, 0);
     for (uint32_t layer = 0; layer < kDiTBlocks; ++layer) {
       @autoreleasepool {
-      if (options.prefetch_weights) {
-        store.finish_prefetch();
-        if (layer + 1 < kDiTBlocks || step + 1 < 6) {
-          prefetch_block(store, (layer + 1) % kDiTBlocks);
-        }
+      if (layer + 1 < kDiTBlocks || step + 1 < 6) queue_block((layer + 1) % kDiTBlocks);
+      if (lazy_modulation && step == 0) {
+        // The first step fills the tables; the other five reuse them.
+        queue_modulation_table(store, layer + 2);
+        if (!modulations[layer].buffer) modulations[layer] = modulation_table(session, store, layer, temb);
       }
       const std::string prefix = "blocks." + std::to_string(layer) + ".";
       Tensor modulation = modulations[layer];
@@ -349,6 +400,9 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
       x = session.gated_residual(x, hidden, gate_mlp);
       }
     }
+    if (lazy_modulation && step == 0 && !modulations[kDiTBlocks].buffer) {
+      modulations[kDiTBlocks] = modulation_table(session, store, kDiTBlocks, temb);
+    }
     Tensor target = session.slice(x, 0, text_count, image_count);
     target = session.rms_norm(target, store.tensor("final_layer.norm.weight"), 1e-5);
     Tensor final = session.reshape(session.slice(final_modulation, 0, step, 1), {2, 5376});
@@ -362,19 +416,23 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
     velocity = session.add(velocity, bias);
     Tensor delta = scalar(sigmas[step] - sigmas[step + 1], MPSDataTypeFloat32);
     patches = session.add(patches, session.multiply(velocity, delta));
-    std::fprintf(stderr, "native DiT step %u/6, Metal allocated %.2f GiB\n", step + 1, device.currentAllocatedSize / 1073741824.0);
+    const double step_seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - step_began).count();
+    std::fprintf(stderr, "native DiT step %u/6, %.3f s, Metal allocated %.2f GiB\n", step + 1, step_seconds,
+                 device.currentAllocatedSize / 1073741824.0);
     }
   }
+  if (options.prefetch_weights) store.finish_prefetch();
   Tensor latent = session.reshape(patches, {static_cast<int64_t>(rows), static_cast<int64_t>(columns), 24, 2, 2});
   latent = session.transpose(latent, {2, 0, 3, 1, 4});
   latent = session.reshape(latent, {24, static_cast<int64_t>(rows * 2), static_cast<int64_t>(columns * 2)});
   save_tensor(output, "latent", latent);
   const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - began).count();
   std::printf("{\"stage\":\"dit\",\"profile\":\"%s\",\"steps\":6,\"seconds\":%.6f,\"output\":\"%s\","
-              "\"modulation_cache\":\"%s\","
+              "\"modulation_cache\":\"%s\",\"modulation_seconds\":%.6f,\"lazy_modulation\":%s,"
               "\"prefetch_weights\":%s,\"prefetch_wait_seconds\":%.6f,"
               "\"weight_cache\":{\"budget\":%llu,\"bytes\":%llu,\"entries\":%llu,\"hits\":%llu,\"read_calls\":%llu,\"read_bytes\":%llu}}\n",
-              options.profile.c_str(), seconds, output.c_str(), modulation_cache_status,
+              options.profile.c_str(), seconds, output.c_str(), modulation_cache_status, modulation_seconds,
+              lazy_modulation ? "true" : "false",
               options.prefetch_weights ? "true" : "false", store.prefetch_wait_seconds(),
               static_cast<unsigned long long>(store.cache_budget()),
               static_cast<unsigned long long>(store.cache_bytes()),

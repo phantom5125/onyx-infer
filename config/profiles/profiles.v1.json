@@ -30,6 +30,10 @@
       "none",
       "lru"
     ],
+    "weight_prefetch": [
+      "off",
+      "next"
+    ],
     "q4_kernel": [
       "mpsgraph",
       "steel",
@@ -53,7 +57,8 @@
     "dit_weights": "The 37.47 GB W4 DiT package streams one block at a time.",
     "vae_weights": "The FP32 VAE is 2.34 GB. Resident mode caches tensors and streaming mode loads and releases weights by tile.",
     "vae_tiling": "Existing overlap equivalence evidence covers tile16. A new geometry requires independent validation.",
-    "dit_block_cache": "Reuse original DiT weight bytes across the six sampling steps. The cache must preserve output bytes. Measure its benefit with an interleaved matrix."
+    "dit_block_cache": "Reuse original DiT weight bytes across the six sampling steps. The cache must preserve output bytes. Measure its benefit with an interleaved matrix.",
+    "weight_prefetch": "Stream the next block's weights while the GPU computes the current one. Streaming only: one extra block stays in memory and the output bytes do not change."
   },
   "profiles": {
     "max-quality": {
@@ -65,6 +70,7 @@
         "vae_weights": "resident",
         "vae_tiling": "tile16",
         "dit_block_cache": "none",
+        "weight_prefetch": "next",
         "q4_kernel": "mpsgraph"
       },
       "gates": {
@@ -85,6 +91,7 @@
         "vae_weights": "stream",
         "vae_tiling": "tile16",
         "dit_block_cache": "none",
+        "weight_prefetch": "off",
         "q4_kernel": "mpsgraph"
       },
       "gates": {
@@ -106,6 +113,7 @@
         "vae_weights": "resident",
         "vae_tiling": "tile16",
         "dit_block_cache": "lru",
+        "weight_prefetch": "off",
         "q4_kernel": "simd"
       },
       "gates": {

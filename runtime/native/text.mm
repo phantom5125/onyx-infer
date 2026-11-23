@@ -8,6 +8,12 @@
 namespace onyx {
 namespace {
 
+// Weights one encoder layer consumes, in the order the layer reads them.
+const std::vector<std::string> kLayerTensors = {
+    "input_layernorm.weight", "self_attn.q_proj.weight", "self_attn.k_proj.weight", "self_attn.v_proj.weight",
+    "self_attn.q_norm.weight", "self_attn.k_norm.weight", "self_attn.o_proj.weight",
+    "post_attention_layernorm.weight", "mlp.gate_proj.weight", "mlp.up_proj.weight", "mlp.down_proj.weight"};
+
 Tensor bf16_tensor(const std::vector<int64_t>& shape, const std::vector<float>& values) {
   std::vector<uint16_t> encoded;
   encoded.reserve(values.size());
@@ -49,6 +55,10 @@ Tensor encode_text(const std::string& model, const std::string& tokens_path, con
   for (uint32_t layer = 0; layer < 50; ++layer) {
     @autoreleasepool {
       const std::string prefix = "model.language_model.layers." + std::to_string(layer) + ".";
+      // The next layer's weights stream in while this layer computes.
+      if (options.prefetch_weights && layer + 1 < 50) {
+        store.prefetch("model.language_model.layers." + std::to_string(layer + 1) + ".", kLayerTensors);
+      }
       Tensor h = session.rms_norm(x, store.tensor(prefix + "input_layernorm.weight"), 1e-6);
       const std::string attention = prefix + "self_attn.";
       Tensor q = session.linear(store, attention + "q_proj", h);
@@ -78,10 +88,13 @@ Tensor encode_text(const std::string& model, const std::string& tokens_path, con
       if ((layer + 1) % 10 == 0) std::fprintf(stderr, "native text layer %u/50\n", layer + 1);
     }
   }
+  if (options.prefetch_weights) store.finish_prefetch();
   save_tensor(output, "embedding", x);
   const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - began).count();
-  std::printf("{\"stage\":\"text\",\"profile\":\"%s\",\"tokens\":%llu,\"seconds\":%.6f,\"output\":\"%s\"}\n",
-              options.profile.c_str(), static_cast<unsigned long long>(count), seconds, output.c_str());
+  std::printf("{\"stage\":\"text\",\"profile\":\"%s\",\"tokens\":%llu,\"seconds\":%.6f,\"output\":\"%s\","
+              "\"prefetch_weights\":%s,\"prefetch_wait_seconds\":%.6f}\n",
+              options.profile.c_str(), static_cast<unsigned long long>(count), seconds, output.c_str(),
+              options.prefetch_weights ? "true" : "false", store.prefetch_wait_seconds());
   if (std::getenv("ONYX_PROFILE")) {
     std::printf("{\"profile\":%s,\"weight_read\":{\"bytes\":%llu,\"calls\":%llu,\"seconds\":%.6f}}\n",
                 session.profile_json().c_str(), store.bytes_read(), store.read_calls(), store.read_seconds());

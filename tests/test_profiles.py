@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from onyx.native import main as native_main, resolve_dit_prefetch
+from onyx.native import main as native_main, resolve_weight_prefetch
 from onyx.profiles import (
     DEFAULT_REGISTRY_PATH,
     ProfileError,
@@ -95,6 +95,25 @@ def test_numeric_equal_to_gate():
     assert parameters["lru"] > 0
 
 
+def test_weight_prefetch_knob_layout():
+    registry = load_registry()
+    assert registry["knob_domain"]["weight_prefetch"] == ["off", "next"]
+    # Only the default profile streams ahead; memory-min keeps its peak-memory gate and
+    # speed-focus caches DiT weights instead.
+    assert registry["profiles"]["max-quality"]["knobs"]["weight_prefetch"] == "next"
+    for profile_id in ("memory-min", "speed-focus"):
+        assert registry["profiles"][profile_id]["knobs"]["weight_prefetch"] == "off"
+
+
+def test_resolve_weight_prefetch_follows_profile_unless_requested():
+    assert resolve_weight_prefetch("next", None)
+    assert not resolve_weight_prefetch("off", None)
+    assert resolve_weight_prefetch("off", True)
+    assert not resolve_weight_prefetch("next", False)
+    with pytest.raises(ProfileError):
+        resolve_weight_prefetch("maybe", None)
+
+
 def test_dit_cache_bytes_resolution():
     registry = load_registry()
     assert dit_cache_bytes(registry, "speed-focus") == registry["knob_parameters"]["dit_block_cache_bytes"]["lru"]
@@ -102,13 +121,6 @@ def test_dit_cache_bytes_resolution():
     assert dit_cache_bytes(registry, "memory-min") == 0
     with pytest.raises(ProfileError):
         dit_cache_bytes(registry, "turbo")
-
-
-def test_dit_prefetch_defaults_to_streaming_and_respects_override():
-    assert resolve_dit_prefetch(None, 0)
-    assert not resolve_dit_prefetch(None, 1024)
-    assert resolve_dit_prefetch(True, 0)
-    assert not resolve_dit_prefetch(False, 0)
 
 
 @pytest.mark.parametrize("budget", ["-1", str(2**44)])

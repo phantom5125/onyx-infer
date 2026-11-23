@@ -8,6 +8,15 @@
 
 namespace {
 
+bool flag(int argc, char** argv, std::string_view name) {
+  return std::any_of(argv + 2, argv + argc, [name](std::string_view arg) { return arg == name; });
+}
+
+// Weight prefetch is explicit: --no-prefetch-weights wins when both flags are present.
+bool weight_prefetch(int argc, char** argv) {
+  return flag(argc, argv, "--prefetch-weights") && !flag(argc, argv, "--no-prefetch-weights");
+}
+
 std::string argument(int argc, char** argv, const std::string& name, bool required = true) {
   for (int index = 2; index < argc; ++index) {
     if (name == argv[index]) {
@@ -44,7 +53,9 @@ int main(int argc, char** argv) {
       const std::string stage = argv[1];
       const onyx::StageOptions options = onyx::parse_stage_options(argc, argv);
       if (stage == "text") {
-        onyx::encode_text(argument(argc, argv, "--model"), argument(argc, argv, "--tokens"), argument(argc, argv, "--output"), options);
+        onyx::StageOptions text_options = options;
+        text_options.prefetch_weights = weight_prefetch(argc, argv);
+        onyx::encode_text(argument(argc, argv, "--model"), argument(argc, argv, "--tokens"), argument(argc, argv, "--output"), text_options);
         return 0;
       }
       if (stage == "dit") {
@@ -52,17 +63,7 @@ int main(int argc, char** argv) {
           onyx::StageOptions copy = options;
           copy.cache_bytes = optional_bytes(argc, argv, "--cache-bytes");
           copy.modulation_cache_dir = argument(argc, argv, "--modulation-cache", false);
-          copy.prefetch_weights = copy.cache_bytes == 0;
-          if (std::any_of(argv + 2, argv + argc, [](std::string_view arg) {
-                return arg == "--prefetch-weights";
-              })) {
-            copy.prefetch_weights = true;
-          }
-          if (std::any_of(argv + 2, argv + argc, [](std::string_view arg) {
-                return arg == "--no-prefetch-weights";
-              })) {
-            copy.prefetch_weights = false;
-          }
+          copy.prefetch_weights = weight_prefetch(argc, argv);
           return copy;
         }();
         onyx::denoise_image(
