@@ -177,6 +177,13 @@ class GraphSession {
                       uint32_t n, uint32_t k, bool has_bias, const Tensor& bias);
   Tensor linear_q4_simd(WeightStore& store, const std::string& weight_name, const Tensor& x,
                         uint32_t n, uint32_t k, bool has_bias, const Tensor& bias);
+  // Q4 linear layers on the M5 neural accelerators, in q4_nax.mm.
+  bool nax_available();
+  Tensor linear_q4_nax(const std::string& weight_name, const Tensor& weight, const Tensor& scales,
+                       const Tensor& x, int64_t n, int64_t k);
+  std::map<std::string, id<MTLComputePipelineState>> nax_pipelines_;
+  // BF16 scales and affine biases per weight, which is how the NAX kernel takes them.
+  std::map<std::string, std::pair<Tensor, Tensor>> nax_affine_;
 #ifdef ONYX_MLX_BACKEND
   struct MlxQ4Weights {
     mlx::core::array w;

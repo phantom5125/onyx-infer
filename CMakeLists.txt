@@ -35,17 +35,26 @@ endif()
 get_filename_component(METAL_TOOLCHAIN_BIN "${METAL_COMPILER}" DIRECTORY)
 find_program(METALLIB NAMES metallib PATHS "${METAL_TOOLCHAIN_BIN}" NO_DEFAULT_PATH REQUIRED)
 
+if(IS_DIRECTORY "${CMAKE_OSX_SYSROOT}")
+  set(MACOS_SDK "${CMAKE_OSX_SYSROOT}")
+else()
+  execute_process(COMMAND xcrun --sdk macosx --show-sdk-path OUTPUT_VARIABLE MACOS_SDK
+                  OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ERROR_IS_FATAL ANY)
+endif()
+
 set(Q4_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/onyx_q4.metallib")
 set(METAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ops/metal")
 set(MLX_METAL_HEADERS "${METAL_DIR}/mlx_root")
 file(GLOB_RECURSE Q4_STEEL_HEADERS CONFIGURE_DEPENDS "${MLX_METAL_HEADERS}/*.h")
-foreach(kernel IN ITEMS q4_gemm q4_gemm_simd q4_gemm_steel)
+# q4_gemm_nax instantiates MLX's neural-accelerator QMM kernel, which includes the Metal
+# Performance Primitives headers from the SDK.
+foreach(kernel IN ITEMS q4_gemm q4_gemm_simd q4_gemm_steel q4_gemm_nax)
   set(source "${METAL_DIR}/${kernel}.metal")
   set(air "${CMAKE_CURRENT_BINARY_DIR}/${kernel}.air")
   add_custom_command(
     OUTPUT "${air}"
     COMMAND "${METAL_COMPILER}" -std=metal4.0 "-mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET}"
-            -I "${MLX_METAL_HEADERS}" -c "${source}" -o "${air}"
+            "-isysroot${MACOS_SDK}" -I "${MLX_METAL_HEADERS}" -c "${source}" -o "${air}"
     DEPENDS "${source}" ${Q4_STEEL_HEADERS}
     VERBATIM
   )
@@ -66,12 +75,6 @@ find_library(MPS_FRAMEWORK MetalPerformanceShaders REQUIRED)
 find_library(COREGRAPHICS_FRAMEWORK CoreGraphics REQUIRED)
 find_library(IMAGEIO_FRAMEWORK ImageIO REQUIRED)
 find_library(UNIFORM_TYPEIDENTIFIERS_FRAMEWORK UniformTypeIdentifiers REQUIRED)
-if(IS_DIRECTORY "${CMAKE_OSX_SYSROOT}")
-  set(MACOS_SDK "${CMAKE_OSX_SYSROOT}")
-else()
-  execute_process(COMMAND xcrun --sdk macosx --show-sdk-path OUTPUT_VARIABLE MACOS_SDK
-                  OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ERROR_IS_FATAL ANY)
-endif()
 find_path(MPSCORE_INCLUDE_DIR MPSCore/MPSNDArray.h
           PATHS "${MACOS_SDK}/System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/Frameworks"
           NO_DEFAULT_PATH REQUIRED)
@@ -82,7 +85,7 @@ add_library(onyx_weight_store STATIC runtime/native/weight_store.mm)
 target_include_directories(onyx_weight_store PUBLIC runtime/native)
 target_link_libraries(onyx_weight_store PUBLIC "${FOUNDATION_FRAMEWORK}" "${METAL_FRAMEWORK}")
 
-add_library(onyx_graph STATIC runtime/native/graph.mm)
+add_library(onyx_graph STATIC runtime/native/graph.mm runtime/native/q4_nax.mm)
 add_dependencies(onyx_graph onyx_metal_library)
 target_include_directories(onyx_graph SYSTEM PRIVATE "${MPSCORE_INCLUDE_DIR}")
 target_compile_definitions(onyx_graph PRIVATE ONYX_Q4_METALLIB="${Q4_LIBRARY}")
@@ -137,6 +140,10 @@ add_test(NAME onyx_q4_linear_mpsgraph COMMAND onyx-q4-linear-probe)
 set_tests_properties(onyx_q4_linear_mpsgraph PROPERTIES ENVIRONMENT "ONYX_Q4_LINEAR=mpsgraph")
 add_test(NAME onyx_q4_linear_dispatch COMMAND onyx-q4-linear-probe)
 set_tests_properties(onyx_q4_linear_dispatch PROPERTIES ENVIRONMENT "ONYX_Q4_LINEAR=;ONYX_Q4_BACKEND=native")
+# The NAX path needs BF16 activations. On GPUs without neural accelerators the engine falls
+# back to MPSGraph and this check exercises that fallback.
+add_test(NAME onyx_q4_linear_nax COMMAND onyx-q4-linear-probe)
+set_tests_properties(onyx_q4_linear_nax PROPERTIES ENVIRONMENT "ONYX_Q4_LINEAR=nax")
 if(ONYX_MLX_AVAILABLE)
   add_test(NAME onyx_q4_linear_mlx COMMAND onyx-q4-linear-probe)
   set_tests_properties(onyx_q4_linear_mlx PROPERTIES ENVIRONMENT "ONYX_Q4_LINEAR=;ONYX_Q4_BACKEND=mlx")

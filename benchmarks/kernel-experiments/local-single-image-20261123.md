@@ -70,6 +70,26 @@ and step.
 - Rejected: a fused gated-residual-plus-norm graph. It changed the PNG and
   showed no gain beyond noise, so a numeric change bought nothing.
 
+## Outcome, round 4: Q4 linears on the M5 neural accelerators
+
+Promoted as a numeric change, behind the new `m5-fast` profile: MLX's
+`affine_qmm_t_nax` is compiled from the vendored source into the Onyx metallib
+and dispatched directly by the engine through Metal Performance Primitives.
+
+- Interleaved against `max-quality`: 22.71 → 20.98 s median (1.08×), DiT
+  18.30 → 16.71 s.
+- The presumed large kernel gap does not exist. The 16.5× figure in the README
+  compared MLX with an MPSGraph probe that included graph compilation. At the
+  engine entry on real weights the neural-accelerator kernel is 27% faster for
+  the output projection, 12% faster for the FFN input, and level for QKV,
+  because each threadgroup still stages and dequantizes its tile in software.
+- Numeric evidence: one BF16 ulp per layer against MPSGraph, maximum error
+  0.068 against 0.082 versus FP64 reference products, image correlation 0.987,
+  replay identical. Peak RSS 1.67 → 3.31 GiB.
+- Rejected: dequantizing to a 16-bit type (wrong results). Deferred: moving the
+  transpose off the weight (bit-identical, faster only at 16384 rows).
+- Evidence: `benchmarks/results/campaign-20261123/round4-nax-q4-kernel.json`.
+
 ## Measurement note: another session on the same machine
 
 A second session ran native benchmarks from another worktree during this campaign.

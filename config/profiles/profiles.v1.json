@@ -37,7 +37,8 @@
     "q4_kernel": [
       "mpsgraph",
       "steel",
-      "simd"
+      "simd",
+      "nax"
     ]
   },
   "knob_parameters": {
@@ -49,7 +50,8 @@
     "q4_kernel_impl": {
       "mpsgraph": "Production MPSGraph dequantization and matmul with FP32 dequantization.",
       "steel": "MIT-licensed MLX Steel affine QMM port using FP16 MMA with FP32 accumulation.",
-      "simd": "Onyx SIMD kernel derived from the Steel layout, with transposed weight staging and branch-free accumulation. Historical isolated results were 4.99 ms versus 5.27 ms for Steel at 1024×5376×5376."
+      "simd": "Onyx SIMD kernel derived from the Steel layout, with transposed weight staging and branch-free accumulation. Historical isolated results were 4.99 ms versus 5.27 ms for Steel at 1024×5376×5376.",
+      "nax": "MLX affine QMM running on the M5 neural accelerators through Metal Performance Primitives, with BF16 scales and affine biases. On GPUs without neural accelerators the engine falls back to the MPSGraph path."
     }
   },
   "knob_notes": {
@@ -58,7 +60,8 @@
     "vae_weights": "The FP32 VAE is 2.34 GB. Resident mode caches tensors and streaming mode loads and releases weights by tile.",
     "vae_tiling": "Existing overlap equivalence evidence covers tile16. A new geometry requires independent validation.",
     "dit_block_cache": "Reuse original DiT weight bytes across the six sampling steps. The cache must preserve output bytes. Measure its benefit with an interleaved matrix.",
-    "weight_prefetch": "Stream the next block's weights while the GPU computes the current one. Streaming only: one extra block stays in memory and the output bytes do not change."
+    "weight_prefetch": "Stream the next block's weights while the GPU computes the current one. Streaming only: one extra block in memory and the output bytes do not change.",
+    "q4_kernel": "The nax kernel changes the numeric path against mpsgraph: against an exact FP64 reference on real block weights its maximum error was 0.068 versus 0.082 for mpsgraph, both at the resolution of the BF16 output."
   },
   "profiles": {
     "max-quality": {
@@ -102,6 +105,30 @@
         "min_samples": 3,
         "bitwise_equal_to": "max-quality",
         "bitwise_note": "Weights and decoding are identical to max-quality. Changing residency must preserve the output bytes."
+      }
+    },
+    "m5-fast": {
+      "title": "M5 fast path",
+      "summary": "The max-quality settings with Q4 linear layers on the M5 neural accelerators. On GPUs without them, the engine falls back to the MPSGraph kernel.",
+      "knobs": {
+        "text_weights": "stream",
+        "dit_weights": "stream",
+        "vae_weights": "resident",
+        "vae_tiling": "tile16",
+        "dit_block_cache": "none",
+        "weight_prefetch": "next",
+        "q4_kernel": "nax"
+      },
+      "gates": {
+        "output_replay_identical": true,
+        "profile_echo_must_match": true,
+        "peak_process_bytes_max": 30150672384,
+        "min_samples": 3,
+        "numeric_equal_to": {
+          "reference": "max-quality",
+          "max_abs_error": 0.05,
+          "note": "The nax kernel rounds scales and biases to BF16 and sums each product in another order, so the PNG differs from max-quality. Compare the final images and report the differences. See docs/PROFILES.md."
+        }
       }
     },
     "speed-focus": {

@@ -193,7 +193,7 @@ def test_check_registry_only_passes(tmp_path):
     code, report = run_checker([], registry=REPO / "config/profiles/profiles.v1.json", check_registry=True)
     assert code == 0
     assert report["status"] == "pass"
-    assert sorted(report["profiles"]) == ["max-quality", "memory-min", "speed-focus"]
+    assert sorted(report["profiles"]) == ["m5-fast", "max-quality", "memory-min", "speed-focus"]
 
 
 def test_checker_without_inputs_errors(tmp_path):

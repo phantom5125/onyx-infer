@@ -424,6 +424,15 @@ Tensor GraphSession::linear(WeightStore& store, const std::string& prefix, const
   const int64_t k = x.shape.back();
   const int64_t n = weight.shape[0];
   const int64_t rows = x.elements() / k;
+  if (mode == "nax" && x.dtype == MPSDataTypeBFloat16 && group_size == 64 && k % 64 == 0 && nax_available()) {
+    Tensor result = linear_q4_nax(weight_name, weight, scales, x, n, k);
+    result.shape = output_shape;
+    if (!has_bias) return result;
+    return run("bias_add", {result, store.tensor(prefix + ".bias")}, output_shape, x.dtype,
+               ^MPSGraphTensor*(MPSGraph* graph, NSArray<MPSGraphTensor*>* input) {
+                 return [graph additionWithPrimaryTensor:input[0] secondaryTensor:cast_to(graph, input[1], input[0].dataType) name:nil];
+               });
+  }
   if ((mode == "simd" || mode == "steel") && x.dtype == MPSDataTypeBFloat16 && x.byte_offset == 0 &&
       group_size == 64 && k % 64 == 0 && n % 32 == 0) {
     // Keep the per-layer profiling overrides available for the experimental kernels.
@@ -568,13 +577,26 @@ Tensor GraphSession::linear(WeightStore& store, const std::string& prefix, const
   }
   std::vector<Tensor> inputs = {x, weight, scales, zero};
   if (has_bias) inputs.push_back(store.tensor(prefix + ".bias"));
-  return run("linear:q4:" + std::to_string(group_size) + ":" + std::to_string(has_bias),
+  const char* graph_setting = std::getenv("ONYX_Q4_GRAPH");
+  const std::string variant = graph_setting && *graph_setting && x.shape.size() == 2 ? graph_setting : "f32";
+  return run("linear:q4:" + std::to_string(group_size) + ":" + std::to_string(has_bias) + ":" + variant,
              inputs, output_shape, x.dtype,
              ^MPSGraphTensor*(MPSGraph* graph, NSArray<MPSGraphTensor*>* input) {
+    // Dequantizing to a 16-bit type gave wrong results on this MPSGraph, so the weights
+    // always dequantize to FP32 and then cast.
     MPSGraphTensor* w = [graph dequantizeTensor:input[1] scaleTensor:input[2] zeroPointTensor:input[3] dataType:MPSDataTypeFloat32 name:nil];
     w = cast_to(graph, w, input[0].dataType);
-    w = [graph transposeTensor:w permutation:@[@1, @0] name:nil];
-    MPSGraphTensor* y = [graph matrixMultiplicationWithPrimaryTensor:input[0] secondaryTensor:w name:nil];
+    MPSGraphTensor* y;
+    if (variant == "f32-t") {
+      // (W x^T)^T = x W^T. The transposes move from the weight matrix to the activations
+      // and to the output, which are an order of magnitude smaller.
+      MPSGraphTensor* xt = [graph transposeTensor:input[0] permutation:@[@1, @0] name:nil];
+      MPSGraphTensor* yt = [graph matrixMultiplicationWithPrimaryTensor:w secondaryTensor:xt name:nil];
+      y = [graph transposeTensor:yt permutation:@[@1, @0] name:nil];
+    } else {
+      w = [graph transposeTensor:w permutation:@[@1, @0] name:nil];
+      y = [graph matrixMultiplicationWithPrimaryTensor:input[0] secondaryTensor:w name:nil];
+    }
     if (has_bias) {
       MPSGraphTensor* bias = cast_to(graph, input[4], input[0].dataType);
       y = [graph additionWithPrimaryTensor:y secondaryTensor:bias name:nil];

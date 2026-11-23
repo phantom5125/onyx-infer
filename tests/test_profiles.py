@@ -16,10 +16,10 @@ from onyx.profiles import (
 )
 
 
-EXPECTED_PROFILES = {"max-quality", "memory-min", "speed-focus"}
+EXPECTED_PROFILES = {"max-quality", "memory-min", "m5-fast", "speed-focus"}
 
 
-def test_registry_loads_and_declares_three_profiles():
+def test_registry_loads_and_declares_four_profiles():
     registry = load_registry()
     assert set(registry["profiles"]) == EXPECTED_PROFILES
     assert registry["$schema"] == "onyx.profiles.v1"
@@ -77,8 +77,12 @@ def test_q4_kernel_knob_layout():
     assert registry["profiles"]["max-quality"]["knobs"]["q4_kernel"] == "mpsgraph"
     assert registry["profiles"]["memory-min"]["knobs"]["q4_kernel"] == "mpsgraph"
     assert registry["profiles"]["speed-focus"]["knobs"]["q4_kernel"] == "simd"
+    # m5-fast keeps every max-quality setting except the Q4 kernel.
+    assert registry["profiles"]["m5-fast"]["knobs"]["q4_kernel"] == "nax"
+    fast = dict(registry["profiles"]["m5-fast"]["knobs"], q4_kernel="mpsgraph")
+    assert fast == registry["profiles"]["max-quality"]["knobs"]
     parameters = registry["knob_parameters"]["q4_kernel_impl"]
-    assert set(parameters) == {"mpsgraph", "steel", "simd"}
+    assert set(parameters) == {"mpsgraph", "steel", "simd", "nax"}
 
 
 def test_numeric_equal_to_gate():
@@ -98,9 +102,10 @@ def test_numeric_equal_to_gate():
 def test_weight_prefetch_knob_layout():
     registry = load_registry()
     assert registry["knob_domain"]["weight_prefetch"] == ["off", "next"]
-    # Only the default profile streams ahead; memory-min keeps its peak-memory gate and
-    # speed-focus caches DiT weights instead.
+    # Only the default profile and m5-fast stream ahead; memory-min keeps its peak-memory
+    # gate and speed-focus caches DiT weights instead.
     assert registry["profiles"]["max-quality"]["knobs"]["weight_prefetch"] == "next"
+    assert registry["profiles"]["m5-fast"]["knobs"]["weight_prefetch"] == "next"
     for profile_id in ("memory-min", "speed-focus"):
         assert registry["profiles"][profile_id]["knobs"]["weight_prefetch"] == "off"
 

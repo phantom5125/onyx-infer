@@ -47,6 +47,21 @@ Both arms decode one VAE tile at a time, so only the gather differs. All six PNG
 
 A single graph for each gated residual and the norm that follows it was tried and rejected. It changed the PNG, because the fused graph keeps the residual sum at higher precision before the norm reads it, and steps two to six took 2.4–2.6 s in one uncontended run, no better than the separate graphs. The two operations stay separate executions.
 
+### Round 4: Q4 linear layers on the M5 neural accelerators
+
+The MPSGraph Q4 path dequantizes each weight to FP32, casts it to BF16, transposes it, and multiplies. MLX takes another route on M5: `quantized_matmul` dispatches a kernel that dequantizes inside the matrix product and runs the product on the neural accelerators through Metal Performance Primitives. The kernel is vendored with the MLX sources, so the build now compiles it into the Onyx metallib and the engine dispatches it directly. The new `m5-fast` profile selects it and otherwise matches `max-quality`.
+
+| Profile | End-to-end samples | Median total | DiT | Peak RSS |
+| --- | --- | ---: | ---: | ---: |
+| `max-quality` | 22.94 / 22.69 / 22.71 s | 22.71 s | 18.30 s | 1.67 GiB |
+| `m5-fast` | 20.98 / 20.95 / 21.08 s | **20.98 s** | 16.71 s | 3.31 GiB |
+
+The gain is much smaller than the earlier operator comparison suggested, because that comparison ran an MPSGraph probe which included graph compilation. At the engine entry on real block weights, the neural-accelerator kernel is 27% faster for the output projection and 12% faster for the FFN input at 1093 rows, and level for the fused QKV projection: each threadgroup still stages and dequantizes its weight tile in software. The text stage is bounded by weight reads after round 1 and did not move. [Round record](../benchmarks/results/campaign-20261123/round4-nax-q4-kernel.json)
+
+**This round changes the numeric path.** The kernel takes BF16 scales and biases and sums each product in another order. Per layer its outputs differ from the MPSGraph path by one BF16 ulp, and against FP64 reference products on real weights it is as accurate (maximum error 0.068 against 0.082). Across 300 block-steps the differences change the fine detail of the image: correlation 0.987 with the `max-quality` image and PSNR 28.3 dB, with the same composition. The `m5-fast` output replays identically. The BF16 scales and biases raise the peak RSS by about 1.6 GiB.
+
+Two MPSGraph changes were tried at the engine entry. Dequantizing straight to a 16-bit type gave wrong results and is rejected. Moving the transpose off the weight is bit-identical, 6–10% slower at 1093 rows and 8–12% faster at 16384 rows. It stays behind `ONYX_Q4_GRAPH=f32-t` until the 16 MP path is measured end to end.
+
 ## Production and isolated measurements
 
 | Configuration | DiT stage | End-to-end per image | Observation |

@@ -5,14 +5,16 @@ The profiles share the same W4 model, six-evaluation PDD recipe, and model ident
 ## Settings
 
 | Profile | Text and DiT weights | VAE weights | VAE tiles | DiT cache | Weight prefetch | Q4 linear path |
-| --- | --- | --- | --- | --- | --- | --- |
+| --- | --- | --- | --- | --- | --- | --- | --- |
 | `max-quality` | Stream | Resident | `tile16` | None | Next block | MPSGraph |
 | `memory-min` | Stream | Stream | `tile16` | None | Off | MPSGraph |
+| `m5-fast` | Stream | Resident | `tile16` | None | Next block | M5 neural accelerators |
 | `speed-focus` | Stream | Resident | `tile16` | LRU, 24 GiB | Off | BF16 SIMD |
 
 - The 21.86 GB text and 37.47 GB DiT packages stream on the 36 GB reference machine. The native stage rejects a resident request for either component.
 - VAE streaming reads and releases weights by tile. The resident path caches weights. Overlap equivalence evidence covers `tile16`. Evaluate a new tile geometry independently. Tiles decode in batches of 25 with the `tile16` geometry and blending unchanged, which changes the output bytes from earlier builds by one 8-bit level at a few channel values. [Round 2](OPTIMIZATION_CAMPAIGN.md#local-single-image-campaign)
 - The default MPSGraph Q4 path uses FP32 dequantization. `speed-focus` tests the BF16 SIMD kernel with the DiT weight cache. The vendored Steel FP16 port is available to probes.
+- `m5-fast` is `max-quality` with one setting changed: Q4 linear layers run MLX's affine quantized matrix multiplication on the M5 neural accelerators, through Metal Performance Primitives. The engine falls back to the MPSGraph kernel on GPUs without neural accelerators. The kernel takes BF16 scales and biases, which adds about 1 GiB of resident scale copies, and it changes the numeric path: the final image correlates 0.987 with the `max-quality` image and replays identically. [Round 4](OPTIMIZATION_CAMPAIGN.md#local-single-image-campaign)
 - The LRU reuses original packed weights across six DiT steps. A 24 GiB limit covers about 64% of the DiT package. The cache test checks equivalent bytes across streaming, LRU, and resident access. Its lifetime relies on synchronous MPSGraph completion.
 - The `weight_prefetch` knob streams the next block's weights while the GPU computes the current one. It requires streaming, holds one extra block in memory, and leaves the output bytes unchanged. `memory-min` keeps it off to stay near its peak-memory gate, and `speed-focus` caches weights instead. [Round 1 measurements](OPTIMIZATION_CAMPAIGN.md#local-single-image-campaign)
 
@@ -22,9 +24,10 @@ The profiles share the same W4 model, six-evaluation PDD recipe, and model ident
 | --- | --- |
 | `output_replay_identical` | Repeated runs of the same profile and request have the same SHA-256 |
 | `profile_echo_must_match` | Native stages declare the expected profile and weights |
-| `peak_process_bytes_max` | Process-tree physical footprint, with RSS fallback. Limits are 28.08 GiB for `max-quality` and `speed-focus`, and a provisional 2 GiB for `memory-min`. |
+| `peak_process_bytes_max` | Process-tree physical footprint, with RSS fallback. Limits are 28.08 GiB for `max-quality`, `m5-fast`, and `speed-focus`, and a provisional 2 GiB for `memory-min`. |
 | `min_samples` | Three measured runs per group |
 | `bitwise_equal_to` | `memory-min` matches `max-quality` byte for byte |
+| `numeric_equal_to` | `m5-fast` and `speed-focus` declare their tolerance to the `max-quality` output |
 | `interleaved` | Profiles rotate through the measurement order |
 
 The `speed-focus` speed gate uses a 3% median margin against comparable groups. A result within the margin is accepted. A slower result beyond both the margin and observed dispersion is rejected. Missing comparisons or excessive dispersion are inconclusive. Report inconclusive results explicitly.
