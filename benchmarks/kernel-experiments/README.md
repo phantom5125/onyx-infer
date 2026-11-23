@@ -12,7 +12,7 @@ Use the local Onyx build and validation tools to reproduce the cases below.
 | --- | --- |
 | [Q4 simdgroup MMA](q4-mma-v1.md) | Historical experiments on large FP16 Q4 GEMMs, shape dispatch, and MLX integration. |
 | [Small-M Q4 split-K](q4-decode-splitk-v1.md) | Split-K retained for operator benchmarks. Engine integration was rejected. |
-| [Local single-image campaign](local-single-image-20261123.md) | Weight reads overlapped with GPU compute on the 1024×1024 request, and the rounds that follow. |
+| [Local single-image campaign](local-single-image-20261123.md) | Five rounds on the 1024×1024 request: a weight prefetch pipeline, batched VAE tiles, the modulation gather on the GPU, the neural-accelerator Q4 kernel behind `m5-fast`, and the modulation cache on by default. |
 
 [Candidate ledger](candidates.jsonl) preserves trial order, parent candidates,
 historical decisions, and the available evidence. Some entries summarize

@@ -80,12 +80,15 @@ and dispatched directly by the engine through Metal Performance Primitives.
   18.30 → 16.71 s.
 - The presumed large kernel gap does not exist. The 16.5× figure in the README
   compared MLX with an MPSGraph probe that included graph compilation. At the
-  engine entry on real weights the neural-accelerator kernel is 27% faster for
-  the output projection, 12% faster for the FFN input, and level for QKV,
+  engine entry on real weights the neural-accelerator kernel is about 25%
+  faster for the output projection and 12–24% faster for the FFN input, and
+  level within noise for QKV (13–18 ms against 14–15 ms over five runs),
   because each threadgroup still stages and dequantizes its tile in software.
-- Numeric evidence: one BF16 ulp per layer against MPSGraph, maximum error
-  0.068 against 0.082 versus FP64 reference products, image correlation 0.987,
-  replay identical. Peak RSS 1.67 → 3.31 GiB.
+- Numeric evidence: one BF16 ulp in 46% of the outputs of every layer against
+  MPSGraph. Versus FP64 reference products both paths sit 2–5 half-ulps of the
+  typical output from exact; the kernel is closer on QKV and farther, by up to
+  1.6×, on the FFN input. Image correlation 0.987, replay identical.
+  Peak RSS 1.67 → 3.31 GiB.
 - Rejected: dequantizing to a 16-bit type (wrong results). Deferred: moving the
   transpose off the weight (bit-identical, faster only at 16384 rows).
 - Evidence: `benchmarks/results/campaign-20261123/round4-nax-q4-kernel.json`.

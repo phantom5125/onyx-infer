@@ -44,7 +44,12 @@ int main() {
     if (!device) { std::fprintf(stderr, "no device\n"); return 1; }
     onyx::GraphSession session(device);
 
-    const uint32_t n = 5376, k = 5376, group = 64;
+    const uint32_t k = 5376, group = 64;
+    // 5376 columns match every Q4 layer of the model. 5360 is not a multiple of 64, which
+    // reaches the neural-accelerator kernel that bounds the output columns.
+    const uint32_t widths[] = {5376, 5360};
+    bool all_pass = true;
+    for (const uint32_t n : widths) {
     const size_t packed_count = size_t(n) * k / 2;
     const size_t scale_count = size_t(n) * (k / group);
     std::mt19937 rng(7);
@@ -75,14 +80,14 @@ int main() {
     write_store(store_path, packed, scales, n, k);
     onyx::WeightStore store(store_path, false);
 
-    struct Case { uint32_t rows; MPSDataType dtype; const char* name; };
     // FP16 cases cover the optional FP16 backends. m69 covers the multi-row-tile regime of
     // the small-m dispatch bucket. BF16 is the production activation type, with the row
     // counts of a DiT block and of the text encoder.
-    const Case cases[] = {{1024, MPSDataTypeFloat16, "m1024-fp16"}, {69, MPSDataTypeFloat16, "m69-fp16"},
-                          {16, MPSDataTypeFloat16, "m16-fp16"},
-                          {1093, MPSDataTypeBFloat16, "m1093-bf16"}, {69, MPSDataTypeBFloat16, "m69-bf16"}};
-    bool all_pass = true;
+    struct Case { uint32_t rows; MPSDataType dtype; const char* name; };
+    std::vector<Case> cases = {{1024, MPSDataTypeFloat16, "m1024-fp16"}, {69, MPSDataTypeFloat16, "m69-fp16"},
+                               {16, MPSDataTypeFloat16, "m16-fp16"},
+                               {1093, MPSDataTypeBFloat16, "m1093-bf16"}, {69, MPSDataTypeBFloat16, "m69-bf16"}};
+    if (n != 5376) cases = {{1093, MPSDataTypeBFloat16, "n5360-m1093-bf16"}, {16, MPSDataTypeBFloat16, "n5360-m16-bf16"}};
     for (const Case& test : cases) {
       std::vector<uint16_t> activation(size_t(test.rows) * k);
       std::vector<float> activation_float(size_t(test.rows) * k);
@@ -147,6 +152,7 @@ int main() {
       std::printf("%s: max_abs_error %.4g max_relative_error %.4g %s\n", test.name, max_error, max_relative, all_pass ? "PASS" : "FAIL");
     }
     std::remove(store_path.c_str());
+    }
     return all_pass ? 0 : 2;
   }
 }

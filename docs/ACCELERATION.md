@@ -14,6 +14,8 @@ A conditioning cache reuses the exact text encoder output. Its key includes enco
 
 The initial standalone MPSGraph Q4 operator measurements showed large gaps against MLX, including 16.5× for the 1024×5376×5376 case. The candidate tracks include Metal Performance Primitives quantized tensor ops, device-tuned MSL, and operator fusion. Kernel probes need real packed weight and edge-tile coverage. Production measurements include graph compilation behavior and caching. [Operator measurements](../benchmarks/results/m5-max-36gb-q4-operator-v1.json) · [Metal features](https://developer.apple.com/metal/whats-new/)
 
+Round 4 of the [local single-image campaign](OPTIMIZATION_CAMPAIGN.md#local-single-image-campaign) settled this track. The 16.5× figure came from an MPSGraph probe that included graph compilation: with compiled graphs the gap is within 9% end to end. MLX's quantized kernel, which runs on the M5 neural accelerators through Metal Performance Primitives, is now compiled into the Onyx metallib and dispatched by the engine behind the `m5-fast` profile. [Round record](../benchmarks/results/campaign-20261123/round4-nax-q4-kernel.json)
+
 The engine already caches MPSGraph graphs by shape. Other proposals include encoding more of a sampling step in one submission and measuring the effect of device memory budgets. System-wide memory settings would need their own stability assessment. [MLX lazy evaluation](https://ml-explore.github.io/mlx/build/html/usage/lazy_evaluation.html) · [TensorRT-LLM](https://nvidia.github.io/TensorRT-LLM/)
 
 ## 3. Validation and priorities

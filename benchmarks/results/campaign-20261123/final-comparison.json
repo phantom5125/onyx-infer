@@ -1,0 +1,181 @@
+{
+  "protocol": "onyx.native-optimization.v1",
+  "campaign": "local-single-image-20261123",
+  "round": "final",
+  "change": "The five rounds together against the f90b0ce baseline, in one interleaved session. The default arm is the max-quality profile with its new defaults: weight prefetch and the modulation cache. The m5-fast arm adds the neural-accelerator Q4 kernel.",
+  "base_commit": "f90b0ce",
+  "case": "h3-teapot-1024-seed42-v1",
+  "profile": "max-quality and m5-fast",
+  "device": {
+    "model_identifier": "Mac17,14",
+    "chip": "Apple M5 Max",
+    "gpu_cores": 32,
+    "physical_memory_bytes": 38654705664,
+    "os_version": "27.2.1"
+  },
+  "native_binary": {
+    "head_sha256": "79910267e635e9985cedfd0f29f5eb714e7ff7ce479589340360c3ff1cc00007",
+    "final_sha256": "ec58291ce7f112f40170a84de8647a74dcfe1dc727ee07d4d54bbd34c7e7f5f3",
+    "note": "The default and m5-fast arms are the same binary. The head arm is the f90b0ce build, run with --no-prefetch-weights and --no-modulation-cache because it predates both."
+  },
+  "method": "Same machine and W4 package; arms alternate in rotating order after per-arm warmups. Arm order: round 1: head, default, m5-fast | round 2: default, m5-fast, head | round 3: m5-fast, head, default",
+  "arms": {
+    "head": {
+      "samples_seconds": [
+        41.92575808300171,
+        42.08917566703167,
+        43.011510667041875
+      ],
+      "seconds_median": 42.08917566703167,
+      "stage_seconds_median": {
+        "text": 5.198790416994598,
+        "dit": 32.21487295802217,
+        "vae": 4.813550958002452
+      },
+      "peak_bytes_max": 1927233536,
+      "output_sha256": [
+        "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1"
+      ],
+      "all_outputs_identical": true,
+      "contended_rounds": [],
+      "native_args": [
+        "--no-prefetch-weights",
+        "--no-modulation-cache"
+      ]
+    },
+    "default": {
+      "samples_seconds": [
+        19.039093083003536,
+        19.78212429198902,
+        19.17672470904654
+      ],
+      "seconds_median": 19.17672470904654,
+      "stage_seconds_median": {
+        "text": 2.228300208982546,
+        "dit": 14.88894758297829,
+        "vae": 2.0931540000019595
+      },
+      "peak_bytes_max": 1830322176,
+      "output_sha256": [
+        "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac"
+      ],
+      "all_outputs_identical": true,
+      "contended_rounds": [],
+      "native_args": []
+    },
+    "m5_fast": {
+      "samples_seconds": [
+        18.36926524998853,
+        18.753524250001647,
+        18.362784833007026
+      ],
+      "seconds_median": 18.36926524998853,
+      "stage_seconds_median": {
+        "text": 2.153548915986903,
+        "dit": 13.95308433403261,
+        "vae": 2.314988041005563
+      },
+      "peak_bytes_max": 3243180032,
+      "output_sha256": [
+        "57f005b360f0428a30e0bee27532e05763e69c04bb6ed8c11c7c66e342520ba6"
+      ],
+      "all_outputs_identical": true,
+      "contended_rounds": [],
+      "native_args": [
+        "--profile",
+        "m5-fast"
+      ]
+    }
+  },
+  "speedup_vs_head": {
+    "default": 2.1948052290272635,
+    "m5_fast": 2.291282481592885
+  },
+  "outputs": {
+    "head_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+    "default_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+    "m5_fast_sha256": "57f005b360f0428a30e0bee27532e05763e69c04bb6ed8c11c7c66e342520ba6",
+    "default_vs_head": "36 of 3,145,728 channel values differ, each by one level of 255. They come from round 2, the batched VAE decoder.",
+    "m5_fast_vs_default": "Correlation 0.987, PSNR 28.3 dB, same composition. Round 4 is a numeric variant.",
+    "replay": "Each arm produced one PNG SHA-256 in all three runs."
+  },
+  "checks": {
+    "memory_min_profile": {
+      "gate_peak_bytes": 2147483648,
+      "peak_bytes": [
+        1907146752,
+        1843986432
+      ],
+      "samples_seconds": [
+        25.903513540979475,
+        25.851178249984514
+      ],
+      "output_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+      "equal_to_max_quality": true,
+      "note": "Prefetch is off in memory-min, so it keeps the serial-read timings."
+    },
+    "vae_batching_512x768": {
+      "vae_seconds_serial": 2.4514212500071153,
+      "vae_seconds_batched": 1.5080626669805497,
+      "differing_channel_values": 17,
+      "channel_values": 1179648,
+      "max_abs_difference_levels": 1
+    },
+    "dit_weight_cache_10240_mib": {
+      "median_seconds": 21.881499479495687,
+      "default_median_seconds": 18.69560106197605,
+      "dit_seconds": 17.500267833500402,
+      "default_dit_seconds": 14.324860791501123,
+      "peak_bytes_max": 6823346176,
+      "default_peak_bytes_max": 1931608064,
+      "note": "The budget was faster while weight reads were serial. With prefetch it is slower and costs 4.5 GiB more, so the README no longer recommends it."
+    }
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "change": "Weight reads overlap GPU compute",
+      "before_seconds": 41.88,
+      "after_seconds": 26.27,
+      "output": "byte-identical to f90b0ce"
+    },
+    {
+      "round": 2,
+      "change": "VAE tiles decode in batches",
+      "before_seconds": 24.22,
+      "after_seconds": 22.08,
+      "output": "36 of 3,145,728 channel values differ by one level"
+    },
+    {
+      "round": 3,
+      "change": "AdaLN modulation gathered on the GPU",
+      "before_seconds": 26.7,
+      "after_seconds": 25.38,
+      "output": "byte-identical to f90b0ce",
+      "note": "Measured against round 1 with the VAE unbatched in both arms; DiT 19.94 -> 18.33 s"
+    },
+    {
+      "round": 4,
+      "change": "Q4 linears on the M5 neural accelerators, m5-fast profile",
+      "before_seconds": 22.71,
+      "after_seconds": 20.98,
+      "output": "numeric variant"
+    },
+    {
+      "round": 5,
+      "change": "Modulation cache on by default",
+      "before_seconds": 22.71,
+      "after_seconds": 19.35,
+      "output": "byte-identical to the uncached path"
+    }
+  ],
+  "tests": {
+    "python_passed": 73,
+    "metal_ctest_passed": 15
+  },
+  "notes": [
+    "Each round was measured against the previous round, so the round speeds do not multiply into the final figure. The final figure comes from this session.",
+    "Another session ran native benchmarks on the same machine during the campaign. Every sample here waited for a quiet GPU and none overlapped another native stage.",
+    "The 16 MP path was not measured end to end in this campaign."
+  ]
+}

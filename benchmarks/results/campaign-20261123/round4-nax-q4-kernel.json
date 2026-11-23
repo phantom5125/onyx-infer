@@ -203,56 +203,110 @@
   "decision": "accepted",
   "notes": [
     "The baseline is the round-3 binary with the max-quality profile. The candidate is the round-4 binary with --profile m5-fast.",
-    "Numeric change: against the max-quality image the m5-fast image correlates 0.987 (PSNR 28.3 dB). Per linear layer the outputs differ by one BF16 ulp, and against an FP64 reference the kernel is as accurate as the MPSGraph path (max error 0.068 versus 0.082).",
+    "Numeric change: against the max-quality image the m5-fast image correlates 0.987 (PSNR 28.3 dB). On every layer 46% of the outputs differ from the MPSGraph path by one BF16 ulp. Against FP64 reference products both paths sit 2-5 half-ulps of the typical output from exact, and neither is uniformly closer.",
     "Peak RSS rises from 1.67 to 3.31 GiB because the kernel takes BF16 scales and biases that are cached per weight.",
     "The text stage is unchanged because it is bounded by weight reads after round 1."
   ],
   "attribution": {
     "engine_probe_real_block_weights": {
-      "tool": "GraphSession::linear entry, real weights from dit-block0.onxpack, median of 12 calls",
+      "tool": "onyx-q4-path-compare (tools/q4_path_compare.mm): median of 12 calls through GraphSession::linear, real weights from dit-block0.onxpack, one run with no other native stage process active",
+      "columns": [
+        "mpsgraph",
+        "transpose off the weight (ONYX_Q4_GRAPH=f32-t)",
+        "nax"
+      ],
       "rows_1093_ms": {
-        "qkv_21504x5376": {
-          "mpsgraph": 14.44,
-          "nax": 13.45
-        },
-        "out_5376x7168": {
-          "mpsgraph": 5.19,
-          "nax": 3.8
-        },
-        "fc1_28672x5376": {
-          "mpsgraph": 18.65,
-          "nax": 16.33
-        }
+        "qkv_21504x5376": [
+          14.48,
+          17.06,
+          16.48
+        ],
+        "out_5376x7168": [
+          4.99,
+          5.12,
+          3.76
+        ],
+        "fc1_28672x5376": [
+          20.47,
+          21.65,
+          15.47
+        ]
       },
       "rows_16384_ms": {
-        "qkv_21504x5376": {
-          "mpsgraph": 108.4,
-          "nax": 106.1
-        },
-        "out_5376x7168": {
-          "mpsgraph": 35.0,
-          "nax": 33.3
-        },
-        "fc1_28672x5376": {
-          "mpsgraph": 144.9,
-          "nax": 141.9
-        }
+        "qkv_21504x5376": [
+          112.1,
+          103.9,
+          107.6
+        ],
+        "out_5376x7168": [
+          36.3,
+          34.0,
+          35.3
+        ],
+        "fc1_28672x5376": [
+          149.5,
+          136.4,
+          141.5
+        ]
       },
       "text_encoder_rows_69_ms": {
-        "q_8192x5120": {
-          "mpsgraph": 4.14,
-          "nax": 2.17
-        }
+        "q_8192x5120": [
+          3.46,
+          3.34,
+          2.03
+        ]
       },
+      "variance": "Across five runs the neural-accelerator QKV call took 13.1-17.7 ms against 14.4-15.1 ms for MPSGraph, so the two are level within noise there. The output projection stayed at 3.8-3.9 ms against 5.0-5.3 ms and the FFN input at 15.3-16.5 ms against 18.6-20.5 ms.",
       "note": "The text stage did not get faster end to end because after round 1 it is bounded by reading 13.7 GB of weights."
     },
     "numeric_effect": {
-      "reference": "FP64 dot products of the unrounded activations with FP32-scale weights, 96 outputs, real qkv weights",
+      "reference": "FP64 products of the unrounded activations with FP32-scale weights, 96 outputs per layer on real weights",
       "max_abs_error_vs_reference": {
-        "mpsgraph": 0.0821,
-        "nax": 0.0679
+        "qkv_1093": {
+          "mpsgraph": 0.0821,
+          "nax": 0.0679
+        },
+        "out_1093": {
+          "mpsgraph": 0.0848,
+          "nax": 0.0848
+        },
+        "fc1_1093": {
+          "mpsgraph": 0.0663,
+          "nax": 0.1036
+        }
       },
-      "outputs_differing_between_paths": "46.0% of elements, each within one BF16 ulp",
+      "same_in_half_ulps_of_the_typical_output": {
+        "qkv_1093": [
+          5.25,
+          4.34
+        ],
+        "out_1093": [
+          5.43,
+          5.43
+        ],
+        "fc1_1093": [
+          2.12,
+          3.31
+        ],
+        "qkv_16384": [
+          5.13,
+          4.94
+        ],
+        "out_16384": [
+          2.37,
+          3.88
+        ],
+        "fc1_16384": [
+          3.0,
+          3.0
+        ],
+        "text_q_69": [
+          3.24,
+          3.43
+        ]
+      },
+      "reading": "Both paths carry the error of rounding the weights to the activation type, 2-5 half-ulps of the typical output. The neural-accelerator kernel is closer on the fused QKV projection, equal on some layers, and farther on others, by up to 1.6x on one layer. It is not uniformly more accurate.",
+      "outputs_differing_between_paths": "46% of the elements on every layer, each within one BF16 ulp",
       "image_vs_max_quality": {
         "shape": [
           1024,

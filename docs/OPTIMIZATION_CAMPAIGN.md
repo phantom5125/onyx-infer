@@ -6,7 +6,7 @@ The experiment archive records the Q4 MMA and small-M split-K cases, their accep
 
 ## Local single-image campaign
 
-Five rounds on one working condition: a single 1024×1024 request on the M5 Max with 36 GB, the default `max-quality` profile, no on-disk caches, and weights streaming from the internal SSD. Each round is measured with the engine-level interleaved A/B in `benchmarks/ab_compare.py` against the binary of the previous round: one warmup and three measured runs per arm in rotating order, with output hashes compared. [Round records](../benchmarks/results/campaign-20261123/)
+Five rounds on one working condition: a single 1024×1024 request on the M5 Max with 36 GB and weights streaming from the internal SSD. Rounds 1–4 ran with the default `max-quality` profile and no on-disk cache; round 5 turns the modulation cache on by default, and round 4 adds the opt-in `m5-fast` profile. Each round is measured with the engine-level interleaved A/B in `benchmarks/ab_compare.py` against the previous round: one warmup and three measured runs per arm in rotating order, with output hashes compared. [Round records](../benchmarks/results/campaign-20261123/)
 
 The f90b0ce baseline took 42.68 s in a profiled run. DiT took 32.79 s, of which 13.97 s was serial weight reads, 12.44 s Q4 linears, and 4.2 s other graph operations. The text stage took 5.14 s with 3.10 s of reads, and the VAE 4.73 s.
 
@@ -56,9 +56,9 @@ The MPSGraph Q4 path dequantizes each weight to FP32, casts it to BF16, transpos
 | `max-quality` | 22.94 / 22.69 / 22.71 s | 22.71 s | 18.30 s | 1.67 GiB |
 | `m5-fast` | 20.98 / 20.95 / 21.08 s | **20.98 s** | 16.71 s | 3.31 GiB |
 
-The gain is much smaller than the earlier operator comparison suggested, because that comparison ran an MPSGraph probe which included graph compilation. At the engine entry on real block weights, the neural-accelerator kernel is 27% faster for the output projection and 12% faster for the FFN input at 1093 rows, and level for the fused QKV projection: each threadgroup still stages and dequantizes its weight tile in software. The text stage is bounded by weight reads after round 1 and did not move. [Round record](../benchmarks/results/campaign-20261123/round4-nax-q4-kernel.json)
+The gain is much smaller than the earlier operator comparison suggested, because that comparison ran an MPSGraph probe which included graph compilation. At the engine entry on real block weights, the neural-accelerator kernel takes about a quarter less time for the output projection (3.8 ms against 5.0 ms at 1093 rows) and 12–24% less for the FFN input. For the fused QKV projection it is level within noise: 13–18 ms against 14–15 ms across five runs. Each threadgroup still stages and dequantizes its weight tile in software. The text stage is bounded by weight reads after round 1 and did not move. [Round record](../benchmarks/results/campaign-20261123/round4-nax-q4-kernel.json)
 
-**This round changes the numeric path.** The kernel takes BF16 scales and biases and sums each product in another order. Per layer its outputs differ from the MPSGraph path by one BF16 ulp, and against FP64 reference products on real weights it is as accurate (maximum error 0.068 against 0.082). Across 300 block-steps the differences change the fine detail of the image: correlation 0.987 with the `max-quality` image and PSNR 28.3 dB, with the same composition. The `m5-fast` output replays identically. The BF16 scales and biases raise the peak RSS by about 1.6 GiB.
+**This round changes the numeric path.** The kernel takes BF16 scales and biases and sums each product in another order. On every layer 46% of its outputs differ from the MPSGraph path, each within one BF16 ulp. Against FP64 reference products on real weights, both paths carry the error of rounding the weights to the activation type, 2–5 half-ulps of the typical output. The kernel is closer on the fused QKV projection, equal on some layers, and farther on others, by up to 1.6× on one layer. Across 300 block-steps the differences change the fine detail of the image: correlation 0.987 with the `max-quality` image and PSNR 28.3 dB, with the same composition. The `m5-fast` output replays identically. The BF16 scales and biases raise the peak RSS by about 1.6 GiB. `onyx-q4-path-compare` reproduces the per-layer timings and errors.
 
 Two MPSGraph changes were tried at the engine entry. Dequantizing straight to a 16-bit type gave wrong results and is rejected. Moving the transpose off the weight is bit-identical, 6–10% slower at 1093 rows and 8–12% faster at 16384 rows. It stays behind `ONYX_Q4_GRAPH=f32-t` until the 16 MP path is measured end to end.
 
@@ -72,6 +72,26 @@ The six-step AdaLN tables depend only on the model and the schedule. The default
 | Default, cache hit | 19.35 / 19.55 / 19.08 s | **19.35 s** | 14.84 s | 1.80 GiB |
 
 Both arms are the round-4 binary with `max-quality`. A hit reads 59.5 GB of weights instead of 85.7 GB and brings the first sampling step from 5.7 s down to the 2.4 s of the other five. All six PNGs share one SHA-256. The first request with a new engine build is a miss and costs the same as the baseline. [Round record](../benchmarks/results/campaign-20261123/round5-default-modulation-cache.json)
+
+### Result of the five rounds
+
+One interleaved session with three arms: the f90b0ce build, the final build with the `max-quality` defaults, and the final build with `m5-fast`. The head arm passes `--no-prefetch-weights` and `--no-modulation-cache`, which is how that build behaved.
+
+| Build | End-to-end samples | Median total | Text | DiT | VAE | Peak RSS | Speed vs. `f90b0ce` |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `f90b0ce`, `max-quality` | 41.93 / 42.09 / 43.01 s | 42.09 s | 5.20 s | 32.21 s | 4.81 s | 1.79 GiB | 1.00× |
+| Final, `max-quality` | 19.04 / 19.78 / 19.18 s | **19.18 s** | 2.23 s | 14.89 s | 2.09 s | 1.70 GiB | **2.19×** |
+| Final, `m5-fast` | 18.37 / 18.75 / 18.36 s | **18.37 s** | 2.15 s | 13.95 s | 2.31 s | 3.02 GiB | **2.29×** |
+
+Each round was measured against the previous one, so the round speeds do not multiply into these figures. The default output differs from the f90b0ce output in 36 of 3,145,728 channel values, each by one level, which round 2 introduced. `m5-fast` is the numeric variant of round 4. Each arm reproduced one PNG in all three runs. [Final record](../benchmarks/results/campaign-20261123/final-comparison.json)
+
+Three checks ran alongside:
+
+- `memory-min` keeps its gates: peak RSS 1.72–1.78 GiB against the 2 GiB limit, and the same PNG as `max-quality`.
+- Batched VAE decoding also holds at 512×768: VAE 2.45 → 1.51 s, with 17 of 1,179,648 channel values one level apart.
+- `--dit-cache-mib 10240` is now slower than the default. It beat serial reads before round 1, but prefetch already hides the reads: 21.88 s against 18.70 s median, with peak RSS at 6.35 GiB against 1.80 GiB.
+
+The 16 MP path was not measured end to end in this campaign.
 
 ## Production and isolated measurements
 

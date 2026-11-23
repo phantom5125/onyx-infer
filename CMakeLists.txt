@@ -109,7 +109,7 @@ target_link_libraries(onyx-mpsgraph-q4-probe PRIVATE "${FOUNDATION_FRAMEWORK}" "
 add_executable(onyx-steel-real-data-probe tools/steel_real_data_probe.mm)
 target_link_libraries(onyx-steel-real-data-probe PRIVATE "${FOUNDATION_FRAMEWORK}" "${METAL_FRAMEWORK}" "${MPSGRAPH_FRAMEWORK}")
 
-foreach(probe IN ITEMS mpsgraph_probe q4_linear_probe dit_block_profile linear_steel_probe)
+foreach(probe IN ITEMS mpsgraph_probe q4_linear_probe q4_path_compare dit_block_profile linear_steel_probe)
   string(REPLACE "_" "-" target "onyx-${probe}")
   add_executable(${target} "tools/${probe}.mm")
   target_link_libraries(${target} PRIVATE onyx_graph)

@@ -61,7 +61,7 @@
     "vae_tiling": "Existing overlap equivalence evidence covers tile16. A new geometry requires independent validation.",
     "dit_block_cache": "Reuse original DiT weight bytes across the six sampling steps. The cache must preserve output bytes. Measure its benefit with an interleaved matrix.",
     "weight_prefetch": "Stream the next block's weights while the GPU computes the current one. Streaming only: one extra block in memory and the output bytes do not change.",
-    "q4_kernel": "The nax kernel changes the numeric path against mpsgraph: against an exact FP64 reference on real block weights its maximum error was 0.068 versus 0.082 for mpsgraph, both at the resolution of the BF16 output."
+    "q4_kernel": "The nax kernel changes the numeric path against mpsgraph: 46% of the outputs of every layer differ by one BF16 ulp. Against FP64 reference products both paths sit 2-5 half-ulps of the typical output from the exact value, and neither is uniformly closer."
   },
   "profiles": {
     "max-quality": {

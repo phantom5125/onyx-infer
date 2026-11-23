@@ -66,6 +66,25 @@ The benchmark records include sample counts, output hashes, and the source revis
 The [teapot benchmark write-up](site/blog/posts/four-rounds-one-byte-identical-teapot.md)
 explains each change, including the zero-point cache regression.
 
+### Local single-image campaign, November 23
+
+Five further rounds on the same request, each measured against the previous round with
+interleaved runs. [Round records](benchmarks/results/campaign-20261123/) · [Write-up](docs/OPTIMIZATION_CAMPAIGN.md#local-single-image-campaign)
+
+| Build | Median wall time | Peak memory | Speed vs. `f90b0ce` | Output |
+| --- | ---: | ---: | ---: | --- |
+| `f90b0ce`, `max-quality` | 42.09 s | 1.79 GiB | 1.00× | SHA-256 `4160adb7` |
+| Five rounds, `max-quality` | **19.18 s** | 1.70 GiB | **2.19×** | 36 of 3,145,728 channel values differ by one level |
+| Five rounds, `m5-fast` | **18.37 s** | 3.02 GiB | **2.29×** | Numeric variant, correlation 0.987 with `max-quality` |
+
+| Round | Change | Before → after | Output |
+| --- | --- | ---: | --- |
+| 1 | Weight reads overlap GPU compute | 41.88 → 26.27 s | Byte-identical |
+| 2 | VAE tiles decode in batches | 24.22 → 22.08 s | 36 channel values differ by one level |
+| 3 | AdaLN modulation gathered on the GPU | DiT 19.94 → 18.33 s | Byte-identical |
+| 4 | Q4 linears on the M5 neural accelerators, `m5-fast` | 22.71 → 20.98 s | Numeric variant |
+| 5 | Modulation cache on by default | 22.71 → 19.35 s | Byte-identical |
+
 ## Key features
 
 - **Full-native pipeline, zero runtime reuse** — MPSGraph + hand-written MSL kernels over our
@@ -77,9 +96,7 @@ explains each change, including the zero-point cache regression.
   a RunRecord for every run; outputs verified by SHA-256 and reproduced by replay.
 - **Evidence-first optimization loop** — the leaderboard above is not a narrative; each round
   is backed by measurement JSON, correctness gates, and an output-hash proof.
-- **Three execution profiles for W4** — `max-quality` uses the default MPSGraph path,
-  `memory-min` streams weights at every stage, and `speed-focus` tests BF16 SIMD and weight
-  caching. The profile registry records the settings and validation criteria.
+- **Four execution profiles for W4** — `max-quality` is the default, `memory-min` streams weights at every stage, `m5-fast` runs the Q4 linears on the M5 neural accelerators, and `speed-focus` tests BF16 SIMD and weight caching. The profile registry records the settings and validation criteria.
 - **Versioned, immutable model packages** — ModelScope revisions pinned, per-file SHA-256,
   resumable multi-part downloads, streaming group-wise W4 packing.
 
@@ -90,10 +107,12 @@ leaderboard above. We publish the gaps next to the wins.
 
 | Measurement | Value | Source |
 | --- | --- | --- |
-| 1024×1024 native generation | 32.81 s median (text 5.25 / DiT 22.95 / VAE 4.65), 1.79 GiB peak | `m5-max-36gb-dit-prefetch-default-v1.json` |
+| 1024×1024 native generation | 19.18 s median (text 2.23 / DiT 14.89 / VAE 2.09), 1.70 GiB peak, with a warm modulation cache | [final-comparison.json](benchmarks/results/campaign-20261123/final-comparison.json) |
+| 1024×1024 at `35bc6f9`, before the local single-image campaign | 32.81 s median (text 5.25 / DiT 22.95 / VAE 4.65), 1.79 GiB peak | `m5-max-36gb-dit-prefetch-default-v1.json` |
+| 1024×1024 before weight prefetch | 34.65 s median (text 3.83 / DiT 26.02 / VAE 4.41), 1.86 GiB peak | `native-round4-fused-attention-views.json` |
 | 4096×4096 teapot benchmark run | 329.61 s, sampled process-tree peak RSS 2.14 GB, replay verified | [native-v1-stability.json](benchmarks/results/native-v1-stability.json) |
 | Numerical fidelity | text-tower corr 0.9999987; VAE pixel corr 0.999993 | `native-baseline-v1.json` |
-| Q4 GEMM vs MLX (published gap) | 28.12 ms vs 1.71 ms median on 1024×5376×5376 — 16.5× | `m5-max-36gb-q4-operator-v1.json` |
+| Q4 GEMM vs MLX | 28.12 ms vs 1.71 ms median on 1024×5376×5376 in the isolated probes. The MPSGraph figure includes graph compilation: with compiled graphs the engine-level gap is within 9% end to end | `m5-max-36gb-q4-operator-v1.json`, [round 4](benchmarks/results/campaign-20261123/round4-nax-q4-kernel.json) |
 | Native vs community W8A8 (published gap) | 38.74 s vs 23.61 s on the same request — 1.64× | `native-v1-stability.json` |
 
 Both the wins and the gaps live in `benchmarks/results/` as committed JSON.
@@ -106,13 +125,13 @@ The [first-image guide](docs/QUICKSTART.md) covers the native build, verified ch
 - **Disk** — About **62 GB** of inference files, including the VAE, PDD heads, and tokenizer. Allow about **200 GB** for the original checkpoint and converted files, plus space for build tools.
 - **Tested hardware** — 1024×1024 generation on M4 Air (24 GB) and M5 Max (36 GB). The minimum supported unified memory is unverified.
 
-Use `memory-min` for all-streaming weights or `speed-focus` to try the BF16 SIMD kernel and DiT weight cache. The measured H3 W4 pipeline is fastest with the default MPSGraph path. See [the optimization campaign](docs/OPTIMIZATION_CAMPAIGN.md).
+Use `memory-min` for all-streaming weights, `m5-fast` on M5 to run the Q4 linears on the neural accelerators (a numeric variant), or `speed-focus` to try the BF16 SIMD kernel and DiT weight cache. Among the profiles that keep the `max-quality` numeric path, the default MPSGraph kernel is the fastest measured. See [the optimization campaign](docs/OPTIMIZATION_CAMPAIGN.md).
 
 [Onyx Studio](plugin/onyx-studio/README.md) adds local image generation, engine inspection, and an illustrated book reader to DeepSeek Harness.
 
 The six-step DiT modulation tables depend only on the model and the schedule, so `native-generate` caches them by default in `~/Library/Caches/onyx-infer/modulation` and reuses them across prompts, seeds, and image sizes. The first request with a new engine build computes them, which streams the 26 GB of AdaLN projection weights. Later requests load the table. `--modulation-cache <directory>` moves the cache and `--no-modulation-cache` turns it off.
 
-For 1024×1024 requests on the 36 GiB benchmark machine, `--dit-cache-mib 10240` speeds up the default MPSGraph path by keeping repeatedly read weights in memory. Native output reports the applied budget. At 16 MP, the same budget increased system swap. [Tuning and verification](docs/NATIVE_TUNING.md)
+Keep the default DiT weight budget. `--dit-cache-mib 10240` was faster while weight reads were serial, but weight prefetch now hides those reads: on the 36 GiB benchmark machine the budget measured 21.88 s against 18.70 s for the default and raised peak memory to 6.35 GiB. Native output reports the applied budget. [Tuning and verification](docs/NATIVE_TUNING.md)
 
 Use `onyx label-prompt` to describe lettering for H3 or `onyx compose-labels` to place exact text and leader lines after generation. [Image text workflows](docs/IMAGE_TEXT.md)
 

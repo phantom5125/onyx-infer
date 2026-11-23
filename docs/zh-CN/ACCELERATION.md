@@ -1,6 +1,6 @@
 # 加速路线与"投机解码"适配性评估
 
-状态：2026-11-18 技术评估，基于公开资料逐条核实（引用见文内 URL）。结论先行：**LLM 式 draft-verify 投机解码对 6-NFE 非自回归扩散模型结构上不适用**（未找到任何针对少步非自回归扩散模型的投机解码公开工作）；扩散场景的对应物是**跨步特征缓存**，但其收益随步数减少明显缩水且改变数值路径；本机真正的第一优先级是**用 M5 Neural Accelerators 关闭 16.5× 的 Q4 GEMM 差距**。
+状态：2026-11-18 技术评估，基于公开资料逐条核实（引用见文内 URL）。结论先行：**LLM 式 draft-verify 投机解码对 6-NFE 非自回归扩散模型结构上不适用**（未找到任何针对少步非自回归扩散模型的投机解码公开工作）；扩散场景的对应物是**跨步特征缓存**，但其收益随步数减少明显缩水且改变数值路径；本机真正的第一优先级是**用 M5 Neural Accelerators 关闭 16.5× 的 Q4 GEMM 差距**。（2026-11-23 更新：该项已做完，见下表「P0 结果」；差距本身来自探针口径。）
 
 ## 1. "投机解码"映射到扩散模型：三条路线的适配性
 
@@ -38,6 +38,7 @@ Mac 特性 → 动作映射：
 | 优先级 | 项 | 数值影响 | 门禁路径 |
 | --- | --- | --- | --- |
 | P0 | MPP/NA 重写 Q4 GEMM，关闭 16.5× 差距 | 无（同数学定义的更快实现） | L0/L1 逐 shape 对账 + 端到端 bitwise + 交错矩阵 |
+| P0 结果（2026-11-23） | **已关闭，但 16.5× 的差距本身不成立**：它来自含图编译的 MPSGraph 探针。按引擎入口（图已编译）在真实块权重上对比，MLX 的 NAX 量化内核（`affine_qmm_t_nax`，经 MPP 运行在 Neural Accelerators 上）相对 MPSGraph：out_proj 快约 25%，fc1 快 12–24%，qkv 在噪声内持平（5 次运行 13–18 ms 对 14–15 ms）——每个线程组仍要靠软件搬运并反量化权重块。该内核已从 vendored 源码编入自有 metallib，由 `GraphSession::linear` 直接分发（不经 MLX 运行时、无拷贝），作为新档位 `m5-fast` 提供：交错 A/B 22.71 → 20.98 s（DiT 18.30 → 16.71 s）。数值变体：每层 46% 的输出相差 1 个 BF16 ulp；对照 FP64 参考，两条路径都落在典型输出的 2–5 个半 ulp 内，互有高低；图像相关 0.987；峰值 RSS 1.67 → 3.31 GiB。复现：`onyx-q4-path-compare`。记录：`benchmarks/results/campaign-20261123/round4-nax-q4-kernel.json` | 数值变体（scale/bias 为 BF16） | `onyx_q4_linear_nax` CTest + 真实权重 FP64 对拍 + 交错端到端 |
 | P0 进展 2（2026-11-18） | ⚠️ 重大发现：真实量化权重（text-q0-qproj, m=32）上，steel 内核与生产 MPSGraph 路径输出**互相一致**（fp16 舍入内），但**共同偏离**三重地面真值（MLX python dequantize+matmul = numpy 独立解码 = C++ CPU 参照，三者一致给出 out[0][:4]≈1.025/0.461/-0.700/0.966；GPU 给 1.879/1.731/-1.799/1.866）。已排除：四种零点约定（±8、漏零点、符号取反）均不匹配 GPU 输出；k 配对交替符号检测因精度不足无结论。合成数据 bench 无法暴露此问题（合成 scale 分布下各候选差异超容差，会 fail——而 bench 通过说明合成数据下 GPU=CPU）。这意味着生产 MPSGraph 的 W4 解码语义可能与 MLX affine 语义存在系统性偏差，且 v1 的 correlation 验收无法区分该类偏差。**修复优先级提升为最高**：单点 dump steel/mpsgraph 的实际 dequantized W 与 numpy 对比即可定位。诊断工具：`tools/linear_steel_probe.mm`（支持 steel/mpsgraph 双路径 + dump）、`tools/steel_real_data_probe.mm`（独立绑定）。影响面：真实数据上所有 W4 GEMM 输出；对图像质量的影响未量化。
 **进一步线索与定位（同日）**：probe 以 x=e_0 输入时 steel 输出与 x=LCG 近似相同——最终定位：**探针自身的读回类型错误**（把 BF16 输出按 FP16 解码 → 数值显示垃圾），steel 内核与生产路径的输出实际全部正确（y_fp16 原始位 a6f8 = fp16(-0.0272) = W(0,0) 逐位吻合地面真值）。
 **结论（已修正）**：① MLX steel 内核在真实量化数据上完全正确（直绑与 CTest 双门验证）；② 生产 MPSGraph 解码路径**无错误**（此前怀疑为探针读回 bug 所致，已排除）；③ GraphSession::linear_steel 运行时路径**验证正确**，含 M=69 边缘 tile（CTest `onyx_linear_steel_probe`，CPU 全对拍 max_err=0.00028）。steel 运行时集成解锁。 |

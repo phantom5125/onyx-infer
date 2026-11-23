@@ -18,7 +18,7 @@ The modulation cache keys entries by the model file identity, PDD schedule, nati
 
 ## Pick a budget
 
-On the M5 Max with 36 GiB of unified memory, the 10 GiB weight-cache budget improved the 1024×1024 teapot request with a warm modulation table. The 4096×4096 stress run with the same budget increased system swap by about 853 MiB. For 16 MP on this machine, use the modulation cache with the default `max-quality` weight budget. When tuning another workload, compare end-to-end latency and swap usage alongside DiT time. [Measured results](OPTIMIZATION_CAMPAIGN.md#cache-the-repeated-dit-weights)
+On the M5 Max with 36 GiB of unified memory, keep the default budget for 1024×1024. The 10 GiB weight cache was faster while weight reads were serial (DiT 20.11 → 16.76 s), but weight prefetch now hides those reads: in an interleaved comparison the budget took 21.88 s against 18.70 s for the default, with peak RSS at 6.35 GiB against 1.80 GiB. [Final record](../benchmarks/results/campaign-20261123/final-comparison.json) The 4096×4096 stress run with that budget also increased system swap by about 853 MiB, so keep the default for 16 MP as well. [Earlier measurement](OPTIMIZATION_CAMPAIGN.md#cache-the-repeated-dit-weights) When tuning another workload, compare end-to-end latency and swap usage alongside DiT time.
 
 ## Check the two caches locally
 

@@ -56,6 +56,24 @@ group-wise W4 量化、分阶段驻留、逐 block 流式、分块注意力，�
 
 完整记录见[茶壶基准文章](site/blog/posts/four-rounds-one-byte-identical-teapot.md)。
 
+### 2026 年 11 月 23 日：本地单图五轮优化
+
+在同一请求上再做五轮，每一轮都与上一轮交错对比。[各轮记录](benchmarks/results/campaign-20261123/) · [完整说明](docs/OPTIMIZATION_CAMPAIGN.md#local-single-image-campaign)
+
+| 构建 | 墙钟时间中位数 | 峰值内存 | 相对 `f90b0ce` | 输出 |
+|---|---:|---:|---:|---|
+| `f90b0ce`，`max-quality` | 42.09 s | 1.79 GiB | 1.00× | SHA-256 `4160adb7` |
+| 五轮之后，`max-quality` | **19.18 s** | 1.70 GiB | **2.19×** | 3,145,728 个通道值中有 36 个相差 1 级 |
+| 五轮之后，`m5-fast` | **18.37 s** | 3.02 GiB | **2.29×** | 数值变体，与 `max-quality` 图像相关 0.987 |
+
+| 轮次 | 改动 | 之前 → 之后 | 输出 |
+|---|---|---:|---|
+| 1 | 权重读取与 GPU 计算重叠 | 41.88 → 26.27 s | 逐字节一致 |
+| 2 | VAE 分块批处理 | 24.22 → 22.08 s | 36 个通道值相差 1 级 |
+| 3 | AdaLN 调制改为 GPU gather | DiT 19.94 → 18.33 s | 逐字节一致 |
+| 4 | Q4 线性层运行在 M5 神经网络加速器上（`m5-fast`） | 22.71 → 20.98 s | 数值变体 |
+| 5 | 默认启用调制缓存 | 22.71 → 19.35 s | 逐字节一致 |
+
 ## 核心特性
 
 - **全原生链路，运行时零复用**——MPSGraph + 手写 MSL kernel，加载自有 packed Q4 权重；
@@ -68,8 +86,9 @@ group-wise W4 量化、分阶段驻留、逐 block 流式、分块注意力，�
   输出哈希证明作为支撑。
 - **版本化不可变模型包**——ModelScope revision 固定、逐文件 SHA-256、多段续传下载、
   流式 group-wise W4 打包。
-- **W4 的三档执行配置**——`max-quality` 使用默认 MPSGraph，`memory-min` 全阶段流式读取，
-  `speed-focus` 用于试验 BF16 SIMD 和权重缓存。档位注册表记录具体配置与验收门槛。
+- **W4 的四档执行配置**——`max-quality` 为默认档，`memory-min` 全阶段流式读取，
+  `m5-fast` 在 M5 神经网络加速器上运行 Q4 线性层，`speed-focus` 用于试验 BF16 SIMD 和权重缓存。
+  档位注册表记录具体配置与验收门槛。
 
 ## 实测结果（M5 Max 36 GB，Mac17,14）
 
@@ -77,10 +96,12 @@ group-wise W4 量化、分阶段驻留、逐 block 流式、分块注意力，�
 
 | 测量项 | 数值 | 来源 |
 | --- | --- | --- |
-| 1024×1024 原生生成 | 32.81 s median（text 5.25 / DiT 22.95 / VAE 4.65），峰值 1.79 GiB | `m5-max-36gb-dit-prefetch-default-v1.json` |
+| 1024×1024 原生生成 | 19.18 s median（text 2.23 / DiT 14.89 / VAE 2.09），峰值 1.70 GiB，调制缓存已预热 | [final-comparison.json](benchmarks/results/campaign-20261123/final-comparison.json) |
+| 1024×1024，`35bc6f9`（本地单图五轮优化之前） | 32.81 s median（text 5.25 / DiT 22.95 / VAE 4.65），峰值 1.79 GiB | `m5-max-36gb-dit-prefetch-default-v1.json` |
+| 1024×1024，启用权重预取之前 | 34.65 s median（text 3.83 / DiT 26.02 / VAE 4.41），峰值 1.86 GiB | `native-round4-fused-attention-views.json` |
 | 4096×4096 茶壶基准 | 329.61 s，该次运行采样到的进程树峰值 RSS 为 2.14 GB，已回放验证 | [native-v1-stability.json](benchmarks/results/native-v1-stability.json) |
 | 数值保真 | 文本塔相关系数 0.9999987；VAE 像素相关系数 0.999993 | `native-baseline-v1.json` |
-| Q4 GEMM vs MLX（已发布的差距） | 同形状 1024×5376×5376 下 28.12 ms vs 1.71 ms，16.5× | `m5-max-36gb-q4-operator-v1.json` |
+| Q4 GEMM vs MLX | 隔离探针中同形状 1024×5376×5376 下 28.12 ms vs 1.71 ms。MPSGraph 的数字包含图编译：图已编译后，引擎入口的端到端差距在 9% 以内 | `m5-max-36gb-q4-operator-v1.json`、[第 4 轮](benchmarks/results/campaign-20261123/round4-nax-q4-kernel.json) |
 | 原生 vs 社区 W8A8（已发布的差距） | 同一请求 38.74 s vs 23.61 s，1.64× | `native-v1-stability.json` |
 
 胜利与差距都在 `benchmarks/results/` 里以提交的 JSON 存档。
@@ -93,13 +114,13 @@ group-wise W4 量化、分阶段驻留、逐 block 流式、分块注意力，�
 - **磁盘** — W4 推理文件约 **62 GB**，包含 VAE、PDD heads 和 tokenizer。原始权重与转换产物合计预留约 **200 GB**，构建工具另计。
 - **已实测机型** — M4 Air（24 GB）和 M5 Max（36 GB）均完成 1024×1024 出图。统一内存下限尚未验证。
 
-使用 `memory-min` 可让全部阶段流式读取权重。`speed-focus` 用于试验 BF16 SIMD 内核与 DiT 权重缓存。已有 H3 W4 端到端实测中，默认 MPSGraph 路径最快。详见[优化记录](docs/OPTIMIZATION_CAMPAIGN.md)。
+使用 `memory-min` 可让全部阶段流式读取权重；在 M5 上可用 `m5-fast` 让 Q4 线性层运行在神经网络加速器上（属于数值变体）；`speed-focus` 用于试验 BF16 SIMD 内核与 DiT 权重缓存。在保持 `max-quality` 数值路径的档位中，默认的 MPSGraph 内核实测最快。详见[优化记录](docs/OPTIMIZATION_CAMPAIGN.md)。
 
 [Onyx Studio](plugin/onyx-studio/README.md) 为 DeepSeek Harness 提供本地出图、引擎观测和图文阅读器。
 
 六步 DiT 调制表只取决于模型和采样计划，因此 `native-generate` 默认把它缓存在 `~/Library/Caches/onyx-infer/modulation`，在不同提示词、种子和画幅之间复用。换用新的引擎构建后，首次请求需要计算调制表并读入 26 GB 的 AdaLN 投影权重，之后的请求直接加载。`--modulation-cache <目录>` 可更换缓存位置，`--no-modulation-cache` 关闭缓存。
 
-在 36 GiB 基准机上，1024×1024 请求可通过 `--dit-cache-mib 10240` 缓存反复读取的权重，加速默认 MPSGraph 路径。原生日志会报告实际预算。同一预算在 16 MP 对照中增加了系统 swap。[缓存调优与验证](docs/NATIVE_TUNING.md)
+请保持默认的 DiT 权重预算。`--dit-cache-mib 10240` 在权重串行读取时更快，但权重预取现在已经把这些读取隐藏掉了：在 36 GiB 基准机上，该预算实测 21.88 s，默认配置为 18.70 s，且峰值内存升到 6.35 GiB。原生日志会报告实际预算。[缓存调优与验证](docs/NATIVE_TUNING.md)
 
 可用 `onyx label-prompt` 为 H3 组织文字提示。需要逐字准确的文字和引线时，可在生成后用 `onyx compose-labels` 排版。[图中文字工作流](docs/IMAGE_TEXT.md)
 
