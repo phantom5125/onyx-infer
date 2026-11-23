@@ -5,7 +5,7 @@ The `site/` directory serves a static site with no framework or build-time depen
 ## Files
 
 - `index.html` contains the landing page.
-- `assets/` contains shared CSS and the site mark.
+- `assets/` contains shared CSS, the site mark, and compressed generation previews in `gallery/`. The landing page and both README files reference these curated images; original PNGs remain generation evidence rather than web assets.
 - `blog/posts/` contains the Markdown sources. `tools/build_blog.py` generates the blog index and individual HTML pages.
 
 The repository root `assets/` directory contains the README banner.

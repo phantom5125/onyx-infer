@@ -19,6 +19,21 @@
 
 PyTorch 和 Diffusers 用于离线导入和参考验证。原生推理由 MPSGraph 和 Metal 内核执行。
 
+## 在 Apple Silicon 上生成
+
+以下均为 Onyx 实际出图的缩放预览，原始生成分辨率见图注。
+
+<table>
+  <tr>
+    <td align="center" width="50%"><img src="site/assets/gallery/pelican-bicycle.jpg" width="480" alt="海边骑着红色自行车的鹈鹕"><br><b>骑自行车的鹈鹕</b><br><sub>4096×4096 · 16 MP 直出</sub></td>
+    <td align="center" width="50%"><img src="site/assets/gallery/red-agate.jpg" width="480" alt="具有半透明矿物纹理的抛光红玛瑙"><br><b>红玛瑙</b><br><sub>4096×4096 · 16 MP 直出</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="site/assets/gallery/moon-surface.jpg" width="480" alt="黑色天空下细节清晰的月球表面与环形山"><br><b>月球表面</b><br><sub>4096×4096 · 16 MP 直出</sub></td>
+    <td align="center"><img src="site/assets/gallery/moka-pot-w4.jpg" width="480" alt="标题 MOKA POT 清晰准确的摩卡壶蓝图"><br><b>摩卡壶蓝图</b><br><sub>1024×1024 · W4 · 短标题逐字准确</sub></td>
+  </tr>
+</table>
+
 ## 为什么要有这个项目
 
 原始权重约 **135 GB**，本机 GPU 可用预算 28.08 GiB。这个差距决定了全部架构：

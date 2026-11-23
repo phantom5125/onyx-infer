@@ -7,7 +7,9 @@
 <meta name="description" content="A native C++20 / Metal 4 inference engine that runs MiniMax-H3-Image end-to-end on a Mac Studio — 33.1B DiT in W4, 16 MP direct generation, replayable protocols, evidence-first optimization.">
 <meta property="og:title" content="Onyx Infer — Native image generation for Apple Silicon">
 <meta property="og:description" content="Native MiniMax-H3-Image on Apple Silicon. About 62 GB of W4 inference files and about 2 GB sampled peak process-tree RSS in 1024×1024 benchmarks.">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://phantom5125.github.io/onyx-infer/assets/gallery/red-agate.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0a0c10">
 <link rel="icon" type="image/svg+xml" href="assets/onyx-mark.svg">
 <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -16,6 +18,7 @@
 <nav class="nav"><div class="nav-inner">
   <a class="brand" href="index.html"><svg viewBox="0 0 64 64" width="26" height="26" aria-hidden="true"><defs><linearGradient id="mnav" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7a6e"/><stop offset="0.5" stop-color="#e5484d"/><stop offset="1" stop-color="#8f1220"/></linearGradient></defs><polygon points="32,4 56,18 56,46 32,60 8,46 8,18" fill="#131722" stroke="url(#mnav)" stroke-width="3"/><polygon points="32,18 44,25 44,39 32,46 20,39 20,25" fill="url(#mnav)" opacity="0.85"/></svg><span class="word">ONYX <b>INFER</b></span></a>
   <div class="nav-links">
+    <a href="#gallery">Output</a>
     <a href="#engine">Engine</a>
     <a href="#benchmarks">Benchmarks</a>
     <a href="blog/index.html">Blog</a>
@@ -23,33 +26,90 @@
   </div>
 </div></nav>
 
+<main>
 <!-- ================= HERO ================= -->
-<header class="hero"><div class="wrap">
-  <div>
-    <div class="eyebrow">v1 protocol frozen &middot; Mac Studio M5 Max 36 GB &middot; macOS 27 &middot; Metal 4</div>
+<header class="hero"><div class="wrap hero-grid">
+  <div class="hero-copy">
+    <div class="eyebrow">C++20 &middot; Metal 4 &middot; replayable onyx.*.v1 protocols</div>
     <h1>Native image generation<br>for <span class="gem">Apple&nbsp;Silicon</span>.</h1>
-    <p class="sub">All three <strong>MiniMax-H3-Image stages run locally in C++20 / Metal&nbsp;4</strong> —
-    Qwen3-VL text tower, 33.1B DiT, and VAE. No PyTorch in the hot path,
-    and every optimization change proves itself with a <strong>byte-identical output hash</strong>.</p>
+    <p class="sub">Run the complete <strong>MiniMax-H3-Image pipeline on your Mac</strong> —
+    Qwen3-VL text tower, 33.1B DiT, and VAE. No cloud, no PyTorch in the hot path,
+    and direct 4096×4096 output without an upscaler.</p>
     <div class="cta-row">
-      <a class="btn btn-primary" href="https://github.com/phantom5125/onyx-infer" target="_blank" rel="noopener">★ Star on GitHub</a>
-      <a class="btn btn-ghost" href="#quickstart">Quick start</a>
-      <a class="btn btn-ghost" href="blog/index.html">Engineering notes</a>
+      <a class="btn btn-primary" href="#gallery">Explore the output <span aria-hidden="true">&darr;</span></a>
+      <a class="btn btn-ghost" href="#quickstart">Generate your first image</a>
+    </div>
+    <div class="hero-proof" aria-label="Runtime properties">
+      <span>100% local inference</span><span>Group-wise W4</span><span>6 sampling steps</span>
     </div>
   </div>
+  <figure class="hero-fig workbench">
+    <div class="workbench-window">
+      <div class="window-bar">
+        <span class="window-controls" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="window-title">output-inspector — red-agate-4k.png</span>
+        <span class="window-run">4K / W4</span>
+      </div>
+      <div class="terminal-line"><span class="terminal-prompt">$</span><code>onyx native-generate --width 4096 --height 4096 …</code></div>
+      <div class="inspector-grid">
+        <div class="inspector-main">
+          <img src="assets/gallery/red-agate.jpg" alt="Full-frame 4K Onyx output of a polished red agate" width="1600" height="1600" fetchpriority="high" decoding="async">
+          <span class="image-label">01 / FULL FRAME · 4096²</span>
+        </div>
+        <div class="inspector-details">
+          <div class="detail-image">
+            <img src="assets/gallery/agate-band-detail.jpg" alt="Translucent mineral bands cropped from the same 4K red agate output" width="800" height="800" decoding="async">
+            <span class="image-label">02 / BAND DETAIL</span>
+          </div>
+          <div class="detail-image">
+            <img src="assets/gallery/agate-inclusion-detail.jpg" alt="Crystal inclusions cropped from the same 4K red agate output" width="800" height="800" decoding="async">
+            <span class="image-label">03 / INCLUSIONS</span>
+          </div>
+        </div>
+      </div>
+      <div class="workbench-status"><span><i aria-hidden="true"></i>LOCAL OUTPUT</span><span>W4 · 6 NFE · METAL 4</span></div>
+    </div>
+    <figcaption><span>OUTPUT INSPECTOR</span><strong>One 4K source &middot; full frame + detail crops</strong></figcaption>
+  </figure>
 </div></header>
 
 <!-- ================= STATS ================= -->
 <div class="stats"><div class="wrap stats-grid">
   <div class="stat"><div class="num">33.1<em>B</em></div><div class="lbl">DiT parameters, group-wise W4, streamed</div></div>
   <div class="stat"><div class="num">16<em> MP</em></div><div class="lbl">4096×4096 direct generation, no upscaler</div></div>
-  <div class="stat"><div class="num">~62<em> GB</em></div><div class="lbl">W4 inference files on disk</div></div>
-  <div class="stat"><div class="num">~2<em> GB</em></div><div class="lbl">sampled peak process-tree RSS at 1024×1024</div></div>
-  <div class="stat"><div class="num">6<em> NFE</em></div><div class="lbl">sampling steps, PDD heads, no CFG</div></div>
+  <div class="stat"><div class="num">34.65<em> s</em></div><div class="lbl">1024×1024 median on M5 Max, six steps</div></div>
+  <div class="stat"><div class="num">1.86<em> GiB</em></div><div class="lbl">sampled peak process-tree RSS at 1024×1024</div></div>
 </div></div>
 
+<!-- ================= OUTPUT ================= -->
+<section id="gallery"><div class="wrap">
+  <div class="section-head section-head-split">
+    <div>
+      <div class="eyebrow">Generated on device</div>
+      <h2>Real output. Full resolution.</h2>
+    </div>
+    <p class="lede">Actual images from the native pipeline, resized for the web.
+    No stock photography, no external image service.</p>
+  </div>
+  <div class="output-grid">
+    <figure class="output-card">
+      <img src="assets/gallery/moon-surface.jpg" alt="Detailed lunar surface with crisp craters against a black sky" width="1200" height="1200" loading="lazy" decoding="async">
+      <figcaption><div><b>Lunar surface</b><span>Crater structure and fine surface detail</span></div><span class="output-meta">4096×4096</span></figcaption>
+    </figure>
+    <figure class="output-card">
+      <img src="assets/gallery/moka-pot-w4.jpg" alt="Moka pot blueprint with the exact title MOKA POT" width="1024" height="1024" loading="lazy" decoding="async">
+      <figcaption><div><b>Moka pot blueprint</b><span>Short English title, rendered exactly</span></div><span class="output-meta">1024×1024 · W4</span></figcaption>
+    </figure>
+    <figure class="output-card">
+      <img src="assets/gallery/teapot-1024.jpg" alt="Yellow enamel teapot on a blue wooden table" width="1024" height="1024" loading="lazy" decoding="async">
+      <figcaption><div><b>Yellow enamel teapot</b><span>The fixed request behind our benchmarks</span></div><span class="output-meta">1024×1024 · W4</span></figcaption>
+    </figure>
+  </div>
+
+</div></section>
+
 <!-- ================= ENGINE ================= -->
-<section id="engine"><div class="wrap">
+<section id="engine" class="section-alt"><div class="wrap">
   <div class="section-head">
     <div class="eyebrow">The engine</div>
     <h2>Everything native. Nothing borrowed at runtime.</h2>
@@ -122,12 +182,12 @@
 </div></section>
 
 <!-- ================= BENCHMARKS ================= -->
-<section id="benchmarks" style="background:var(--bg-2); border-top:1px solid var(--border-soft); border-bottom:1px solid var(--border-soft)"><div class="wrap">
+<section id="benchmarks"><div class="wrap">
   <div class="section-head">
     <div class="eyebrow">Benchmarks</div>
     <h2>Numbers you can check in</h2>
     <p class="lede">Every figure below is produced by a committed measurement file in
-    <a href="https://github.com/phantom5125/onyx-infer/tree/main/benchmarks/results" style="color:var(--accent-soft)">benchmarks/results/</a> —
+    <a href="https://github.com/phantom5125/onyx-infer/tree/main/benchmarks/results">benchmarks/results/</a> —
     including the gaps we haven't closed yet.</p>
   </div>
 
@@ -144,7 +204,7 @@
     </table>
   </div>
 
-  <div class="feat-grid" style="grid-template-columns:1fr 1fr 1fr">
+  <div class="feat-grid">
     <div class="card"><h3><span class="pill red">gap · published</span></h3>
       <p><b>Q4 GEMM kernel vs MLX.</b> Our tile16 kernel runs 28.12 ms median on
       1024×5376×5376 (group 64) against MLX <code>quantized_matmul</code>'s 1.71 ms —
@@ -161,7 +221,7 @@
 </div></section>
 
 <!-- ================= QUICK START ================= -->
-<section id="quickstart" style="background:var(--bg-2); border-top:1px solid var(--border-soft)"><div class="wrap">
+<section id="quickstart" class="section-alt"><div class="wrap">
   <div class="section-head">
     <div class="eyebrow">Quick start</div>
     <h2>From clone to native generation</h2>
@@ -217,6 +277,7 @@
       <p>The memory choreography — phase residency, block streaming, chunked attention — behind 4K direct generation.</p></div></a>
   </div>
 </div></section>
+</main>
 
 <footer class="site"><div class="wrap">
   <div class="foot-grid">
