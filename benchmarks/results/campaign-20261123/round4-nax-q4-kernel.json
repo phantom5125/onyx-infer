@@ -1,0 +1,333 @@
+{
+  "protocol": "onyx.native-optimization.v1",
+  "campaign": "local-single-image-20261123",
+  "round": 4,
+  "change": "Run Q4 linear layers on the M5 neural accelerators through MLX's affine QMM kernel, compiled from the vendored source into the Onyx metallib and dispatched by the engine. Exposed as the new m5-fast profile, which differs from max-quality only in its q4_kernel.",
+  "base_commit": "4323154",
+  "case": "h3-teapot-1024-seed42-v1",
+  "profile": "max-quality",
+  "device": {
+    "model_identifier": "Mac17,14",
+    "chip": "Apple M5 Max",
+    "gpu_cores": 32,
+    "physical_memory_bytes": 38654705664,
+    "os_version": "27.2.1"
+  },
+  "native_binary": {
+    "baseline_sha256": "f842f84d9a862cdc7051abbc2fc654027d311ef34e3131232b2735de5e6fc37b",
+    "candidate_sha256": "ec58291ce7f112f40170a84de8647a74dcfe1dc727ee07d4d54bbd34c7e7f5f3",
+    "same_binary": false
+  },
+  "method": "Same machine and W4 package; arms alternate in rotating order after per-arm warmups. Arm order: round 1: base, nax | round 2: nax, base | round 3: base, nax",
+  "baseline": {
+    "binary": ".build/round3-bin/onyx-native",
+    "native_args": [],
+    "environment": [],
+    "samples_seconds": [
+      22.94293020904297,
+      22.690990041999612,
+      22.70691683300538
+    ],
+    "seconds_median": 22.70691683300538,
+    "stage_seconds_median": {
+      "text": 2.2357565839774907,
+      "dit": 18.302098124986514,
+      "vae": 2.1626338330097497
+    },
+    "peak_bytes_max": 1792360448,
+    "output_sha256": [
+      "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac"
+    ],
+    "all_outputs_identical": true,
+    "runs": [
+      {
+        "seconds": 22.94293020904297,
+        "stage_seconds": {
+          "text": 2.2543959580361843,
+          "dit": 18.51837704196805,
+          "vae": 2.1626338330097497
+        },
+        "peak_rss_bytes": 1792360448,
+        "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+        "dit_step_seconds": [
+          5.802,
+          2.573,
+          2.429,
+          2.386,
+          2.413,
+          2.376
+        ],
+        "dit_native_seconds": 18.366341,
+        "dit_prefetch_wait_seconds": 1.833354,
+        "dit_read_bytes": 85656876608
+      },
+      {
+        "seconds": 22.690990041999612,
+        "stage_seconds": {
+          "text": 2.2357565839774907,
+          "dit": 18.302098124986514,
+          "vae": 2.1415388329769485
+        },
+        "peak_rss_bytes": 1754021888,
+        "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+        "dit_step_seconds": [
+          5.839,
+          2.514,
+          2.35,
+          2.342,
+          2.362,
+          2.341
+        ],
+        "dit_native_seconds": 18.145645,
+        "dit_prefetch_wait_seconds": 1.908374,
+        "dit_read_bytes": 85656876608
+      },
+      {
+        "seconds": 22.70691683300538,
+        "stage_seconds": {
+          "text": 2.2249874160042964,
+          "dit": 18.283055417006835,
+          "vae": 2.1894293749937788
+        },
+        "peak_rss_bytes": 1792098304,
+        "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+        "dit_step_seconds": [
+          5.763,
+          2.47,
+          2.371,
+          2.389,
+          2.39,
+          2.359
+        ],
+        "dit_native_seconds": 18.134848,
+        "dit_prefetch_wait_seconds": 1.912907,
+        "dit_read_bytes": 85656876608
+      }
+    ]
+  },
+  "candidate": {
+    "binary": ".build/onyx-native",
+    "native_args": [
+      "--profile",
+      "m5-fast"
+    ],
+    "environment": [],
+    "samples_seconds": [
+      20.975584957981482,
+      20.95235458400566,
+      21.078818832989782
+    ],
+    "seconds_median": 20.975584957981482,
+    "stage_seconds_median": {
+      "text": 2.1560520000057295,
+      "dit": 16.7122269590036,
+      "vae": 2.163866999966558
+    },
+    "peak_bytes_max": 3549200384,
+    "output_sha256": [
+      "57f005b360f0428a30e0bee27532e05763e69c04bb6ed8c11c7c66e342520ba6"
+    ],
+    "all_outputs_identical": true,
+    "runs": [
+      {
+        "seconds": 20.975584957981482,
+        "stage_seconds": {
+          "text": 2.172174334002193,
+          "dit": 16.472267292032484,
+          "vae": 2.3212898750207387
+        },
+        "peak_rss_bytes": 3549200384,
+        "png_sha256": "57f005b360f0428a30e0bee27532e05763e69c04bb6ed8c11c7c66e342520ba6",
+        "dit_step_seconds": [
+          5.438,
+          2.21,
+          2.064,
+          2.1,
+          2.199,
+          2.095
+        ],
+        "dit_native_seconds": 16.431707,
+        "dit_prefetch_wait_seconds": 1.444917,
+        "dit_read_bytes": 85656876608
+      },
+      {
+        "seconds": 20.95235458400566,
+        "stage_seconds": {
+          "text": 2.146767334023025,
+          "dit": 16.7122269590036,
+          "vae": 2.083967750018928
+        },
+        "peak_rss_bytes": 3409231872,
+        "png_sha256": "57f005b360f0428a30e0bee27532e05763e69c04bb6ed8c11c7c66e342520ba6",
+        "dit_step_seconds": [
+          5.451,
+          2.128,
+          2.281,
+          2.12,
+          2.204,
+          2.156
+        ],
+        "dit_native_seconds": 16.670847,
+        "dit_prefetch_wait_seconds": 1.536139,
+        "dit_read_bytes": 85656876608
+      },
+      {
+        "seconds": 21.078818832989782,
+        "stage_seconds": {
+          "text": 2.1560520000057295,
+          "dit": 16.749415707949083,
+          "vae": 2.163866999966558
+        },
+        "peak_rss_bytes": 3540434944,
+        "png_sha256": "57f005b360f0428a30e0bee27532e05763e69c04bb6ed8c11c7c66e342520ba6",
+        "dit_step_seconds": [
+          5.441,
+          2.211,
+          2.181,
+          2.165,
+          2.067,
+          2.302
+        ],
+        "dit_native_seconds": 16.705958,
+        "dit_prefetch_wait_seconds": 1.515363,
+        "dit_read_bytes": 85656876608
+      }
+    ]
+  },
+  "speedup_vs_baseline": 1.082540338135605,
+  "latency_reduction": 0.07624689374417137,
+  "output_sha256": [
+    "57f005b360f0428a30e0bee27532e05763e69c04bb6ed8c11c7c66e342520ba6"
+  ],
+  "outputs_match_baseline": false,
+  "decision": "accepted",
+  "notes": [
+    "The baseline is the round-3 binary with the max-quality profile. The candidate is the round-4 binary with --profile m5-fast.",
+    "Numeric change: against the max-quality image the m5-fast image correlates 0.987 (PSNR 28.3 dB). On every layer 46% of the outputs differ from the MPSGraph path by one BF16 ulp. Against FP64 reference products both paths sit 2-5 half-ulps of the typical output from exact, and neither is uniformly closer.",
+    "Peak RSS rises from 1.67 to 3.31 GiB because the kernel takes BF16 scales and biases that are cached per weight.",
+    "The text stage is unchanged because it is bounded by weight reads after round 1."
+  ],
+  "attribution": {
+    "engine_probe_real_block_weights": {
+      "tool": "onyx-q4-path-compare (tools/q4_path_compare.mm): median of 12 calls through GraphSession::linear, real weights from dit-block0.onxpack, one run with no other native stage process active",
+      "columns": [
+        "mpsgraph",
+        "transpose off the weight (ONYX_Q4_GRAPH=f32-t)",
+        "nax"
+      ],
+      "rows_1093_ms": {
+        "qkv_21504x5376": [
+          14.48,
+          17.06,
+          16.48
+        ],
+        "out_5376x7168": [
+          4.99,
+          5.12,
+          3.76
+        ],
+        "fc1_28672x5376": [
+          20.47,
+          21.65,
+          15.47
+        ]
+      },
+      "rows_16384_ms": {
+        "qkv_21504x5376": [
+          112.1,
+          103.9,
+          107.6
+        ],
+        "out_5376x7168": [
+          36.3,
+          34.0,
+          35.3
+        ],
+        "fc1_28672x5376": [
+          149.5,
+          136.4,
+          141.5
+        ]
+      },
+      "text_encoder_rows_69_ms": {
+        "q_8192x5120": [
+          3.46,
+          3.34,
+          2.03
+        ]
+      },
+      "variance": "Across five runs the neural-accelerator QKV call took 13.1-17.7 ms against 14.4-15.1 ms for MPSGraph, so the two are level within noise there. The output projection stayed at 3.8-3.9 ms against 5.0-5.3 ms and the FFN input at 15.3-16.5 ms against 18.6-20.5 ms.",
+      "note": "The text stage did not get faster end to end because after round 1 it is bounded by reading 13.7 GB of weights."
+    },
+    "numeric_effect": {
+      "reference": "FP64 products of the unrounded activations with FP32-scale weights, 96 outputs per layer on real weights",
+      "max_abs_error_vs_reference": {
+        "qkv_1093": {
+          "mpsgraph": 0.0821,
+          "nax": 0.0679
+        },
+        "out_1093": {
+          "mpsgraph": 0.0848,
+          "nax": 0.0848
+        },
+        "fc1_1093": {
+          "mpsgraph": 0.0663,
+          "nax": 0.1036
+        }
+      },
+      "same_in_half_ulps_of_the_typical_output": {
+        "qkv_1093": [
+          5.25,
+          4.34
+        ],
+        "out_1093": [
+          5.43,
+          5.43
+        ],
+        "fc1_1093": [
+          2.12,
+          3.31
+        ],
+        "qkv_16384": [
+          5.13,
+          4.94
+        ],
+        "out_16384": [
+          2.37,
+          3.88
+        ],
+        "fc1_16384": [
+          3.0,
+          3.0
+        ],
+        "text_q_69": [
+          3.24,
+          3.43
+        ]
+      },
+      "reading": "Both paths carry the error of rounding the weights to the activation type, 2-5 half-ulps of the typical output. The neural-accelerator kernel is closer on the fused QKV projection, equal on some layers, and farther on others, by up to 1.6x on one layer. It is not uniformly more accurate.",
+      "outputs_differing_between_paths": "46% of the elements on every layer, each within one BF16 ulp",
+      "image_vs_max_quality": {
+        "shape": [
+          1024,
+          1024,
+          3
+        ],
+        "mae": 0.015065811574459076,
+        "rmse": 0.038356436143486314,
+        "psnr_db": 28.32323503478271,
+        "pixel_identical": false,
+        "pixel_correlation": 0.9871715814375941,
+        "scope": "Similarity between two implementations, not an absolute image-quality score",
+        "differing_channel_fraction": 0.8083,
+        "mean_abs_levels": 3.84
+      },
+      "replay": "Three m5-fast runs produced one PNG SHA-256"
+    },
+    "rejected_variants": {
+      "dequantize_to_16_bit": "MPSGraph dequantize to the activation type gave wrong results (max_abs_error 179 on the probe), so weights keep the FP32 dequantization and cast.",
+      "transpose_off_weight_f32_t": "Bit-identical on every probed shape. At 1093 rows it is 6-10% slower; at 16384 rows it is 8-12% faster. Kept behind ONYX_Q4_GRAPH=f32-t and not enabled by default because the 16 MP path was not measured end to end."
+    },
+    "memory": "The kernel takes BF16 scales and biases, cached per weight: about 1 GiB more resident scale copies in the DiT stage."
+  }
+}

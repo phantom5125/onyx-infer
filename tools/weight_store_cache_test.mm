@@ -1,6 +1,7 @@
 // Check the WeightStore LRU for bitwise consistency.
-// Read the same pack twice using each storage policy:
+// Read the same pack four times, using each storage policy:
 //   streaming with a zero cache budget
+//   streaming through the background prefetch pipeline
 //   bounded LRU that can evict entries
 //   fully resident weights
 // Compare tensor SHA-256 digests, cache budgets, and hit counts.
@@ -59,6 +60,28 @@ int main(int argc, char** argv) {
       onyx::WeightStore streaming(pack, false, 0);
       const auto streaming_hashes = read_all(streaming, nullptr);
 
+      // Queue each tensor one name at a time and take it right away, so the reader pipeline
+      // hands back the same bytes as the synchronous path.
+      std::map<std::string, std::string> pipeline_hashes;
+      {
+        onyx::WeightStore pipeline(pack, false, 0);
+        for (const std::string& name : pipeline.names()) {
+          pipeline.prefetch("", {name});
+          pipeline_hashes[name] = sha256_hex(pipeline.tensor(name));
+          if (pipeline.dtype(name).starts_with("Q4")) {
+            pipeline_hashes[name + "/scale"] = sha256_hex(pipeline.scale(name));
+          }
+        }
+        pipeline.finish_prefetch();
+      }
+      bool pipeline_ok = pipeline_hashes.size() >= streaming_hashes.size();
+      for (const auto& [name, digest] : streaming_hashes) {
+        pipeline_ok = pipeline_ok && pipeline_hashes.at(name) == digest;
+        if (streaming.dtype(name).starts_with("Q4")) {
+          pipeline_ok = pipeline_ok && pipeline_hashes.at(name + "/scale") == sha256_hex(streaming.scale(name));
+        }
+      }
+
       onyx::WeightStore lru(pack, false, budget);
       const auto lru_hashes = read_all(lru, nullptr);
 
@@ -79,15 +102,17 @@ int main(int argc, char** argv) {
       // Oversized tensors are ineligible. A populated cache should get hits on the second pass.
       const bool hits_ok = lru.cache_entries() == 0 || lru.cache_hits() > 0;
       const bool cached_ok = resident_hashes.size() > 0;
+      const bool ok = pipeline_ok && budget_ok && hits_ok && cached_ok;
       std::printf("{\"test\":\"onyx_weight_store_cache\",\"status\":\"%s\",\"tensors\":%zu,\"budget\":%llu,"
-                  "\"cache_bytes\":%llu,\"entries\":%llu,\"hits\":%llu}\n",
-                  budget_ok && hits_ok && cached_ok ? "pass" : "fail",
+                  "\"cache_bytes\":%llu,\"entries\":%llu,\"hits\":%llu,\"prefetch_pipeline\":\"%s\"}\n",
+                  ok ? "pass" : "fail",
                   resident_hashes.size(),
                   static_cast<unsigned long long>(lru.cache_budget()),
                   static_cast<unsigned long long>(lru.cache_bytes()),
                   static_cast<unsigned long long>(lru.cache_entries()),
-                  static_cast<unsigned long long>(lru.cache_hits()));
-      return budget_ok && hits_ok && cached_ok ? 0 : 1;
+                  static_cast<unsigned long long>(lru.cache_hits()),
+                  pipeline_ok ? "pass" : "fail");
+      return ok ? 0 : 1;
     } catch (const std::exception& error) {
       std::fprintf(stderr, "onyx-weight-store-cache-test: %s\n", error.what());
       return 1;

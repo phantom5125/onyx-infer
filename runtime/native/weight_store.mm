@@ -4,12 +4,27 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <chrono>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <stdexcept>
 
 namespace onyx {
 namespace {
+
+// Reader threads per store. Cold model files deliver about 6.4 GiB/s on the M5 Max
+// reference machine with any thread count, so a second reader only keeps small tensors
+// from waiting behind a large one.
+uint64_t reader_threads() {
+  static const uint64_t count = [] {
+    const char* value = std::getenv("ONYX_PREFETCH_THREADS");
+    const long long parsed = value ? std::atoll(value) : 2;
+    return parsed > 0 ? static_cast<uint64_t>(parsed) : 1;
+  }();
+  return count;
+}
 
 NSDictionary* json_object(NSData* data) {
   NSError* error = nil;
@@ -109,7 +124,8 @@ void require_streaming_weights(const StageOptions& options, const char* stage, c
 }
 
 WeightStore::WeightStore(const std::string& path, bool resident, uint64_t cache_budget_bytes)
-    : fd_(-1), data_begin_(0), specs_(nil), resident_(resident), cache_budget_(resident ? UINT64_MAX : cache_budget_bytes), cache_() {
+    : fd_(-1), data_begin_(0), specs_(nil), names_(), device_(MTLCreateSystemDefaultDevice()),
+      resident_(resident), cache_budget_(resident ? UINT64_MAX : cache_budget_bytes), cache_() {
   fd_ = open(path.c_str(), O_RDONLY);
   if (fd_ < 0) throw std::runtime_error("Could not open weights: " + path);
   @autoreleasepool {
@@ -130,11 +146,19 @@ WeightStore::WeightStore(const std::string& path, bool resident, uint64_t cache_
       data_begin_ = 8 + length;
       specs_ = json_object(read_at(fd_, 8, length));
     }
+    for (NSString* key in specs_) names_.push_back(key.UTF8String);
+    std::sort(names_.begin(), names_.end());
   }
 }
 
 WeightStore::~WeightStore() {
-  if (prefetch_.valid()) prefetch_.wait();
+  {
+    const std::lock_guard lock(prefetch_mutex_);
+    prefetch_stop_ = true;
+    prefetch_queue_.clear();
+  }
+  work_available_.notify_all();
+  for (std::thread& reader : prefetch_readers_) reader.join();
   if (fd_ >= 0) close(fd_);
 }
 
@@ -157,11 +181,7 @@ std::string WeightStore::dtype(const std::string& name) const {
 }
 
 std::vector<std::string> WeightStore::names() const {
-  std::vector<std::string> result;
-  result.reserve([specs_ count]);
-  for (NSString* key in specs_) result.push_back([key UTF8String]);
-  std::sort(result.begin(), result.end());
-  return result;
+  return names_;
 }
 
 void WeightStore::touch(const std::string& name) {
@@ -191,8 +211,10 @@ void WeightStore::admit(const std::string& name, const Tensor& value) {
 }
 
 Tensor WeightStore::tensor(const std::string& name) {
-  auto prefetched = prefetched_.extract(name);
-  if (!prefetched.empty()) return std::move(prefetched.mapped());
+  if (Tensor value = take_prefetched(name); value.buffer) return value;
+  if (std::getenv("ONYX_PREFETCH_TRACE")) {
+    std::fprintf(stderr, "prefetch trace: synchronous read of %s\n", name.c_str());
+  }
   auto found = cache_.find(name);
   if (found != cache_.end()) {
     if (!resident_) {
@@ -210,26 +232,98 @@ Tensor WeightStore::tensor(const std::string& name) {
   return result;
 }
 
-void WeightStore::prefetch(std::vector<std::string> names) {
-  if (cache_budget_ != 0 || prefetch_.valid()) {
-    throw std::logic_error("Weight prefetch requires streaming and at most one pending batch");
-  }
-  prefetch_ = std::async(std::launch::async, [this, names = std::move(names)] {
-    std::map<std::string, Tensor> result;
-    for (const auto& name : names) {
-      @autoreleasepool {
-        result.emplace(name, read(name, "data_offsets", false));
-      }
+void WeightStore::prefetch(const std::string& prefix, const std::vector<std::string>& suffixes) {
+  if (cache_budget_ != 0) throw std::logic_error("Weight prefetch requires streaming weights");
+  const std::lock_guard lock(prefetch_mutex_);
+  // Only the listed tensors are read. A block prefix also covers weights that another phase
+  // owns, and reading those would hold memory and delay the tensors in use.
+  for (const std::string& suffix : suffixes) {
+    const std::string name = prefix + suffix;
+    if (!has(name)) continue;
+    const bool quantized = dtype(name).starts_with("Q4");
+    for (const bool scales : {false, true}) {
+      if (scales && !quantized) continue;
+      const std::string key = scales ? name + "/scale" : name;
+      if (cache_.count(key) || prefetch_pending_.count(key)) continue;
+      prefetch_queue_.push_back({name, scales});
+      prefetch_pending_.insert(key);
     }
-    return result;
-  });
+  }
+  if (prefetch_queue_.empty()) return;
+  while (prefetch_readers_.size() < reader_threads()) {
+    prefetch_readers_.emplace_back([this] { read_loop(); });
+  }
+  work_available_.notify_all();
 }
 
 void WeightStore::finish_prefetch() {
   const auto began = std::chrono::steady_clock::now();
-  prefetched_ = prefetch_.get();
+  std::unique_lock lock(prefetch_mutex_);
+  result_ready_.wait(lock, [this] { return prefetch_queue_.empty() && prefetch_active_ == 0; });
   prefetch_wait_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::steady_clock::now() - began).count();
+  if (!prefetch_errors_.empty()) {
+    std::exception_ptr error = prefetch_errors_.begin()->second;
+    prefetch_errors_.erase(prefetch_errors_.begin());
+    std::rethrow_exception(error);
+  }
+}
+
+Tensor WeightStore::take_prefetched(const std::string& key) {
+  std::unique_lock lock(prefetch_mutex_);
+  if (!prefetch_pending_.count(key)) return {};
+  const auto began = std::chrono::steady_clock::now();
+  result_ready_.wait(lock, [&] {
+    return prefetch_stop_ || prefetched_.count(key) || prefetch_errors_.count(key);
+  });
+  prefetch_wait_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(
+      std::chrono::steady_clock::now() - began).count();
+  prefetch_pending_.erase(key);
+  if (auto found = prefetched_.find(key); found != prefetched_.end()) {
+    Tensor value = found->second;
+    prefetched_.erase(found);
+    return value;
+  }
+  if (auto found = prefetch_errors_.find(key); found != prefetch_errors_.end()) {
+    std::exception_ptr error = found->second;
+    prefetch_errors_.erase(found);
+    std::rethrow_exception(error);
+  }
+  return {};  // The pipeline stopped with this read unfinished; the caller reads synchronously.
+}
+
+void WeightStore::read_loop() {
+  for (;;) {
+    Request request;
+    {
+      std::unique_lock lock(prefetch_mutex_);
+      work_available_.wait(lock, [this] { return prefetch_stop_ || !prefetch_queue_.empty(); });
+      if (prefetch_stop_ && prefetch_queue_.empty()) return;
+      request = std::move(prefetch_queue_.front());
+      prefetch_queue_.pop_front();
+      ++prefetch_active_;
+    }
+    std::exception_ptr error;
+    Tensor value{};
+    @autoreleasepool {
+      try {
+        value = request.scales ? read_scale(request.name) : read(request.name, "data_offsets", false);
+      } catch (...) {
+        error = std::current_exception();
+      }
+    }
+    {
+      const std::lock_guard lock(prefetch_mutex_);
+      --prefetch_active_;
+      const std::string key = request.scales ? request.name + "/scale" : request.name;
+      if (error) {
+        prefetch_errors_[key] = error;
+      } else {
+        prefetched_[key] = value;
+      }
+    }
+    result_ready_.notify_all();
+  }
 }
 
 std::vector<int64_t> WeightStore::shape(const std::string& name) const {
@@ -247,8 +341,7 @@ Tensor WeightStore::read(const std::string& name, const std::string& field, bool
   const uint64_t end = [offsets[1] unsignedLongLongValue];
   const uint64_t length = end - begin;
   const auto read_start = std::chrono::steady_clock::now();
-  id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-  id<MTLBuffer> buffer = [device newBufferWithLength:length options:resource_options];
+  id<MTLBuffer> buffer = [device_ newBufferWithLength:length options:resource_options];
   if (!buffer) throw std::runtime_error("Metal weight allocation failed: " + name);
   uint64_t completed = 0;
   while (completed < length) {
@@ -273,11 +366,20 @@ Tensor WeightStore::scale(const std::string& name) {
   const std::string key = name + "/scale";
   auto found = cache_.find(key);
   if (found != cache_.end()) return found->second;
-  Tensor result = read(name, "scale_offsets", true);
-  const std::string type = dtype(name);
-  const uint64_t group = std::stoull(type.substr(3));
-  result.shape = {result.shape[0], result.shape[1] / static_cast<int64_t>(group)};
+  if (Tensor value = take_prefetched(key); value.buffer) {
+    // Scales stay resident regardless of the weight budget.
+    cache_[key] = value;
+    return value;
+  }
+  Tensor result = read_scale(name);
   cache_[key] = result;
+  return result;
+}
+
+Tensor WeightStore::read_scale(const std::string& name) {
+  Tensor result = read(name, "scale_offsets", true);
+  const uint64_t group = std::stoull(dtype(name).substr(3));
+  result.shape = {result.shape[0], result.shape[1] / static_cast<int64_t>(group)};
   return result;
 }
 
@@ -298,8 +400,7 @@ Tensor WeightStore::embedding(const std::string& name, const std::vector<int32_t
     const ssize_t result = pread(fd_, static_cast<uint8_t*>(data.mutableBytes) + index * stride, stride, offset);
     if (result != static_cast<ssize_t>(stride)) throw std::runtime_error("Could not read embedding row");
   }
-  id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-  id<MTLBuffer> buffer = [device newBufferWithBytes:data.bytes length:data.length options:resource_options];
+  id<MTLBuffer> buffer = [device_ newBufferWithBytes:data.bytes length:data.length options:resource_options];
   return Tensor{buffer, {static_cast<int64_t>(ids.size()), shape[1]}, data_type(type)};
 }
 

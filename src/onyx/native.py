@@ -1,7 +1,9 @@
 import argparse
 import json
+import logging
 import os
 import shutil
+import stat
 import subprocess
 import tempfile
 import time
@@ -15,6 +17,42 @@ from onyx.profiles import ProfileError, dit_cache_bytes, load_registry, registry
 
 
 ROOT = Path(__file__).resolve().parents[2]
+# Regenerable tables belong in the user cache. An entry binds one native build, so every
+# rebuild of the engine leaves the previous entry behind at about 55.5 MiB.
+DEFAULT_MODULATION_CACHE = Path.home() / "Library" / "Caches" / "onyx-infer" / "modulation"
+MODULATION_CACHE_KEEP = 2
+
+
+def resolve_modulation_cache(requested: Path | None, disabled: bool) -> Path | None:
+    """Return the modulation cache directory, or None to compute the tables on every request."""
+    if disabled:
+        return None
+    return requested if requested is not None else DEFAULT_MODULATION_CACHE
+
+
+def prune_modulation_cache(directory: Path, keep: int = MODULATION_CACHE_KEEP) -> list[str]:
+    """Delete the oldest modulation entries beyond `keep` and return their names, oldest first.
+
+    Only the default directory is pruned. A directory that the caller chose may hold
+    entries that it wants to keep.
+    """
+    entries = []
+    for path in directory.glob("*.adaln"):
+        try:
+            info = path.stat()
+        except FileNotFoundError:
+            continue
+        if stat.S_ISREG(info.st_mode):
+            entries.append((info.st_mtime_ns, path))
+    entries.sort(reverse=True)
+    removed = []
+    for _, stale in reversed(entries[keep:]):
+        try:
+            stale.unlink()
+        except FileNotFoundError:
+            continue
+        removed.append(stale.name)
+    return removed
 
 
 def main(argv=None):
@@ -27,15 +65,20 @@ def main(argv=None):
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--native-bin", type=Path, default=ROOT / ".build/onyx-native")
     parser.add_argument("--profile", default="max-quality", help="Execution profile from config/profiles/profiles.v1.json")
-    parser.add_argument("--modulation-cache", type=Path, help="Directory for reusable DiT timestep modulation tables")
+    parser.add_argument("--modulation-cache", type=Path,
+                        help="Directory for reusable DiT timestep modulation tables (default: ~/Library/Caches/onyx-infer/modulation)")
+    parser.add_argument("--no-modulation-cache", action="store_true",
+                        help="Compute the DiT modulation tables on every request and write no cache")
     parser.add_argument("--dit-cache-mib", type=int, help="Override the DiT weight-cache budget in MiB")
     parser.add_argument("--dit-prefetch", action=argparse.BooleanOptionalAction, default=None,
-                        help="Read the next DiT block's projection weights during GPU computation "
-                             "(default: enabled with a zero DiT weight-cache budget)")
+                        help="Override weight prefetch for the DiT stage only")
+    parser.add_argument("--prefetch-weights", action=argparse.BooleanOptionalAction, default=None,
+                        help="Prefetch weights in the text and DiT stages (default: the profile's weight_prefetch knob)")
     args = parser.parse_args(argv)
     try:
         registry = load_registry()
         resolved = resolve_profile(registry, args.profile)
+        text_prefetch = resolve_weight_prefetch(resolved["knobs"]["weight_prefetch"], args.prefetch_weights)
     except ProfileError as error:
         parser.error(str(error))
     profile_knobs = resolved["knobs"]
@@ -44,9 +87,11 @@ def main(argv=None):
         if not 0 <= args.dit_cache_mib < 2**44:
             parser.error("--dit-cache-mib must be a nonnegative budget representable in 64-bit bytes")
         dit_weight_cache_bytes = args.dit_cache_mib * 2**20
-    if args.dit_prefetch and dit_weight_cache_bytes:
-        parser.error("--dit-prefetch requires a zero DiT weight-cache budget")
-    dit_prefetch = resolve_dit_prefetch(args.dit_prefetch, dit_weight_cache_bytes)
+    dit_prefetch = resolve_dit_prefetch(text_prefetch, args.prefetch_weights, args.dit_prefetch, dit_weight_cache_bytes)
+    prefetch = {"text": text_prefetch, "dit": dit_prefetch}
+    if dit_prefetch and dit_weight_cache_bytes:
+        parser.error("DiT weight prefetch requires a zero DiT weight-cache budget")
+    modulation_cache = resolve_modulation_cache(args.modulation_cache, args.no_modulation_cache)
     environment = os.environ.copy()
     environment["ONYX_Q4_LINEAR"] = profile_knobs["q4_kernel"]
     binary = args.native_bin.resolve()
@@ -60,6 +105,8 @@ def main(argv=None):
     began = time.monotonic()
     timings = {}
     stage_logs = {}
+    modulation_cache_status = None
+    pruned = []
     with tempfile.TemporaryDirectory(prefix="onyx-native-") as temporary:
         work = Path(temporary)
         (work / "tokens.json").write_text(json.dumps({"ids": ids, "count": len(ids)}))
@@ -86,27 +133,38 @@ def main(argv=None):
             declared_cache = dit_weight_cache_bytes if name == "dit" else 0
             if name == "dit":
                 command.extend(["--cache-bytes", str(declared_cache)])
-                if args.modulation_cache is not None:
-                    command.extend(["--modulation-cache", str(args.modulation_cache.resolve())])
-                command.append("--prefetch-weights" if dit_prefetch else "--no-prefetch-weights")
+                if modulation_cache is not None:
+                    command.extend(["--modulation-cache", str(modulation_cache.resolve())])
+            if name in prefetch:
+                command.append("--prefetch-weights" if prefetch[name] else "--no-prefetch-weights")
             start = time.monotonic()
             result = subprocess.run(command, capture_output=True, text=True, env=environment)
             timings[name] = time.monotonic() - start
             stage_logs[name] = {"stdout": result.stdout, "stderr": result.stderr}
             if result.returncode:
                 raise RuntimeError(f"Native {name} failed: {result.stderr.strip()}")
-            verify_stage_echo(name, result.stdout, args.profile, declared_weights, declared_cache, dit_prefetch)
+            verify_stage_echo(name, result.stdout, args.profile, declared_weights, declared_cache, prefetch.get(name, False),
+                              name == "dit" and modulation_cache is not None)
+            if name == "dit":
+                modulation_cache_status = stage_details("dit", result.stdout).get("modulation_cache")
         args.output.parent.mkdir(parents=True, exist_ok=True)
         partial = args.output.with_suffix(args.output.suffix + ".part")
         shutil.copyfile(work / "image.png", partial)
         os.replace(partial, args.output)
+    if modulation_cache_status == "miss" and modulation_cache is not None and args.modulation_cache is None:
+        try:
+            pruned = prune_modulation_cache(modulation_cache)
+        except OSError as error:
+            logging.getLogger(__name__).warning("Could not prune modulation cache %s: %s", modulation_cache, error)
     print(json.dumps({
         "backend": "onyx-native-cpp-metal",
         "profile": args.profile,
         "profile_knobs": profile_knobs,
         "profile_registry_sha256": registry_digest(),
         "dit_weight_cache_bytes": dit_weight_cache_bytes,
-        "dit_prefetch": dit_prefetch,
+        "weight_prefetch": prefetch,
+        "modulation_cache": {"directory": str(modulation_cache) if modulation_cache is not None else None,
+                             "status": modulation_cache_status, "pruned": pruned},
         "token_count": len(ids),
         "stage_seconds": timings,
         "stage_logs": stage_logs,
@@ -114,13 +172,21 @@ def main(argv=None):
     }))
 
 
-def resolve_dit_prefetch(requested: bool | None, cache_bytes: int) -> bool:
-    return cache_bytes == 0 if requested is None else requested
+def resolve_dit_prefetch(knob_prefetch: bool, requested: bool | None, dit_requested: bool | None, cache_bytes: int) -> bool:
+    """Return whether the DiT stage reads the next block's weights ahead of the GPU.
+
+    A nonzero weight-cache budget replaces prefetch in the DiT stage unless the request asks
+    for prefetch explicitly, which the caller rejects.
+    """
+    if dit_requested is not None:
+        return dit_requested
+    if requested is not None:
+        return requested
+    return knob_prefetch and cache_bytes == 0
 
 
-def verify_stage_echo(stage: str, stdout: str, profile: str, weights: str, cache_bytes: int = 0,
-                      dit_prefetch: bool = False) -> None:
-    """Verify that the native stage reports the requested profile and settings."""
+def stage_details(stage: str, stdout: str) -> dict:
+    """Return the JSON line that a native stage printed about itself."""
     for line in stdout.splitlines():
         line = line.strip()
         if not line.startswith("{"):
@@ -129,20 +195,41 @@ def verify_stage_echo(stage: str, stdout: str, profile: str, weights: str, cache
             details = json.loads(line)
         except json.JSONDecodeError:
             continue
-        if details.get("stage") != stage:
-            continue
-        if details.get("profile") != profile:
-            raise RuntimeError(f"Native {stage} echoed profile {details.get('profile')!r}, requested {profile!r}")
-        if details.get("weights") not in (None, weights):
-            raise RuntimeError(f"Native {stage} echoed weights {details.get('weights')!r}, requested {weights!r}")
-        if stage == "dit":
-            cache_echo = details.get("weight_cache") or {}
-            if cache_echo.get("budget") != cache_bytes:
-                raise RuntimeError(f"Native dit echoed cache budget {cache_echo.get('budget')!r}, requested {cache_bytes}")
-            if details.get("prefetch_weights", False) != dit_prefetch:
-                raise RuntimeError(f"Native dit echoed prefetch {details.get('prefetch_weights')!r}, requested {dit_prefetch}")
-        return
-    raise RuntimeError(f"Native {stage} did not echo a stage JSON line; cannot verify profile {profile!r}")
+        if details.get("stage") == stage:
+            return details
+    return {}
+
+
+def resolve_weight_prefetch(knob: str, requested: bool | None) -> bool:
+    """Return whether streaming stages read the next block's weights ahead of the GPU."""
+    if requested is not None:
+        return requested
+    if knob not in ("off", "next"):
+        raise ProfileError(f"Unknown weight_prefetch setting {knob!r}")
+    return knob == "next"
+
+
+def verify_stage_echo(stage: str, stdout: str, profile: str, weights: str, cache_bytes: int = 0,
+                      prefetch: bool = False, modulation_cache: bool = False) -> None:
+    """Verify that the native stage reports the requested profile and settings."""
+    details = stage_details(stage, stdout)
+    if not details:
+        raise RuntimeError(f"Native {stage} did not echo a stage JSON line; cannot verify profile {profile!r}")
+    if details.get("profile") != profile:
+        raise RuntimeError(f"Native {stage} echoed profile {details.get('profile')!r}, requested {profile!r}")
+    if details.get("weights") not in (None, weights):
+        raise RuntimeError(f"Native {stage} echoed weights {details.get('weights')!r}, requested {weights!r}")
+    if stage in ("text", "dit") and details.get("prefetch_weights", False) != prefetch:
+        raise RuntimeError(f"Native {stage} echoed prefetch {details.get('prefetch_weights')!r}, requested {prefetch}. "
+                           "A native build without weight prefetch echoes nothing for it: rebuild the engine "
+                           "or pass --no-prefetch-weights.")
+    if stage == "dit":
+        cache_echo = details.get("weight_cache") or {}
+        if cache_echo.get("budget") != cache_bytes:
+            raise RuntimeError(f"Native dit echoed cache budget {cache_echo.get('budget')!r}, requested {cache_bytes}")
+        status = details.get("modulation_cache")
+        if modulation_cache != (status != "disabled"):
+            raise RuntimeError(f"Native dit echoed modulation cache {status!r}, requested {modulation_cache}")
 
 
 if __name__ == "__main__":

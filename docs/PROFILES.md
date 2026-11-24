@@ -4,16 +4,19 @@ The profiles share the same W4 model, six-evaluation PDD recipe, and model ident
 
 ## Settings
 
-| Profile | Text and DiT weights | VAE weights | VAE tiles | DiT cache | Q4 linear path |
-| --- | --- | --- | --- | --- | --- |
-| `max-quality` | Stream | Resident | `tile16` | None | MPSGraph |
-| `memory-min` | Stream | Stream | `tile16` | None | MPSGraph |
-| `speed-focus` | Stream | Resident | `tile16` | LRU, 24 GiB | BF16 SIMD |
+| Profile | Text and DiT weights | VAE weights | VAE tiles | DiT weight cache | Weight prefetch | Q4 linear path |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `max-quality` | Stream | Resident | `tile16` | None | Next block | MPSGraph |
+| `memory-min` | Stream | Stream | `tile16` | None | Off | MPSGraph |
+| `m5-fast` | Stream | Resident | `tile16` | None | Next block | M5 neural accelerators |
+| `speed-focus` | Stream | Resident | `tile16` | LRU, 24 GiB | Off | BF16 SIMD |
 
 - The 21.86 GB text and 37.47 GB DiT packages stream on the 36 GB reference machine. The native stage rejects a resident request for either component.
-- VAE streaming reads and releases weights by tile. The resident path caches weights. Overlap equivalence evidence covers `tile16`. Evaluate a new tile geometry independently.
+- VAE decoding batches up to 25 tiles with `tile16` geometry. The streaming mode loads weights for each batch and releases them after use. The resident mode reuses weights across batches. Batch size can affect rounding in the output. Use `ONYX_VAE_BATCH=1` to decode tiles individually. [VAE batching measurements](../benchmarks/results/campaign-20261123/round2-vae-tile-batching.json)
 - The default MPSGraph Q4 path uses FP32 dequantization. `speed-focus` tests the BF16 SIMD kernel with the DiT weight cache. The vendored Steel FP16 port is available to probes.
+- `m5-fast` uses the MLX affine Q4 kernel on M5 neural accelerators through Metal Performance Primitives. The engine falls back to MPSGraph on GPUs without neural accelerators. The kernel uses BF16 scales and biases, which adds resident memory and can change the generated image. [Latency, memory, and output comparison](../benchmarks/results/campaign-20261123/round4-nax-q4-kernel.json)
 - The LRU reuses original packed weights across six DiT steps. A 24 GiB limit covers about 64% of the DiT package. The cache test checks equivalent bytes across streaming, LRU, and resident access. Its lifetime relies on synchronous MPSGraph completion.
+- The `weight_prefetch` knob overlaps reads for the next text encoder layer or DiT block with GPU computation. It holds an extra set of weights in memory. `memory-min` defaults to serial reads for a smaller memory footprint. [Prefetch measurements](../benchmarks/results/campaign-20261123/round1-prefetch-pipeline.json)
 
 ## Validation gates
 
@@ -21,9 +24,10 @@ The profiles share the same W4 model, six-evaluation PDD recipe, and model ident
 | --- | --- |
 | `output_replay_identical` | Repeated runs of the same profile and request have the same SHA-256 |
 | `profile_echo_must_match` | Native stages declare the expected profile and weights |
-| `peak_process_bytes_max` | Process-tree physical footprint, with RSS fallback. Limits are 28.08 GiB for `max-quality` and `speed-focus`, and a provisional 2 GiB for `memory-min`. |
+| `peak_process_bytes_max` | Process-tree physical footprint, with RSS fallback. Limits are 28.08 GiB for `max-quality`, `m5-fast`, and `speed-focus`, and a provisional 2 GiB for `memory-min`. |
 | `min_samples` | Three measured runs per group |
 | `bitwise_equal_to` | `memory-min` matches `max-quality` byte for byte |
+| `numeric_equal_to` | `m5-fast` and `speed-focus` declare their tolerance to the `max-quality` output |
 | `interleaved` | Profiles rotate through the measurement order |
 
 The `speed-focus` speed gate uses a 3% median margin against comparable groups. A result within the margin is accepted. A slower result beyond both the margin and observed dispersion is rejected. Missing comparisons or excessive dispersion are inconclusive. Report inconclusive results explicitly.
@@ -34,7 +38,7 @@ Matrices bind to the registry SHA-256, the native binary hash, and the source re
 
 `onyx native-generate --profile <id>` resolves the registry, sends stage options, checks the returned settings, and records the resolved knobs and registry SHA-256. Each native stage requires explicit `--profile` and `--weights` arguments.
 
-With a zero DiT weight-cache budget, `onyx native-generate` reads the next block's projection weights during GPU computation by default, including across sampling-step boundaries. Use `--no-dit-prefetch` to disable this overlap. A nonzero weight-cache budget disables prefetch by default; explicitly combining `--dit-prefetch` with a nonzero budget is rejected. Prefetch can be combined with the on-disk modulation cache. [M5 Max measurements](OPTIMIZATION_CAMPAIGN.md#dit-weight-prefetch-on-m5-max) · [M4 measurements](OPTIMIZATION_CAMPAIGN.md#dit-weight-prefetch-on-macbook-air-m4)
+Weight prefetch follows the profile's `weight_prefetch` setting. Use `--prefetch-weights` or `--no-prefetch-weights` to override both text and DiT. Use `--dit-prefetch` or `--no-dit-prefetch` to override DiT alone. These stage-specific flags take precedence for DiT. Explicitly enabling DiT prefetch requires a zero DiT weight-cache budget. The launcher verifies each stage's `prefetch_weights` setting.
 
 ```bash
 uv run python benchmarks/run_profiles.py --sizes 1024x1024 --runs 3 --output artifacts/benchmarks/profile-stage-matrix.json

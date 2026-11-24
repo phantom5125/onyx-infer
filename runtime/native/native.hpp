@@ -8,12 +8,16 @@
 #import <mlx/mlx.h>
 #endif
 
+#include <condition_variable>
+#include <deque>
+#include <exception>
 #include <functional>
-#include <future>
 #include <list>
 #include <map>
 #include <mutex>
+#include <set>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -58,7 +62,10 @@ class WeightStore {
   Tensor scale(const std::string& name);
   Tensor embedding(const std::string& name, const std::vector<int32_t>& ids);
   std::string file_identity() const;
-  void prefetch(std::vector<std::string> names);
+  // Queue background reads for the tensors stored as prefix + suffix, with the scales of a
+  // quantized tensor read right after it. Streaming only. tensor() and scale() take the
+  // results and wait for a read that is still in flight.
+  void prefetch(const std::string& prefix, const std::vector<std::string>& suffixes);
   void finish_prefetch();
   double prefetch_wait_seconds() const { return prefetch_wait_ns_ / 1e9; }
   uint64_t bytes_read() const { return bytes_read_; }
@@ -74,6 +81,8 @@ class WeightStore {
   int fd_;
   uint64_t data_begin_;
   NSDictionary* specs_;
+  std::vector<std::string> names_;  // Sorted tensor names.
+  id<MTLDevice> device_;
   bool resident_;
   uint64_t cache_budget_;
   uint64_t cache_bytes_ = 0;
@@ -88,9 +97,26 @@ class WeightStore {
   uint64_t read_ns_ = 0;
   std::map<std::string, uint64_t> read_bytes_by_name_;
   std::mutex read_stats_mutex_;
-  uint64_t prefetch_wait_ns_ = 0;
+  // Reader pipeline. The reader threads share only the queue, the in-flight count, the
+  // results, and the errors. The caches above stay on the calling thread.
+  struct Request {
+    std::string name;
+    bool scales = false;
+  };
+  Tensor read_scale(const std::string& name);
+  Tensor take_prefetched(const std::string& key);
+  void read_loop();
+  std::mutex prefetch_mutex_;
+  std::condition_variable work_available_;
+  std::condition_variable result_ready_;
+  std::deque<Request> prefetch_queue_;
+  std::set<std::string> prefetch_pending_;  // Queued, in flight, or ready and not yet taken
   std::map<std::string, Tensor> prefetched_;
-  std::future<std::map<std::string, Tensor>> prefetch_;
+  std::map<std::string, std::exception_ptr> prefetch_errors_;
+  size_t prefetch_active_ = 0;
+  bool prefetch_stop_ = false;
+  std::vector<std::thread> prefetch_readers_;
+  uint64_t prefetch_wait_ns_ = 0;
   Tensor read(const std::string& name, const std::string& field, bool scales);
 };
 
@@ -124,6 +150,10 @@ class GraphSession {
   Tensor silu(const Tensor& x);
   Tensor gated_activation(const Tensor& x);
   Tensor gated_residual(const Tensor& x, const Tensor& value, const Tensor& gate);
+  // Gather one [tokens, width] tensor per AdaLN part from `rows`, which holds the parts of
+  // the image modality followed by those of the text modality. Token index 0 selects the
+  // image rows and 1 the text rows.
+  std::vector<Tensor> modulation_parts(const Tensor& rows, const Tensor& indices);
   Tensor cast(const Tensor& x, MPSDataType dtype);
   void enable_profiling(bool enabled) { profile_enabled_ = enabled; }
   std::string profile_json() const;
@@ -147,6 +177,13 @@ class GraphSession {
                       uint32_t n, uint32_t k, bool has_bias, const Tensor& bias);
   Tensor linear_q4_simd(WeightStore& store, const std::string& weight_name, const Tensor& x,
                         uint32_t n, uint32_t k, bool has_bias, const Tensor& bias);
+  // Q4 linear layers on the M5 neural accelerators, in q4_nax.mm.
+  bool nax_available();
+  Tensor linear_q4_nax(const std::string& weight_name, const Tensor& weight, const Tensor& scales,
+                       const Tensor& x, int64_t n, int64_t k);
+  std::map<std::string, id<MTLComputePipelineState>> nax_pipelines_;
+  // BF16 scales and affine biases per weight, which is how the NAX kernel takes them.
+  std::map<std::string, std::pair<Tensor, Tensor>> nax_affine_;
 #ifdef ONYX_MLX_BACKEND
   struct MlxQ4Weights {
     mlx::core::array w;
@@ -158,6 +195,11 @@ class GraphSession {
   };
   std::unordered_map<std::string, MlxQ4Weights> mlx_weight_cache_;
 #endif
+  std::vector<Tensor> run_outputs(const std::string& key,
+                                  const std::vector<Tensor>& inputs,
+                                  const std::vector<std::vector<int64_t>>& output_shapes,
+                                  MPSDataType output_dtype,
+                                  NSArray<MPSGraphTensor*>* (^build)(MPSGraph*, NSArray<MPSGraphTensor*>*));
   Tensor run(const std::string& key,
              const std::vector<Tensor>& inputs,
              const std::vector<int64_t>& output_shape,

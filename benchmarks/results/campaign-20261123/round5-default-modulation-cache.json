@@ -1,0 +1,237 @@
+{
+  "protocol": "onyx.native-optimization.v1",
+  "campaign": "local-single-image-20261123",
+  "round": 5,
+  "change": "Turn the modulation cache on by default. The six-step AdaLN tables depend only on the model and the schedule, yet the default request recomputed them and streamed 26 GB of projection weights every time. The launcher now caches them in ~/Library/Caches/onyx-infer/modulation, keeps the two newest entries there, and passes --no-modulation-cache through to compute the tables on every request.",
+  "base_commit": "411ff91",
+  "case": "h3-teapot-1024-seed42-v1",
+  "profile": "max-quality",
+  "device": {
+    "model_identifier": "Mac17,14",
+    "chip": "Apple M5 Max",
+    "gpu_cores": 32,
+    "physical_memory_bytes": 38654705664,
+    "os_version": "27.2.1"
+  },
+  "native_binary": {
+    "baseline_sha256": "ec58291ce7f112f40170a84de8647a74dcfe1dc727ee07d4d54bbd34c7e7f5f3",
+    "candidate_sha256": "ec58291ce7f112f40170a84de8647a74dcfe1dc727ee07d4d54bbd34c7e7f5f3",
+    "same_binary": true
+  },
+  "method": "Same machine and W4 package; arms alternate in rotating order after per-arm warmups. Arm order: round 1: nocache, cached | round 2: cached, nocache | round 3: nocache, cached",
+  "baseline": {
+    "binary": ".build/onyx-native",
+    "native_args": [
+      "--no-modulation-cache"
+    ],
+    "environment": [],
+    "samples_seconds": [
+      22.541609332954977,
+      22.779709250025917,
+      22.709952917008195
+    ],
+    "seconds_median": 22.709952917008195,
+    "stage_seconds_median": {
+      "text": 2.269756875000894,
+      "dit": 18.193800208042376,
+      "vae": 2.298472042020876
+    },
+    "peak_bytes_max": 2350071808,
+    "output_sha256": [
+      "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac"
+    ],
+    "all_outputs_identical": true,
+    "runs": [
+      {
+        "seconds": 22.541609332954977,
+        "stage_seconds": {
+          "text": 2.265492082980927,
+          "dit": 17.948833915987052,
+          "vae": 2.3185221249586903
+        },
+        "peak_rss_bytes": 2350071808,
+        "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+        "dit_step_seconds": [
+          5.682,
+          2.383,
+          2.344,
+          2.339,
+          2.371,
+          2.362
+        ],
+        "dit_native_seconds": 17.888941,
+        "dit_prefetch_wait_seconds": 2.073798,
+        "dit_read_bytes": 85656876608
+      },
+      {
+        "seconds": 22.779709250025917,
+        "stage_seconds": {
+          "text": 2.27865237504011,
+          "dit": 18.193800208042376,
+          "vae": 2.298472042020876
+        },
+        "peak_rss_bytes": 1955430400,
+        "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+        "dit_step_seconds": [
+          5.771,
+          2.445,
+          2.393,
+          2.401,
+          2.347,
+          2.364
+        ],
+        "dit_native_seconds": 18.118499,
+        "dit_prefetch_wait_seconds": 1.996267,
+        "dit_read_bytes": 85656876608
+      },
+      {
+        "seconds": 22.709952917008195,
+        "stage_seconds": {
+          "text": 2.269756875000894,
+          "dit": 18.45786758302711,
+          "vae": 1.9742741669761017
+        },
+        "peak_rss_bytes": 2027913216,
+        "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+        "dit_step_seconds": [
+          5.748,
+          2.447,
+          2.401,
+          2.373,
+          2.415,
+          2.605
+        ],
+        "dit_native_seconds": 18.391756,
+        "dit_prefetch_wait_seconds": 1.961843,
+        "dit_read_bytes": 85656876608
+      }
+    ]
+  },
+  "candidate": {
+    "binary": ".build/onyx-native",
+    "native_args": [],
+    "environment": [],
+    "samples_seconds": [
+      19.34731824998744,
+      19.54577645799145,
+      19.075979791989084
+    ],
+    "seconds_median": 19.34731824998744,
+    "stage_seconds_median": {
+      "text": 2.2773685829597525,
+      "dit": 14.841674750030506,
+      "vae": 2.2787736249738373
+    },
+    "peak_bytes_max": 1932820480,
+    "output_sha256": [
+      "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac"
+    ],
+    "all_outputs_identical": true,
+    "runs": [
+      {
+        "seconds": 19.34731824998744,
+        "stage_seconds": {
+          "text": 2.2806795409996994,
+          "dit": 14.779344415990636,
+          "vae": 2.2787736249738373
+        },
+        "peak_rss_bytes": 1931821056,
+        "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+        "dit_step_seconds": [
+          2.522,
+          2.346,
+          2.384,
+          2.357,
+          2.412,
+          2.377
+        ],
+        "dit_native_seconds": 14.725349,
+        "dit_prefetch_wait_seconds": 0.000754,
+        "dit_read_bytes": 59514797120
+      },
+      {
+        "seconds": 19.54577645799145,
+        "stage_seconds": {
+          "text": 2.2773685829597525,
+          "dit": 14.956188041018322,
+          "vae": 2.3040845000068657
+        },
+        "peak_rss_bytes": 1932820480,
+        "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+        "dit_step_seconds": [
+          2.586,
+          2.407,
+          2.373,
+          2.42,
+          2.395,
+          2.401
+        ],
+        "dit_native_seconds": 14.896198,
+        "dit_prefetch_wait_seconds": 0.000712,
+        "dit_read_bytes": 59514797120
+      },
+      {
+        "seconds": 19.075979791989084,
+        "stage_seconds": {
+          "text": 2.266251499997452,
+          "dit": 14.841674750030506,
+          "vae": 1.9599531660205685
+        },
+        "peak_rss_bytes": 1881931776,
+        "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+        "dit_step_seconds": [
+          2.539,
+          2.375,
+          2.387,
+          2.395,
+          2.381,
+          2.374
+        ],
+        "dit_native_seconds": 14.757454,
+        "dit_prefetch_wait_seconds": 0.000632,
+        "dit_read_bytes": 59514797120
+      }
+    ]
+  },
+  "speedup_vs_baseline": 1.1738036571049293,
+  "latency_reduction": 0.14806876435672278,
+  "output_sha256": [
+    "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac"
+  ],
+  "outputs_match_baseline": true,
+  "decision": "accepted",
+  "notes": [
+    "Both arms are the round-4 binary with the max-quality profile. The baseline passes --no-modulation-cache, which was the default behavior; the candidate uses the new default. The candidate's warmup populated the entry, so the measured runs are hits.",
+    "A first request with a new engine build is a miss and costs the same as the baseline.",
+    "A directory chosen with --modulation-cache is never pruned."
+  ],
+  "attribution": {
+    "dit_weight_read_bytes": {
+      "cache_hit": 59514797120,
+      "no_cache": 85656876608,
+      "note": "A cache hit skips the 26 GB of AdaLN projection weights."
+    },
+    "dit_step_seconds": {
+      "cache_hit": [
+        2.522,
+        2.346,
+        2.384,
+        2.357,
+        2.412,
+        2.377
+      ],
+      "no_cache": [
+        5.682,
+        2.383,
+        2.344,
+        2.339,
+        2.371,
+        2.362
+      ]
+    },
+    "cache_entry_bytes": 58189888,
+    "default_directory": "~/Library/Caches/onyx-infer/modulation",
+    "entries_kept": 2,
+    "first_request_with_a_new_build": "cache miss: the same cost as no cache, then the entry is written"
+  }
+}
