@@ -24,12 +24,11 @@
     <div class="section-head">
       <div class="eyebrow">Engineering notes</div>
       <h2>Build logs from a native inference engine</h2>
-      <p class="lede">Short, evidence-first write-ups: what we changed, what we measured, and the
-      output hashes that prove nothing drifted. Numbers come from the JSON measurement files
-      committed next to the code.</p>
+      <p class="lede">Short engineering write-ups on what we changed, what we measured, and how
+      each result affected the model output.</p>
     </div>
     <div class="blog-list">
-      <a class="post-card" href="four-rounds-one-byte-identical-teapot.html"><div><div class="date">2026-11-18</div><h3>Four rounds, one byte-identical teapot</h3><p>42.30 s → 34.65 s across four optimization rounds on the same 1024 px teapot request — with every accepted change proving byte-identical output. Round 1 made things slower, and we published that too.</p></div></a><a class="post-card" href="sixteen-megapixels-on-36gb.html"><div><div class="date">2026-11-18</div><h3>Sixteen megapixels on 36 GB of unified memory</h3><p>4096×4096 direct generation — no upscaler — in 329.6 s with a 2.14 GB peak on a 36 GB Mac Studio. The memory choreography that makes it fit.</p></div></a><a class="post-card" href="why-native-from-scratch.html"><div><div class="date">2026-11-18</div><h3>Why we're building an inference engine from scratch</h3><p>135 GB of checkpoint weights, a 36 GB machine, and a hard rule — no open-source runtime in the dependency graph. The math and the principles behind Onyx Infer.</p></div></a>
+      <a class="post-card" href="onyx-tile-vae.html" lang="zh-CN"><img src="../assets/gallery/teapot-1024.jpg" alt=""><div><div class="date">2026-11-24</div><h3>OnyxTileVAE 在批处理之上把 4K VAE 延迟再降约三成</h3><p>H3 的 441 个 tile 已经分成 18 批。合并注意力子图、滚动拼接之后，4K VAE 阶段从 26.35 秒降到 18.87 秒。</p></div></a><a class="post-card" href="four-rounds-one-byte-identical-teapot.html"><div><div class="date">2026-11-18</div><h3>Four rounds, one byte-identical teapot</h3><p>42.30 s → 34.65 s across four optimization rounds on the same 1024 px teapot request — with every accepted change proving byte-identical output. Round 1 made things slower, and we published that too.</p></div></a><a class="post-card" href="sixteen-megapixels-on-36gb.html"><div><div class="date">2026-11-18</div><h3>Sixteen megapixels on 36 GB of unified memory</h3><p>4096×4096 direct generation — no upscaler — in 329.6 s with a 2.14 GB peak on a 36 GB Mac Studio. The memory choreography that makes it fit.</p></div></a><a class="post-card" href="why-native-from-scratch.html"><div><div class="date">2026-11-18</div><h3>Why we're building an inference engine from scratch</h3><p>135 GB of checkpoint weights, a 36 GB machine, and a hard rule — no open-source runtime in the dependency graph. The math and the principles behind Onyx Infer.</p></div></a>
     </div>
   </section>
 </main>

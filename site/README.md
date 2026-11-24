@@ -12,7 +12,7 @@ The repository root `assets/` directory contains the README banner.
 
 ## Publish a post
 
-Add a Markdown file under `site/blog/posts/`. Set `title`, `date`, and `summary` in its frontmatter. Optional fields include `image` relative to `site/`, `caption`, and `tags`. Generate the HTML and preview the site locally.
+Add a Markdown file under `site/blog/posts/`. Set `title`, `date`, and `summary` in its frontmatter. Optional fields include `image` relative to `site/`, `caption`, `tags`, and `lang` for posts written in a language other than English. Generate the HTML and preview the site locally.
 
 ```bash
 uv run python tools/build_blog.py

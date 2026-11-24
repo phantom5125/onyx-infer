@@ -141,6 +141,7 @@ class GraphSession {
   Tensor rope(const Tensor& x, const Tensor& cosine, const Tensor& sine);
   Tensor attention(const Tensor& q, const Tensor& k, const Tensor& v, bool causal, double scale);
   Tensor fused_qkv_attention(const Tensor& qkv, const Tensor& q_weight, const Tensor& k_weight, const Tensor* cosine, const Tensor* sine);
+  Tensor tile_attention(const Tensor& qkv, const Tensor& cosine, const Tensor& sine);
   Tensor reshape(const Tensor& x, const std::vector<int64_t>& shape);
   Tensor transpose(const Tensor& x, const std::vector<uint32_t>& permutation);
   Tensor slice(const Tensor& x, uint32_t dimension, int64_t start, int64_t length);
