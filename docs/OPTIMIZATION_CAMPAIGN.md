@@ -1,108 +1,21 @@
-# W4 operator optimization
+# Native inference benchmarks
 
-The campaign compared Onyx kernels with the MIT-licensed MLX Steel affine QMM implementation. The custom SIMD candidate improved isolated kernels, and cached MPSGraph remained the fastest measured end-to-end H3 path. [Kernel evidence](../benchmarks/results/m5-max-36gb-q4-kernel-variants-v1.json)
+The measurements below distinguish operator probes from measurements of the full H3 pipeline. Benchmark records include the hardware, run conditions, and output hashes. [Kernel experiment archive](../benchmarks/kernel-experiments/README.md)
 
-The experiment archive records the Q4 MMA and small-M split-K cases, their acceptance criteria, and the evidence behind each decision. [Kernel experiment contracts](../benchmarks/kernel-experiments/README.md)
+## Single-image performance
 
-## Local single-image campaign
+The teapot benchmarks compared builds `35bc6f9` and `e0b4244` on an M5 Max with 36 GB of unified memory. Each build used its own launcher with the same W4 package, six-step PDD schedule, seed 42, and `max-quality` profile. Measurements alternated between builds after one warmup per build and resolution. The `e0b4244` measurements hit the DiT modulation cache.
 
-Five rounds on one working condition: a single 1024×1024 request on the M5 Max with 36 GB and weights streaming from the internal SSD. Rounds 1–4 ran with the default `max-quality` profile and no on-disk cache; round 5 turns the modulation cache on by default, and round 4 adds the opt-in `m5-fast` profile. Each round is measured with the engine-level interleaved A/B in `benchmarks/ab_compare.py` against the previous round: one warmup and three measured runs per arm in rotating order, with output hashes compared. [Round records](../benchmarks/results/campaign-20261123/)
-
-The f90b0ce baseline took 42.68 s in a profiled run. DiT took 32.79 s, of which 13.97 s was serial weight reads, 12.44 s Q4 linears, and 4.2 s other graph operations. The text stage took 5.14 s with 3.10 s of reads, and the VAE 4.73 s.
-
-### Round 1: overlap weight reads with GPU compute
-
-The weight store now queues background reads. Two reader threads stay one block ahead of the GPU for every DiT block tensor, for each text encoder layer, and for the AdaLN projections, and the pipeline continues across sampling steps. Without an on-disk modulation cache, the first sampling step computes each AdaLN table just before its block uses it, so its 520 MB projection weight streams alongside the block weights instead of in a serial pass.
-
-| Build | End-to-end samples | Median total | Text | DiT | VAE | Peak RSS |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| f90b0ce, prefetch off | 41.74 / 41.88 / 41.95 s | 41.88 s | 5.23 s | 31.98 s | 4.71 s | 1.79 GiB |
-| Round 1, prefetch on | 26.40 / 26.23 / 26.27 s | **26.27 s** | 2.23 s | 19.64 s | 4.39 s | 1.86 GiB |
-
-All six PNGs had the same SHA-256, and both arms read 85,656,876,608 weight bytes. A second interleaved session measured 38.86 → 27.45 s (1.42×) on a warmer page cache, so compare arms within a session and not across sessions. [Round record](../benchmarks/results/campaign-20261123/round1-prefetch-pipeline.json)
-
-Cold model files deliver about 6.4 GiB/s on this machine with any number of reader threads, so the remaining I/O time follows from the bytes read. The AdaLN projections alone stream 26 GB, and an on-disk modulation cache skips them.
-
-### Round 2: decode VAE tiles in batches
-
-The VAE decoder ran one 16×16 latent tile at a time, so a 1024×1024 image made about 14,000 small graph executions with 261 rows in each matrix product. Tiles now decode in batches of 25 in raster order, which multiplies the rows of every matrix product and cuts the dispatch count 25-fold. The tile geometry and the overlap blending are unchanged, and `ONYX_VAE_BATCH=1` restores one tile at a time.
-
-| Build | End-to-end samples | Median total | DiT | VAE | Peak RSS |
-| --- | --- | ---: | ---: | ---: | ---: |
-| One tile at a time | 24.22 / 24.11 / 24.51 s | 24.22 s | 17.81 s | 4.18 s | 2.15 GiB |
-| Batches of 25 | 22.08 / 22.39 / 21.92 s | **22.08 s** | 17.87 s | 2.05 s | 2.10 GiB |
-
-Both arms are the same binary with the batch size switched by environment. **This round changes the output bytes.** Batched matrix products sum in a different order, so the PNG differs from the earlier rounds: 36 of 3,145,728 channel values differ, each by one level of 255 (MAE 4.5e-8, PSNR 97.5 dB). Repeated runs of the batched decoder reproduce the same PNG. [Round record](../benchmarks/results/campaign-20261123/round2-vae-tile-batching.json)
-
-### Round 3: gather the AdaLN modulation on the GPU
-
-Each block and step used to build six per-token modulation buffers on the CPU: six allocations and about 70 MB of copies per block, or 21 GB of copies and 1,800 allocations per image. Every token belongs to one of two modalities, so one graph execution now gathers the six rows that each token needs, with the same values as the copies. The norm that opens a block also moves to the end of the previous block, where it follows the gated residual.
-
-| Build | End-to-end samples | Median total | DiT | Peak RSS |
-| --- | --- | ---: | ---: | ---: |
-| Round 1 | 26.23 / 26.73 / 26.70 s | 26.70 s | 19.94 s | 2.12 GiB |
-| Round 3, gather | 25.38 / 25.92 / 24.96 s | **25.38 s** | 18.33 s | 1.82 GiB |
-
-Both arms decode one VAE tile at a time, so only the gather differs. All six PNGs keep the SHA-256 of the earlier rounds. Sampling steps two to six fell from 2.7–3.0 s to 2.3–2.4 s each, while the first step is bounded by weight reads and did not move. The VAE stage moved between 4.2 s and 5.3 s in both arms. [Round record](../benchmarks/results/campaign-20261123/round3-modulation-gather.json)
-
-A single graph for each gated residual and the norm that follows it was tried and rejected. It changed the PNG, because the fused graph keeps the residual sum at higher precision before the norm reads it, and steps two to six took 2.4–2.6 s in one uncontended run, no better than the separate graphs. The two operations stay separate executions.
-
-### Round 4: Q4 linear layers on the M5 neural accelerators
-
-The MPSGraph Q4 path dequantizes each weight to FP32, casts it to BF16, transposes it, and multiplies. MLX takes another route on M5: `quantized_matmul` dispatches a kernel that dequantizes inside the matrix product and runs the product on the neural accelerators through Metal Performance Primitives. The kernel is vendored with the MLX sources, so the build now compiles it into the Onyx metallib and the engine dispatches it directly. The new `m5-fast` profile selects it and otherwise matches `max-quality`.
-
-| Profile | End-to-end samples | Median total | DiT | Peak RSS |
-| --- | --- | ---: | ---: | ---: |
-| `max-quality` | 22.94 / 22.69 / 22.71 s | 22.71 s | 18.30 s | 1.67 GiB |
-| `m5-fast` | 20.98 / 20.95 / 21.08 s | **20.98 s** | 16.71 s | 3.31 GiB |
-
-The gain is much smaller than the earlier operator comparison suggested, because that comparison ran an MPSGraph probe which included graph compilation. At the engine entry on real block weights, the neural-accelerator kernel takes about a quarter less time for the output projection (3.8 ms against 5.0 ms at 1093 rows) and 12–24% less for the FFN input. For the fused QKV projection it is level within noise: 13–18 ms against 14–15 ms across five runs. Each threadgroup still stages and dequantizes its weight tile in software. The text stage is bounded by weight reads after round 1 and did not move. [Round record](../benchmarks/results/campaign-20261123/round4-nax-q4-kernel.json)
-
-**This round changes the numeric path.** The kernel takes BF16 scales and biases and sums each product in another order. On every layer 46% of its outputs differ from the MPSGraph path, each within one BF16 ulp. Against FP64 reference products on real weights, both paths carry the error of rounding the weights to the activation type, 2–5 half-ulps of the typical output. The kernel is closer on the fused QKV projection, equal on some layers, and farther on others, by up to 1.6× on one layer. Across 300 block-steps the differences change the fine detail of the image: correlation 0.987 with the `max-quality` image and PSNR 28.3 dB, with the same composition. The `m5-fast` output replays identically. The BF16 scales and biases raise the peak RSS by about 1.6 GiB. `onyx-q4-path-compare` reproduces the per-layer timings and errors.
-
-Two MPSGraph changes were tried at the engine entry. Dequantizing straight to a 16-bit type gave wrong results and is rejected. Moving the transpose off the weight is bit-identical, 6–10% slower at 1093 rows and 8–12% faster at 16384 rows. It stays behind `ONYX_Q4_GRAPH=f32-t` until the 16 MP path is measured end to end.
-
-### Round 5: modulation cache on by default
-
-The six-step AdaLN tables depend only on the model and the schedule. The default request nevertheless recomputed them, which streams 26 GB of projection weights, and the optional `--modulation-cache` stayed off unless a directory was passed. The launcher now caches the tables in `~/Library/Caches/onyx-infer/modulation`, keeps the two newest entries there, and passes `--no-modulation-cache` through for requests that want the tables computed every time.
-
-| Setting | End-to-end samples | Median total | DiT | Peak RSS |
-| --- | --- | ---: | ---: | ---: |
-| `--no-modulation-cache` | 22.54 / 22.78 / 22.71 s | 22.71 s | 18.19 s | 2.19 GiB |
-| Default, cache hit | 19.35 / 19.55 / 19.08 s | **19.35 s** | 14.84 s | 1.80 GiB |
-
-Both arms are the round-4 binary with `max-quality`. A hit reads 59.5 GB of weights instead of 85.7 GB and brings the first sampling step from 5.7 s down to the 2.4 s of the other five. All six PNGs share one SHA-256. The first request with a new engine build is a miss and costs the same as the baseline. [Round record](../benchmarks/results/campaign-20261123/round5-default-modulation-cache.json)
-
-### Result of the five rounds
-
-One interleaved session with three arms: the f90b0ce build, the final build with the `max-quality` defaults, and the final build with `m5-fast`. The head arm passes `--no-prefetch-weights` and `--no-modulation-cache`, which is how that build behaved.
-
-| Build | End-to-end samples | Median total | Text | DiT | VAE | Peak RSS | Speed vs. `f90b0ce` |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `f90b0ce`, `max-quality` | 41.93 / 42.09 / 43.01 s | 42.09 s | 5.20 s | 32.21 s | 4.81 s | 1.79 GiB | 1.00× |
-| Final, `max-quality` | 19.04 / 19.78 / 19.18 s | **19.18 s** | 2.23 s | 14.89 s | 2.09 s | 1.70 GiB | **2.19×** |
-| Final, `m5-fast` | 18.37 / 18.75 / 18.36 s | **18.37 s** | 2.15 s | 13.95 s | 2.31 s | 3.02 GiB | **2.29×** |
-
-Each round was measured against the previous one, so the round speeds do not multiply into these figures. The default output differs from the f90b0ce output in 36 of 3,145,728 channel values, each by one level, which round 2 introduced. `m5-fast` is the numeric variant of round 4. Each arm reproduced one PNG in all three runs. [Final record](../benchmarks/results/campaign-20261123/final-comparison.json)
-
-Three checks ran alongside:
-
-- `memory-min` keeps its gates: peak RSS 1.72–1.78 GiB against the 2 GiB limit, and the same PNG as `max-quality`.
-- Batched VAE decoding also holds at 512×768: VAE 2.45 → 1.51 s, with 17 of 1,179,648 channel values one level apart.
-- `--dit-cache-mib 10240` is now slower than the default. It beat serial reads before round 1, but prefetch already hides the reads: 21.88 s against 18.70 s median, with peak RSS at 6.35 GiB against 1.80 GiB.
-
-### Against `main` after the rebase
-
-`main` at `35bc6f9` already streams DiT weights one block ahead, so the branch was measured against it again after the rebase. The engine binary is bit-identical to the one above, and the baseline arm runs the `35bc6f9` build from its own checkout with its own launcher.
-
-| Case | `main` `35bc6f9` | This branch | Speed | Output |
+| Resolution | Runs per build | Wall time, `35bc6f9` → `e0b4244` | Peak process-tree RSS | Record |
 | --- | ---: | ---: | ---: | --- |
-| 1024×1024 teapot, three runs per arm | 33.54 s | **19.58 s** | 1.71× | 36 of 3,145,728 channel values differ by one level |
-| 1024×1024 moka pot, one run | 32.28 s | 19.54 s | 1.65× | 71 channel values differ by one level |
-| 1024×1024 jet engine, one run | 33.41 s | 20.67 s | 1.62× | 71 channel values differ by one level |
-| 4096×4096 teapot, one run | 323.04 s | **227.93 s** | 1.42× | 653 of 50,331,648 channel values differ by one level |
+| 1024×1024 | 3 | 33.54 → 19.58 s (median) | 1.80 → 1.71 GiB | [1024×1024](../benchmarks/results/campaign-20261123/against-main-1024.json) |
+| 4096×4096 | 1 | 323.04 → 227.93 s | 2.66 → 1.91 GiB | [4096×4096](../benchmarks/results/campaign-20261123/against-main-4096.json) |
 
-At 4096 the VAE stage falls from 99.6 to 29.0 s and peak RSS from 2.66 to 1.91 GiB. `m5-fast` took 19.96 s at 1024 and 218.44 s at 4096. Against the `max-quality` image of the branch its correlation is 0.987 at 1024 and 0.996 at 4096, which is the numeric variant of round 4. The text-rendering cases keep their lettering: `MOKA POT` is legible in both images, and the jet-engine labels carry the same misspellings in both. [1024 record](../benchmarks/results/campaign-20261123/against-main-1024.json) · [4096 record](../benchmarks/results/campaign-20261123/against-main-4096.json) · [Generated-image evidence](../benchmarks/results/campaign-20261123/generated-image-evidence.json)
+The newer build overlaps more weight reads with GPU work, gathers AdaLN modulation on the GPU, batches VAE tiles, and caches DiT modulation tables by default. At 4096×4096 the VAE stage took 99.64 s before batching and 28.95 s with batches of 25 tiles. The batched decoder changed 36 of 3,145,728 RGB channel values at 1024×1024 and 653 of 50,331,648 at 4096×4096, each by one 8-bit level. [Generated-image evidence](../benchmarks/results/campaign-20261123/generated-image-evidence.json)
+
+The optional `m5-fast` profile ran in 20.98 s versus 22.71 s for `max-quality` in a separate three-run comparison on the same 1024×1024 request. Peak RSS increased from 1.67 to 3.31 GiB and output image correlation was 0.987. Speed depends on the workload. [Q4 kernel comparison](../benchmarks/results/campaign-20261123/round4-nax-q4-kernel.json)
+
+The [experiment record](../benchmarks/kernel-experiments/local-single-image-20261123.md) documents individual changes and rejected variants. The [benchmark results](../benchmarks/results/campaign-20261123/) include the interleaved samples, comparisons with the earlier streaming baseline, and lettering cases.
 
 ## Production and isolated measurements
 
@@ -137,7 +50,7 @@ For a 512×768 native stage check, the uncached, cached, and rebuilt latents had
 
 ### Cache the repeated DiT weights
 
-`native-generate --dit-cache-mib 10240` uses a 10 GiB budget with the default MPSGraph kernel. With the timestep modulation table already cached, this budget covers the repeatedly read W4 weights on the benchmark model. The DiT stage reports the applied budget and the observed weight reads.
+These measurements use serial DiT weight reads. The 10 GiB budget (`--dit-cache-mib 10240`) keeps repeatedly read packed weights in memory across sampling steps. The DiT stage reports the applied budget and observed reads.
 
 With the same 1024×1024 request, same native binary, and a warm modulation table, the median of three paired end-to-end runs fell from **30.69 s to 24.96 s**. Native DiT fell from 20.11 s to 16.76 s. The cached runs recorded 2,015 weight hits and read 11,329,849,920 bytes per run, compared with 59,514,797,120 bytes with weight caching off. Peak sampled process-tree RSS rose from 1.79 GiB to 7.09 GiB. All PNGs matched byte for byte and system swap usage was unchanged at sample boundaries.
 
@@ -154,7 +67,7 @@ The candidate enables prefetch by default with a zero weight-cache budget and ke
 | Disabled | 42.34 / 42.24 / 42.16 s | 42.24 s | 32.00 s | 1.794 GiB |
 | Enabled | 32.81 / 32.81 / 33.11 s | **32.81 s** | **22.95 s** | 1.794 GiB |
 
-The median fell 22.3% end to end and 28.3% in DiT. All six PNGs had SHA-256 `4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1`. Prefetch waits were 17–23 ms per request. A paired 4096×4096 run with the same binary also produced byte-identical PNGs (SHA-256 `0b9761b2416b57639d9fe387a528136c072b867fa54f394399a651be36557e3f`); those single runs are correctness and memory evidence, not a 4K performance claim. Use `--no-dit-prefetch` to recover serial reads; a nonzero weight-cache budget keeps prefetch disabled unless explicitly requested. [Samples, binary hash, and reproduction commands](../benchmarks/results/m5-max-36gb-dit-prefetch-default-v1.json)
+The median fell 22.3% end to end and 28.3% in DiT. All six PNGs had SHA-256 `4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1`. Prefetch waits were 17–23 ms per request. A paired 4096×4096 run with the same binary also produced byte-identical PNGs (SHA-256 `0b9761b2416b57639d9fe387a528136c072b867fa54f394399a651be36557e3f`); those single runs are correctness and memory evidence, not a 4K performance claim. Use `--no-dit-prefetch` to isolate serial DiT reads. Use `--no-prefetch-weights` for serial reads in both the text and DiT stages. [Samples, binary hash, and reproduction commands](../benchmarks/results/m5-max-36gb-dit-prefetch-default-v1.json)
 
 ## DiT weight prefetch on MacBook Air M4
 
@@ -210,4 +123,4 @@ python -m onyx package-w4 --source artifacts/models/h3-image-source --original-m
 python3 tools/profile_quality_gate.py --candidate speed-focus
 ```
 
-Diagnostic environment variables include `ONYX_SIMD_SKIP_ODD=1` for mixed-path measurements, `ONYX_SIMD_NOWAIT=1` for deferred waits, `ONYX_GPU_COUNTERS=1` for counter probes on eligible devices, `ONYX_PREFETCH_THREADS=<n>` for the number of background readers, `ONYX_PREFETCH_TRACE=1` to list each weight that a stage still reads synchronously, and `ONYX_VAE_BATCH=<n>` for the number of VAE tiles per decoder batch, where 1 reproduces the output bytes of the builds before round 2.
+Diagnostic environment variables include `ONYX_SIMD_SKIP_ODD=1` for mixed-path measurements, `ONYX_SIMD_NOWAIT=1` for deferred waits, `ONYX_GPU_COUNTERS=1` for counter probes on eligible devices, `ONYX_PREFETCH_THREADS=<n>` for the number of background readers, `ONYX_PREFETCH_TRACE=1` to list each weight that a stage still reads synchronously, and `ONYX_VAE_BATCH=<n>` for the number of VAE tiles per decoder batch, where 1 decodes one tile at a time.

@@ -1,6 +1,6 @@
 # Acceleration roadmap
 
-The initial review on November 18, 2026 evaluated methods for the six-evaluation H3 PDD pipeline on M5 Max. [Measurements and corrections](OPTIMIZATION_CAMPAIGN.md) · [Chinese research notes](zh-CN/ACCELERATION.md)
+Acceleration options for the six-evaluation H3 PDD pipeline on Apple Silicon. [Native inference benchmarks](OPTIMIZATION_CAMPAIGN.md) · [Chinese research notes](zh-CN/ACCELERATION.md)
 
 ## 1. Sampling and caching
 
@@ -12,17 +12,15 @@ A conditioning cache reuses the exact text encoder output. Its key includes enco
 
 ## 2. Apple Silicon and operator choices
 
-The initial standalone MPSGraph Q4 operator measurements showed large gaps against MLX, including 16.5× for the 1024×5376×5376 case. The candidate tracks include Metal Performance Primitives quantized tensor ops, device-tuned MSL, and operator fusion. Kernel probes need real packed weight and edge-tile coverage. Production measurements include graph compilation behavior and caching. [Operator measurements](../benchmarks/results/m5-max-36gb-q4-operator-v1.json) · [Metal features](https://developer.apple.com/metal/whats-new/)
-
-Round 4 of the [local single-image campaign](OPTIMIZATION_CAMPAIGN.md#local-single-image-campaign) settled this track. The 16.5× figure came from an MPSGraph probe that included graph compilation: with compiled graphs the gap is within 9% end to end. MLX's quantized kernel, which runs on the M5 neural accelerators through Metal Performance Primitives, is now compiled into the Onyx metallib and dispatched by the engine behind the `m5-fast` profile. [Round record](../benchmarks/results/campaign-20261123/round4-nax-q4-kernel.json)
+The historical 16.5× operator comparison included MPSGraph graph compilation. With graph reuse in the native pipeline, the `m5-fast` profile reduced median wall time from 22.71 to 20.98 s in a three-run 1024×1024 comparison on an M5 Max. It uses the vendored MLX Q4 kernel through Metal Performance Primitives and trades additional memory and a different numerical path for the measured speedup. [Operator probe](../benchmarks/results/m5-max-36gb-q4-operator-v1.json) · [Native comparison](../benchmarks/results/campaign-20261123/round4-nax-q4-kernel.json)
 
 The engine already caches MPSGraph graphs by shape. Other proposals include encoding more of a sampling step in one submission and measuring the effect of device memory budgets. System-wide memory settings would need their own stability assessment. [MLX lazy evaluation](https://ml-explore.github.io/mlx/build/html/usage/lazy_evaluation.html) · [TensorRT-LLM](https://nvidia.github.io/TensorRT-LLM/)
 
 ## 3. Validation and priorities
 
 - **Q4 operators.** Compare MPP and MSL variants with references by shape. In the earlier probe, reading BF16 output as FP16 falsely suggested a decoding error. Corrected real-weight checks confirmed Steel and the production path. At the `m=69` edge the Steel CPU-reference maximum absolute error was 0.00028.
-- **Weight cache and conditioning reuse.** Check bitwise replay, measured peak memory, and interleaved latency. The 24 GiB setting belongs to the experimental `speed-focus` profile. The measured 10 GiB override uses the default MPSGraph kernel and improved the 1024×1024 case. [Tuning and verification](NATIVE_TUNING.md)
+- **Weight cache and conditioning reuse.** Check bitwise replay, measured peak memory, and interleaved latency. The experimental `speed-focus` profile uses a 24 GiB cache. On the 36 GB M5 Max, the default streaming budget with prefetch ran faster than the 10 GiB override on the 1024×1024 teapot request and used less memory. [Tuning and verification](NATIVE_TUNING.md)
 - **Command encoding.** Measure operator grouping inside the actual pipeline after verifying lifetime and synchronization.
 - **Cross-step features.** Gate these candidates by new numerical identity, multiple prompts, and an end-to-end quality and latency matrix.
 
-The custom BF16 SIMD variant improved isolated Q4 measurements. In the tested H3 pipeline, MPSGraph graph fusion and cached compilation provided better end-to-end wall time. Current defaults use that measured pipeline. [Optimization campaign](OPTIMIZATION_CAMPAIGN.md)
+The default profile uses MPSGraph. It outperformed the custom BF16 SIMD variant in the full H3 pipeline despite the SIMD variant's isolated kernel gains. [Native inference benchmarks](OPTIMIZATION_CAMPAIGN.md)

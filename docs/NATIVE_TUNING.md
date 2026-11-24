@@ -4,21 +4,19 @@ Use the default `max-quality` profile with a built native engine and a staged W4
 
 | Option | Scope | Cost on the tested model |
 | --- | --- | --- |
-| `--modulation-cache <directory>` | Moves the six-step BF16 AdaLN tables to another directory. The cache is on by default. | About 55.5 MiB per compatible table on disk |
-| `--no-modulation-cache` | Computes the AdaLN tables on every request and keeps no cache | The first sampling step then streams 26 GB of projection weights |
-| `--dit-cache-mib <MiB>` | Keeps packed DiT weights in memory for reuse across the six steps of one request | A configurable in-memory budget. Zero streams the weights. |
+| `--modulation-cache <directory>` | Sets the on-disk cache directory for the six-step BF16 AdaLN tables | About 55.5 MiB per compatible entry |
+| `--no-modulation-cache` | Recomputes the AdaLN tables for each request | The first sampling step streams an additional 26 GB of projection weights on the H3 W4 pack |
+| `--dit-cache-mib <MiB>` | Sets the in-memory budget for reusing packed DiT weights across the six sampling steps | Zero streams the weights |
 
-Weight prefetch is part of the default `max-quality` profile: the text and DiT stages read the next block's weights while the GPU computes the current one. Pass `--no-prefetch-weights` to compare against serial reads. The DiT stage prefetches only with a zero weight-cache budget, so `--dit-cache-mib` above zero replaces prefetch with the cache. [Round 1 measurements](OPTIMIZATION_CAMPAIGN.md#local-single-image-campaign)
+The default `max-quality` profile prefetches text and DiT weights. Use `--no-prefetch-weights` to measure serial reads in both stages or `--no-dit-prefetch` to isolate DiT. A nonzero DiT weight-cache budget disables DiT prefetch by default. [Execution profiles](PROFILES.md)
 
-The modulation cache is on by default and lives in `~/Library/Caches/onyx-infer/modulation`. Each entry binds one native build, so the launcher keeps the two newest entries of that directory and deletes older ones after it writes a new one. A directory chosen with `--modulation-cache` is never pruned.
+The default cache directory is `~/Library/Caches/onyx-infer/modulation`. After writing a new entry, the launcher attempts to retain the two newest files by modification time. Manage directories specified with `--modulation-cache` yourself. Cache cleanup takes place after the output image is saved.
 
-Without a modulation cache, the first sampling step computes each AdaLN table just before its block uses it, which streams the 26 GB of projection weights alongside the block weights. That step is bounded by disk reads and takes about 5.5 s on the reference machine where the other five take about 2.2–2.7 s each. The first request with a new native build pays the same cost and writes the entry; later requests load it. [Round 5 measurements](OPTIMIZATION_CAMPAIGN.md#local-single-image-campaign)
-
-The modulation cache keys entries by the model file identity, PDD schedule, native build, GPU, and macOS version. A missing entry or checksum failure triggers recomputation. Entries are disposable and can be removed to reclaim space. Each request reports its modulation-cache status, including `miss` after computing and saving a table and `hit` after loading one. A request also reports `write_failed` if it could compute the table but could not save it. Check the cache directory and permissions if this status recurs.
+The modulation cache keys entries by the model file identity, PDD schedule, native build, GPU, and macOS version. Missing entries and checksum failures trigger recomputation. The launcher reports `miss` after computing and saving a table, `hit` after loading one, `write_failed` if saving fails, and `disabled` when caching is off. [Cold and warm cache measurements](../benchmarks/results/campaign-20261123/round5-default-modulation-cache.json)
 
 ## Pick a budget
 
-On the M5 Max with 36 GiB of unified memory, keep the default budget for 1024×1024. The 10 GiB weight cache was faster while weight reads were serial (DiT 20.11 → 16.76 s), but weight prefetch now hides those reads: in an interleaved comparison the budget took 21.88 s against 18.70 s for the default, with peak RSS at 6.35 GiB against 1.80 GiB. [Final record](../benchmarks/results/campaign-20261123/final-comparison.json) The 4096×4096 stress run with that budget also increased system swap by about 853 MiB, so keep the default for 16 MP as well. [Earlier measurement](OPTIMIZATION_CAMPAIGN.md#cache-the-repeated-dit-weights) When tuning another workload, compare end-to-end latency and swap usage alongside DiT time.
+Start with the default streaming budget. On the 36 GB M5 Max, a 10 GiB DiT weight cache increased 1024×1024 median wall time from 18.70 to 21.88 s and peak RSS from 1.80 to 6.35 GiB compared with the default prefetch path. An earlier 4096×4096 run with the same budget added about 853 MiB of swap. When tuning another workload, compare end-to-end latency, peak memory, and swap. [Prefetch comparison](../benchmarks/results/campaign-20261123/final-comparison.json) · [4K stress run](OPTIMIZATION_CAMPAIGN.md#cache-the-repeated-dit-weights)
 
 ## Check the two caches locally
 

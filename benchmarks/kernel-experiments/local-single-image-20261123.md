@@ -3,8 +3,8 @@
 This case records the 2026-11-23 contract and the outcome of each round. See the
 [candidate ledger](candidates.jsonl) for individual trials and the
 [round records](../results/campaign-20261123/) for samples, output hashes, and binary
-identities. The [optimization campaign](../../docs/OPTIMIZATION_CAMPAIGN.md#local-single-image-campaign)
-holds the narrative.
+identities. The [benchmark summary](../../docs/OPTIMIZATION_CAMPAIGN.md#single-image-performance)
+compares the measured builds.
 
 ## Task Contract: local single-image campaign
 
@@ -56,6 +56,8 @@ The tile geometry and the overlap blending are unchanged.
 - Gate declared for this round: at most one 8-bit level per channel value and at
   most 0.01% of the values differing.
 - `ONYX_VAE_BATCH=1` restores one tile at a time and the earlier output bytes.
+- At 512×768, batching cut VAE time from 2.45 to 1.51 s. It changed 17 of
+  1,179,648 channel values by one level.
 - Evidence: `benchmarks/results/campaign-20261123/round2-vae-tile-batching.json`.
 
 ## Outcome, round 3: AdaLN modulation gathered on the GPU
@@ -78,8 +80,7 @@ and dispatched directly by the engine through Metal Performance Primitives.
 
 - Interleaved against `max-quality`: 22.71 → 20.98 s median (1.08×), DiT
   18.30 → 16.71 s.
-- The presumed large kernel gap does not exist. The 16.5× figure in the README
-  compared MLX with an MPSGraph probe that included graph compilation. At the
+- The historical 16.5× probe comparison included MPSGraph graph compilation. At the
   engine entry on real weights the neural-accelerator kernel is about 25%
   faster for the output projection and 12–24% faster for the FFN input, and
   level within noise for QKV (13–18 ms against 14–15 ms over five runs),
@@ -90,7 +91,10 @@ and dispatched directly by the engine through Metal Performance Primitives.
   1.6×, on the FFN input. Image correlation 0.987, replay identical.
   Peak RSS 1.67 → 3.31 GiB.
 - Rejected: dequantizing to a 16-bit type (wrong results). Deferred: moving the
-  transpose off the weight (bit-identical, faster only at 16384 rows).
+  transpose off the weight (`ONYX_Q4_GRAPH=f32-t`). The output is bit-identical.
+  Latency increased 6–10% at 1093 rows and decreased 8–12% at 16384 rows.
+- Reproduce the per-layer timings and FP64 reference comparison with
+  `onyx-q4-path-compare`.
 - Evidence: `benchmarks/results/campaign-20261123/round4-nax-q4-kernel.json`.
 
 ## Outcome, round 5: modulation cache on by default
@@ -113,11 +117,13 @@ session was discarded. `benchmarks/ab_compare.py` now waits before each sample
 until no other native stage process runs and records any that appear, which makes
 a contended sample visible in the report.
 
-## After the rebase: the branch against main
+## Comparison with DiT prefetch build
 
-Main moved to `35bc6f9` during the campaign, which already streams DiT weights one block ahead. The branch was rebased onto it and measured against that build, run from its own checkout. The engine binary stayed bit-identical through the rebase.
+The `e0b4244` build was compared with `35bc6f9`, which already streams DiT weights one block ahead. Each build ran from its own checkout with its own launcher.
 
 - 1024×1024 teapot, three runs per arm: 33.54 → 19.58 s (1.71×). The PNG differs in 36 of 3,145,728 channel values, each by one level.
 - 4096×4096 teapot, one run per arm: 323.04 → 227.93 s (1.42×), VAE 99.6 → 29.0 s, peak RSS 2.66 → 1.91 GiB. The PNG differs in 653 of 50,331,648 channel values, each by one level.
+- In this comparison, `m5-fast` took 19.96 s at 1024×1024 and 218.44 s at 4096×4096.
+  Its image correlation with the matching `max-quality` outputs was 0.987 and 0.996, respectively.
 - Text-rendering cases at 1024 keep their lettering: the moka-pot title is legible in both, and the jet-engine labels carry the same misspellings in both.
 - Evidence: `benchmarks/results/campaign-20261123/against-main-*.json` and `generated-image-evidence.json`.

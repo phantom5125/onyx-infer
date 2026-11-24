@@ -1,6 +1,6 @@
 # 加速路线与"投机解码"适配性评估
 
-状态：2026-11-18 技术评估，基于公开资料逐条核实（引用见文内 URL）。结论先行：**LLM 式 draft-verify 投机解码对 6-NFE 非自回归扩散模型结构上不适用**（未找到任何针对少步非自回归扩散模型的投机解码公开工作）；扩散场景的对应物是**跨步特征缓存**，但其收益随步数减少明显缩水且改变数值路径；本机真正的第一优先级是**用 M5 Neural Accelerators 关闭 16.5× 的 Q4 GEMM 差距**。（2026-11-23 更新：该项已做完，见下表「P0 结果」；差距本身来自探针口径。）
+本文记录 Apple Silicon 上六步 H3 PDD 管线的加速方案和验证要求。[原生推理基准](../OPTIMIZATION_CAMPAIGN.md) · [英文路线图](../ACCELERATION.md)
 
 ## 1. "投机解码"映射到扩散模型：三条路线的适配性
 
@@ -14,19 +14,17 @@ LLM 投机解码（draft model 起草 + 大模型验证，MLX 官方支持 `--dr
 
 ## 2. Mac（M5 Max）特性与本机瓶颈的对齐
 
-Apple 官方 What's New（[developer.apple.com/metal/whats-new](https://developer.apple.com/metal/whats-new/)）明确：**"New quantized tensor formats and support for scale factors…native support in Metal performance primitives to efficiently compress weights and take advantage of the Neural Accelerators on the M5 Pro and M5 Max."** —— 这正对着我们公布的差距：Onyx MPSGraph Q4 流式 GEMM vs MLX 在 1024×21504×5376 上慢 **16.5×**、QKV 形状慢 20.05×（`m5-max-36gb-q4-operator-v1.json`）。**关闭这个差距的期望收益（数倍）大于任何缓存或投机技巧（1.1-2.5×）**，且是纯 kernel 层优化、不动数值语义契约（同一数学定义的更快实现，走 L0/L1 对账）。
+早期 Q4 算子探针测得 16.5× 的差距，其中 MPSGraph 耗时包含图编译。完整原生管线会复用已编译的图。在 M5 Max 的 1024×1024 茶壶对照中，`m5-fast` 使用 Metal Performance Primitives 调用随项目提供的 MLX Q4 内核，将三次运行的耗时中位数从 22.71 秒降至 20.98 秒。该内核使用 BF16 scale 和 bias，增加内存占用，也会改变输出数值。[算子探针](../../benchmarks/results/m5-max-36gb-q4-operator-v1.json) · [端到端对照](../../benchmarks/results/campaign-20261123/round4-nax-q4-kernel.json)
 
-Mac 特性 → 动作映射：
-
-| Mac 特性 | 对应动作 | 状态 |
+| Mac 特性 | 对应实现 | 状态 |
 | --- | --- | --- |
-| M5 Pro/Max Neural Accelerators + MPP 量化张量格式 | 用 MPP 量化 tensor ops / NA-aware MSL 变体重写 Q4 GEMM，逐 shape 对账 | **P0**，Loop 队列第 5 项 |
-| 统一内存 + 页缓存（64 GB 物理装得下 37 GB 包） | 已被隐式利用；显式化 = 代内 LRU block 缓存（消除重复 pread+拷贝，bitwise 等价） | **P1**，已实现（见 PROFILES.md §2），收益待 W4 包重建后实测 |
+| M5 神经网络加速器与 MPP 量化张量 | 通过 `m5-fast` 在 Q4 线性层使用 MLX 量化内核 | 已提供可选档位 |
+| 统一内存与页缓存 | 在单次生成的多个采样步之间复用 Q4 权重 | 已实现 DiT LRU 权重缓存。实测条件见[调优指南](../NATIVE_TUNING.md) |
 | `iogpu.wired_limit_mb`（[MLX README](https://raw.githubusercontent.com/ml-explore/mlx-lm/main/README.md) 记载的 wired memory 手段） | 可提高 GPU 可驻留预算；属系统级调优，需单独验证稳定性后才能进基准口径 | 备选，暂不动基准口径 |
 | MLX lazy evaluation / `mx.compile`（[官方文档](https://ml-explore.github.io/mlx/build/html/usage/lazy_evaluation.html)） | MPSGraph 等价物我们已有（按 shape 键控的图缓存 + metallib 预编译） | 已具备 |
 | TensorRT-LLM CUDA Graphs（[docs](https://nvidia.github.io/TensorRT-LLM/)） | MPSGraph 按需建图已是同思路；进阶是步内多算子合并编码，属 kernel 层候选 | P2 |
 
-## 3. 顶尖 infra 团队的可迁移建议
+## 3. 相关实现与研究
 
 - **SGLang / RadixAttention**（[blog](https://www.lmsys.org/blog/2024-01-17-sglang/)、[arXiv:2312.07104](https://arxiv.org/abs/2312.07104)）：radix tree 前缀缓存带来最高 5× 吞吐。迁移到扩散管线 = **conditioning cache**：以"文本编码器语义哈希 + prompt + 预处理"为键缓存文本编码输出（占端到端 ~11%：3.83 s / 34.65 s），同 prompt 重复生成直接跳过文本塔。这是缓存路线里唯一**数值不变**（复用同一 artifact）的一项，性价比最高。
 - **TensorRT-LLM**（[docs](https://nvidia.github.io/TensorRT-LLM/)）：官方把 **GEMM/attention 量化 + graph replay** 作为视觉生成首选——与我们的 W4 + MPSGraph 图缓存同构；他们的经验确认"先修 kernel 效率，再玩调度技巧"。
@@ -37,11 +35,8 @@ Mac 特性 → 动作映射：
 
 | 优先级 | 项 | 数值影响 | 门禁路径 |
 | --- | --- | --- | --- |
-| P0 | MPP/NA 重写 Q4 GEMM，关闭 16.5× 差距 | 无（同数学定义的更快实现） | L0/L1 逐 shape 对账 + 端到端 bitwise + 交错矩阵 |
-| P0 结果（2026-11-23） | **已关闭，但 16.5× 的差距本身不成立**：它来自含图编译的 MPSGraph 探针。按引擎入口（图已编译）在真实块权重上对比，MLX 的 NAX 量化内核（`affine_qmm_t_nax`，经 MPP 运行在 Neural Accelerators 上）相对 MPSGraph：out_proj 快约 25%，fc1 快 12–24%，qkv 在噪声内持平（5 次运行 13–18 ms 对 14–15 ms）——每个线程组仍要靠软件搬运并反量化权重块。该内核已从 vendored 源码编入自有 metallib，由 `GraphSession::linear` 直接分发（不经 MLX 运行时、无拷贝），作为新档位 `m5-fast` 提供：交错 A/B 22.71 → 20.98 s（DiT 18.30 → 16.71 s）。数值变体：每层 46% 的输出相差 1 个 BF16 ulp；对照 FP64 参考，两条路径都落在典型输出的 2–5 个半 ulp 内，互有高低；图像相关 0.987；峰值 RSS 1.67 → 3.31 GiB。复现：`onyx-q4-path-compare`。记录：`benchmarks/results/campaign-20261123/round4-nax-q4-kernel.json` | 数值变体（scale/bias 为 BF16） | `onyx_q4_linear_nax` CTest + 真实权重 FP64 对拍 + 交错端到端 |
-| P0 进展 2（2026-11-18） | ⚠️ 重大发现：真实量化权重（text-q0-qproj, m=32）上，steel 内核与生产 MPSGraph 路径输出**互相一致**（fp16 舍入内），但**共同偏离**三重地面真值（MLX python dequantize+matmul = numpy 独立解码 = C++ CPU 参照，三者一致给出 out[0][:4]≈1.025/0.461/-0.700/0.966；GPU 给 1.879/1.731/-1.799/1.866）。已排除：四种零点约定（±8、漏零点、符号取反）均不匹配 GPU 输出；k 配对交替符号检测因精度不足无结论。合成数据 bench 无法暴露此问题（合成 scale 分布下各候选差异超容差，会 fail——而 bench 通过说明合成数据下 GPU=CPU）。这意味着生产 MPSGraph 的 W4 解码语义可能与 MLX affine 语义存在系统性偏差，且 v1 的 correlation 验收无法区分该类偏差。**修复优先级提升为最高**：单点 dump steel/mpsgraph 的实际 dequantized W 与 numpy 对比即可定位。诊断工具：`tools/linear_steel_probe.mm`（支持 steel/mpsgraph 双路径 + dump）、`tools/steel_real_data_probe.mm`（独立绑定）。影响面：真实数据上所有 W4 GEMM 输出；对图像质量的影响未量化。
-**进一步线索与定位（同日）**：probe 以 x=e_0 输入时 steel 输出与 x=LCG 近似相同——最终定位：**探针自身的读回类型错误**（把 BF16 输出按 FP16 解码 → 数值显示垃圾），steel 内核与生产路径的输出实际全部正确（y_fp16 原始位 a6f8 = fp16(-0.0272) = W(0,0) 逐位吻合地面真值）。
-**结论（已修正）**：① MLX steel 内核在真实量化数据上完全正确（直绑与 CTest 双门验证）；② 生产 MPSGraph 解码路径**无错误**（此前怀疑为探针读回 bug 所致，已排除）；③ GraphSession::linear_steel 运行时路径**验证正确**，含 M=69 边缘 tile（CTest `onyx_linear_steel_probe`，CPU 全对拍 max_err=0.00028）。steel 运行时集成解锁。 |
+| Q4 神经网络加速器 | `m5-fast` 使用 vendored MLX 内核 `affine_qmm_t_nax`。可用 `onyx-q4-path-compare` 对比真实权重上的延迟和误差。 | BF16 scale 和 bias 带来数值差异 | `onyx_q4_linear_nax` CTest、FP64 参考对照与端到端交错测量 |
+| Q4 探针验证 | 早期探针将 BF16 输出按 FP16 读回，造成参考值偏差。修正后，真实量化权重与参考对照通过。 | 在 `m=69` 边界形状中，Steel 与 CPU 参考的最大绝对误差为 0.00028 | `onyx_linear_steel_probe` CTest |
 | P0 进展（2026-11-18） | ① MLX steel qmm 内核（社区最优，MIT）vendored 并在我们 bench 内跑通：5.27/20.74/1.19 ms（三个真实 shape），成为新基线 variant `mlx-steel`（数据：`benchmarks/results/m5-max-36gb-q4-kernel-variants-v1.json`）；② 自研蒸馏版 `simd` 9.64/38.52/2.50 ms（较原 tile16 快 2.8×，尚未达 steel 水平）；③ steel 与 MLX 独立参照仍有 ~3× 差距（Shared 存储模式 + 计时口径），private buffer + blit 上传是下一步 | — | 两个新内核均有 CTest 正确性门（onyx_q4_gemm_simd / onyx_q4_gemm_steel） |
 | P1 | DiT block LRU 缓存（已实现） | 无（bitwise） | `must_be_fastest_within` + 峰值内存 ≤ 28.08 GiB |
 | P1 | **MLX steel affine_qmm_t 接入运行时**（q4_kernel=steel） | 数值等价（fp16 舍入内，非逐位） | `numeric_equal_to`（linear_steel_probe CTest 全对拍）+ `must_be_fastest_within` |
@@ -64,6 +59,6 @@ Mac 特性 → 动作映射：
 | 不采 | draft-verify 投机解码 | 结构上不适用（§1） | — |
 | 不采 | 6 步 → 更少步数的调度技巧 | recipe 属模型制品 | 新 recipe 身份独立评审，不经档位系统 |
 
-## 5. 对"投机解码"问题的直接回答
+## 5. 后续验证
 
-对这台单机单 GPU、6-NFE、非自回归的管线：**没有合适的投机解码**。领域内最接近的公开工作（SJD2）服务于自回归逐 token 图像模型，需要数千次前向才有起草空间，还要微调；跨步缓存是扩散场景的实际对应物，但公开数据表明少步模型收益缩水且必然改数值。我们已把缓存路线里数值安全的两个成员（block LRU、conditioning cache）排进队列，把数值有风险的成员（跨步特征缓存）明确标为"新身份候选"，把最大的确定性收益（Q4 GEMM × Neural Accelerators）排在 P0。
+精确的文本条件缓存需要验证缓存键和回放一致性。跨步特征缓存会改变数值路径，需要单独的数值档位，以及覆盖多个提示词的质量和延迟对照。对于 Q4 内核和权重缓存，使用真实权重测量端到端耗时与峰值内存。[验证流程](../VALIDATION.md)

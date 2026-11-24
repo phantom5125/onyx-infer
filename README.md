@@ -21,9 +21,7 @@
 
 Generate **4096×4096 images directly on Apple Silicon** with MiniMax-H3-Image. Onyx Infer runs the text encoder, 33.1B DiT, and VAE locally in C++20 and Metal 4. The 4K path has been verified on a Mac Studio with an M5 Max and 36 GB of unified memory.
 
-[Generate your first image](docs/QUICKSTART.md) · [Measured performance](#measured-results-m5-max-36-gb-mac1714) · [Onyx Studio](plugin/onyx-studio/README.md)
-
-The six-step 4096×4096 teapot benchmark took 329.6 s on the 36 GB M5 Max. The 1024×1024 benchmark took a median 175 s on a 24 GB M4 MacBook Air on battery. [M5 Max benchmark](benchmarks/results/native-v1-stability.json) · [M4 Air benchmark](benchmarks/results/m4-air-24gb-dit-prefetch-v1.json)
+[Generate your first image](docs/QUICKSTART.md) · [Measured performance](#benchmarks) · [Onyx Studio](plugin/onyx-studio/README.md)
 
 PyTorch and Diffusers support offline import and reference validation. Native generation uses MPSGraph and Metal kernels.
 
@@ -44,81 +42,28 @@ Resized previews of actual Onyx output, with the original generation resolution 
 
 ## Why it exists
 
-The checkpoint is ~135 GB. The machine grants a 28.08 GiB working set. That gap dictates
-everything: group-wise W4 weights, phase residency, block streaming, chunked attention —
-and an engine that plans memory explicitly instead of hoping unified memory sorts it out.
-
-## Optimization leaderboard
-
-Each row uses the same 1024×1024 teapot request on the M5 Max with 36 GB of unified memory
-(seed 42, six sampling steps). All candidates matched the baseline PNG byte for byte.
-The benchmark records include sample counts, output hashes, and the source revision.
-
-| Configuration | Median wall time | Peak memory | Speed vs. baseline | Evidence |
-| --- | ---: | ---: | ---: | --- |
-| Native streaming baseline | 42.30 s | 3.19 GiB | 1.00× | [Baseline measurements](benchmarks/results/native-round1-zero-cache.json) |
-| Grouped Q4 zero-point cache | 42.63 s | 3.18 GiB | 0.99× | [Measurement](benchmarks/results/native-round1-zero-cache.json) |
-| Direct reads into Metal buffers | 38.74 s | 1.70 GiB | 1.09× | [Measurement](benchmarks/results/native-round2-direct-pread.json) |
-| Shared-memory BF16 modulation packing | 37.50 s | 1.70 GiB | 1.13× | [Measurement](benchmarks/results/native-round3-cpu-modulation.json) |
-| Fused DiT attention and tensor views | 34.65 s | 1.86 GiB | 1.22× | [Measurement](benchmarks/results/native-round4-fused-attention-views.json) |
-| Streaming DiT prefetch (default) | **32.81 s** | 1.79 GiB | **1.29×** | [Measurement](benchmarks/results/m5-max-36gb-dit-prefetch-default-v1.json) |
-
-The [teapot benchmark write-up](site/blog/posts/four-rounds-one-byte-identical-teapot.md)
-explains each change, including the zero-point cache regression.
-
-### Local single-image campaign, November 23
-
-Five further rounds on the same request, each measured against the previous round with
-interleaved runs. [Round records](benchmarks/results/campaign-20261123/) · [Write-up](docs/OPTIMIZATION_CAMPAIGN.md#local-single-image-campaign)
-
-| Build | Median wall time | Peak memory | Speed vs. `f90b0ce` | Output |
-| --- | ---: | ---: | ---: | --- |
-| `f90b0ce`, `max-quality` | 42.09 s | 1.79 GiB | 1.00× | SHA-256 `4160adb7` |
-| Five rounds, `max-quality` | **19.18 s** | 1.70 GiB | **2.19×** | 36 of 3,145,728 channel values differ by one level |
-| Five rounds, `m5-fast` | **18.37 s** | 3.02 GiB | **2.29×** | Numeric variant, correlation 0.987 with `max-quality` |
-
-| Round | Change | Before → after | Output |
-| --- | --- | ---: | --- |
-| 1 | Weight reads overlap GPU compute | 41.88 → 26.27 s | Byte-identical |
-| 2 | VAE tiles decode in batches | 24.22 → 22.08 s | 36 channel values differ by one level |
-| 3 | AdaLN modulation gathered on the GPU | DiT 19.94 → 18.33 s | Byte-identical |
-| 4 | Q4 linears on the M5 neural accelerators, `m5-fast` | 22.71 → 20.98 s | Numeric variant |
-| 5 | Modulation cache on by default | 22.71 → 19.35 s | Byte-identical |
-
-`main` at `35bc6f9` already streams DiT weights one block ahead. Measured against it after the rebase, the branch takes 19.58 s against 33.54 s at 1024×1024 and 227.9 s against 323.0 s at 4096×4096. The default output differs from it in 36 of 3,145,728 channel values at 1024 and 653 of 50,331,648 at 4096, each by one level. [Records](benchmarks/results/campaign-20261123/)
+The H3 checkpoint is about 135 GB. The M5 Max benchmark machine has a recommended GPU
+working set of 28.08 GiB. Onyx uses group-wise W4 quantization, weight streaming, and
+chunked attention to run H3 within that budget.
 
 ## Key features
 
-- **Full-native pipeline, zero runtime reuse** — MPSGraph + hand-written MSL kernels over our
-  own packed Q4 weights; staged, streaming execution with VAE tiling.
-- **16 MP direct generation** — 4096×4096 straight from the DiT (one token = 32×32 px),
-  no upscaler. The teapot benchmark run took 329.6 s with a sampled process-tree peak
-  RSS of 2.14 GB.
-- **Replayable v1 protocols** — six versioned protobuf contracts (`onyx.common/job/model/plan/trace/loop.v1`);
-  a RunRecord for every run; outputs verified by SHA-256 and reproduced by replay.
-- **Evidence-first optimization loop** — the leaderboard above is not a narrative; each round
-  is backed by measurement JSON, correctness gates, and an output-hash proof.
-- **Four execution profiles for W4** — `max-quality` is the default, `memory-min` streams weights at every stage, `m5-fast` runs the Q4 linears on the M5 neural accelerators, and `speed-focus` tests BF16 SIMD and weight caching. The profile registry records the settings and validation criteria.
-- **Versioned, immutable model packages** — ModelScope revisions pinned, per-file SHA-256,
-  resumable multi-part downloads, streaming group-wise W4 packing.
+- **Native inference** on Apple Silicon with MPSGraph, Metal kernels, and streamed group-wise W4 weights.
+- **Direct 16 MP generation** at 4096×4096 with tiled VAE decoding.
+- **Replayable runs** with versioned Protobuf contracts, a RunRecord, and SHA-256 output verification.
+- **Versioned model packages** with pinned source revisions, resumable downloads, and per-file SHA-256 checks.
 
-## Measured results (M5 Max 36 GB, Mac17,14)
+## Benchmarks
 
-Headline numbers on the benchmark machine; the optimization history lives in the
-leaderboard above. We publish the gaps next to the wins.
+H3 W4 teapot request, seed 42, six sampling steps, and the `max-quality` profile. Peak memory is sampled process-tree RSS.
 
-| Measurement | Value | Source |
-| --- | --- | --- |
-| 1024×1024 native generation | 19.18 s median (text 2.23 / DiT 14.89 / VAE 2.09), 1.70 GiB peak, with a warm modulation cache | [final-comparison.json](benchmarks/results/campaign-20261123/final-comparison.json) |
-| 4096×4096 teapot, five rounds | 227.93 s (text 2.22 / DiT 196.74 / VAE 28.95), 1.91 GiB peak, single run | [against-main-4096.json](benchmarks/results/campaign-20261123/against-main-4096.json) |
-| 1024×1024 at `35bc6f9`, before the local single-image campaign | 32.81 s median (text 5.25 / DiT 22.95 / VAE 4.65), 1.79 GiB peak | `m5-max-36gb-dit-prefetch-default-v1.json` |
-| 1024×1024 before weight prefetch | 34.65 s median (text 3.83 / DiT 26.02 / VAE 4.41), 1.86 GiB peak | `native-round4-fused-attention-views.json` |
-| 4096×4096 teapot benchmark run | 329.61 s, sampled process-tree peak RSS 2.14 GB, replay verified | [native-v1-stability.json](benchmarks/results/native-v1-stability.json) |
-| Numerical fidelity | text-tower corr 0.9999987; VAE pixel corr 0.999993 | `native-baseline-v1.json` |
-| Q4 GEMM vs MLX | 28.12 ms vs 1.71 ms median on 1024×5376×5376 in the isolated probes. The MPSGraph figure includes graph compilation: with compiled graphs the engine-level gap is within 9% end to end | `m5-max-36gb-q4-operator-v1.json`, [round 4](benchmarks/results/campaign-20261123/round4-nax-q4-kernel.json) |
-| Native vs community W8A8 (published gap) | 38.74 s vs 23.61 s on the same request — 1.64× | `native-v1-stability.json` |
+| Hardware | Resolution | Wall time | Peak RSS | Record |
+| --- | --- | ---: | ---: | --- |
+| M5 Max, 36 GB | 1024×1024 | 19.58 s median (3 runs) | 1.71 GiB | [1024×1024 run data](benchmarks/results/campaign-20261123/against-main-1024.json) |
+| M5 Max, 36 GB | 4096×4096 | 227.93 s (1 run) | 1.91 GiB | [4096×4096 run data](benchmarks/results/campaign-20261123/against-main-4096.json) |
+| MacBook Air M4, 24 GB | 1024×1024 | 174.98 s median (3 runs) | 1.79 GiB | [v0.3.1, battery power](benchmarks/results/m4-air-24gb-dit-prefetch-v1.json) |
 
-Both the wins and the gaps live in `benchmarks/results/` as committed JSON.
+The M5 Max runs used a warm DiT modulation cache. The first request computes the tables. [Benchmark methodology and results](docs/OPTIMIZATION_CAMPAIGN.md)
 
 ## Quick start
 
@@ -128,25 +73,11 @@ The [first-image guide](docs/QUICKSTART.md) covers the native build, verified ch
 - **Disk** — About **62 GB** of inference files, including the VAE, PDD heads, and tokenizer. Allow about **200 GB** for the original checkpoint and converted files, plus space for build tools.
 - **Tested hardware** — 1024×1024 generation on M4 Air (24 GB) and M5 Max (36 GB). The minimum supported unified memory is unverified.
 
-Use `memory-min` for all-streaming weights, `m5-fast` on M5 to run the Q4 linears on the neural accelerators (a numeric variant), or `speed-focus` to try the BF16 SIMD kernel and DiT weight cache. Among the profiles that keep the `max-quality` numeric path, the default MPSGraph kernel is the fastest measured. See [the optimization campaign](docs/OPTIMIZATION_CAMPAIGN.md).
+The default profile is `max-quality`. Choose `memory-min` to stream VAE weights, `m5-fast` to use the M5 neural accelerators with a different numerical path, or `speed-focus` to evaluate BF16 SIMD and DiT weight caching. [Execution profiles](docs/PROFILES.md)
 
-[Onyx Studio](plugin/onyx-studio/README.md) adds local image generation, engine inspection, and an illustrated book reader to DeepSeek Harness.
+Native generation caches DiT modulation tables by default in `~/Library/Caches/onyx-infer/modulation`. Use `--modulation-cache <directory>` to choose a location or `--no-modulation-cache` to disable it. [Native tuning guide](docs/NATIVE_TUNING.md)
 
-The six-step DiT modulation tables depend only on the model and the schedule, so `native-generate` caches them by default in `~/Library/Caches/onyx-infer/modulation` and reuses them across prompts, seeds, and image sizes. The first request with a new engine build computes them, which streams the 26 GB of AdaLN projection weights. Later requests load the table. `--modulation-cache <directory>` moves the cache and `--no-modulation-cache` turns it off.
-
-Keep the default DiT weight budget. `--dit-cache-mib 10240` was faster while weight reads were serial, but weight prefetch now hides those reads: on the 36 GiB benchmark machine the budget measured 21.88 s against 18.70 s for the default and raised peak memory to 6.35 GiB. Native output reports the applied budget. [Tuning and verification](docs/NATIVE_TUNING.md)
-
-Use `onyx label-prompt` to describe lettering for H3 or `onyx compose-labels` to place exact text and leader lines after generation. [Image text workflows](docs/IMAGE_TEXT.md)
-
-Cross-profile stage matrices, gate checks, and the aggregated capability report:
-
-```bash
-uv run python benchmarks/run_profiles.py --sizes 1024x1024,4096x4096 --runs 3 --output artifacts/benchmarks/profile-stage-matrix.json
-uv run python tools/check_profile_gates.py artifacts/benchmarks/profile-stage-matrix.json
-uv run python tools/build_benchmark_report.py
-```
-
-The MLX reference environment is separate: `uv sync --extra reference`.
+[Onyx Studio](plugin/onyx-studio/README.md) adds local image generation, engine inspection, and an illustrated book reader to DeepSeek Harness. For lettering and annotations, see the [image text guide](docs/IMAGE_TEXT.md).
 
 ## Documentation
 
@@ -156,8 +87,8 @@ The MLX reference environment is separate: `uv sync --extra reference`.
 | [docs/PROTOCOLS.md](docs/PROTOCOLS.md) | The six versioned protobuf contracts |
 | [docs/LOOP.md](docs/LOOP.md) | Loop engineering and controlled RSI |
 | [docs/V1_REVIEW.md](docs/V1_REVIEW.md) | v1 freeze review with acceptance evidence |
-| [docs/PROFILES.md](docs/PROFILES.md) | The three execution profiles and their acceptance gates |
-| [docs/ACCELERATION.md](docs/ACCELERATION.md) | Acceleration roadmap: Mac feature levers, transferable infra-team advice, priority queue |
+| [docs/PROFILES.md](docs/PROFILES.md) | Execution profiles and acceptance gates |
+| [docs/ACCELERATION.md](docs/ACCELERATION.md) | Acceleration options and validation priorities |
 | [docs/BENCHMARKS.md](docs/BENCHMARKS.md) | Aggregated benchmark capability report (generated) |
 | [docs/VALIDATION.md](docs/VALIDATION.md) | Local and hardware validation |
 | [docs/LORA_ADAPTERS.md](docs/LORA_ADAPTERS.md) | LoRA adapter notes |
@@ -170,7 +101,7 @@ Project site & engineering blog: **https://phantom5125.github.io/onyx-infer/**
 
 Guides we've published on the engineering blog, most recent first:
 
-- [Nov 18 2026: Four rounds, one byte-identical teapot](site/blog/posts/four-rounds-one-byte-identical-teapot.md) — the full story behind the leaderboard above, including the round that regressed.
+- [Nov 18 2026: Four rounds, one byte-identical teapot](site/blog/posts/four-rounds-one-byte-identical-teapot.md) — measurements from four early kernel and weight-loading experiments.
 - [Nov 18 2026: Sixteen megapixels on 36 GB of unified memory](site/blog/posts/sixteen-megapixels-on-36gb.md) — how the engine manages memory for 4096×4096 direct generation.
 - [Nov 18 2026: Why we're building an inference engine from scratch](site/blog/posts/why-native-from-scratch.md) — the 135 GB → 28.08 GiB math and the design principles that follow from it.
 
