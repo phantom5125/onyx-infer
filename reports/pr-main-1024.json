@@ -1,0 +1,108 @@
+{
+  "protocol": "onyx.ci.v1",
+  "suite": "h3",
+  "label": "pr-main-1024",
+  "status": "pass",
+  "reason": null,
+  "started_at": "2026-11-24T04:37:39.693265+00:00",
+  "finished_at": "2026-11-24T04:38:11.326710+00:00",
+  "duration_ns": 31633145250,
+  "git": {
+    "revision": "35bc6f9b94ec8599d504900fcd21395a22f54f26",
+    "dirty": false
+  },
+  "target": {
+    "target_id": "mac17-14-m5-max-36gb",
+    "chip": "Apple M5 Max",
+    "physical_memory_bytes": 38654705664,
+    "metal": "Metal 4",
+    "metal_compiler_version": "32023.921 (metalfe-32023.921.6)"
+  },
+  "checks": [
+    {
+      "name": "native-generation",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "benchmarks/run_native.py",
+        "--label",
+        "pr-main-1024",
+        "--runs",
+        "1",
+        "--case",
+        "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer-main/benchmarks/requests/teapot-1024.json",
+        "--plan-id",
+        "pr-main-1024",
+        "--target",
+        "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer-main/config/targets/m5-max-36gb.json"
+      ],
+      "status": "pass",
+      "returncode": 0,
+      "duration_ns": 31607462584,
+      "log_tail": "{\n  \"run_id\": \"fc3e886d-8cd7-4554-b1ec-60cad73d74e0\",\n  \"return_code\": 0,\n  \"seconds\": 31.489021542,\n  \"peak_bytes\": 2094366720,\n  \"output\": \"/Users/daocheng/.zcode/worktrees/6fba/onyx-infer-main/artifacts/benchmarks/onyx-native-h3/h3-teapot-1024-seed42-v1/fc3e886d-8cd7-4554-b1ec-60cad73d74e0/output.png\",\n  \"output_sha256\": \"4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1\",\n  \"run_record\": \"/Users/daocheng/.zcode/worktrees/6fba/onyx-infer-main/artifacts/benchmarks/onyx-native-h3/h3-teapot-1024-seed42-v1/fc3e886d-8cd7-4554-b1ec-60cad73d74e0/run.pb\",\n  \"error\": null\n}\n{\n  \"label\": \"pr-main-1024\",\n  \"plan_id\": \"pr-main-1024\",\n  \"seconds_median\": 31.489021542,\n  \"peak_bytes_max\": 2094366720,\n  \"all_outputs_identical\": true\n}\n"
+    }
+  ],
+  "details": {
+    "native": {
+      "label": "pr-main-1024",
+      "plan_id": "pr-main-1024",
+      "runs": [
+        {
+          "run_id": "fc3e886d-8cd7-4554-b1ec-60cad73d74e0",
+          "return_code": 0,
+          "seconds": 31.489021542,
+          "peak_bytes": 2094366720,
+          "output": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer-main/artifacts/benchmarks/onyx-native-h3/h3-teapot-1024-seed42-v1/fc3e886d-8cd7-4554-b1ec-60cad73d74e0/output.png",
+          "output_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+          "run_record": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer-main/artifacts/benchmarks/onyx-native-h3/h3-teapot-1024-seed42-v1/fc3e886d-8cd7-4554-b1ec-60cad73d74e0/run.pb",
+          "error": null,
+          "stage_seconds": {
+            "text": 3.785854958,
+            "dit": 20.12487875,
+            "vae": 7.424346
+          },
+          "backend": {
+            "backend": "onyx-native-cpp-metal",
+            "profile": "max-quality",
+            "profile_knobs": {
+              "text_weights": "stream",
+              "dit_weights": "stream",
+              "vae_weights": "resident",
+              "vae_tiling": "tile16",
+              "dit_block_cache": "none",
+              "q4_kernel": "mpsgraph"
+            },
+            "profile_registry_sha256": "160c3242b484ddd9cf1b7ffa99420feeed50e5eb2f32f2fe0f838f81a39502d1",
+            "dit_weight_cache_bytes": 0,
+            "dit_prefetch": true,
+            "token_count": 69,
+            "stage_seconds": {
+              "text": 3.785854957997799,
+              "dit": 20.124878750008065,
+              "vae": 7.424346000014339
+            },
+            "stage_logs": {
+              "text": {
+                "stdout": "{\"stage\":\"text\",\"profile\":\"max-quality\",\"tokens\":69,\"seconds\":3.752398,\"output\":\"/var/folders/dl/z74jz9m52vn_js10hs9yyls80000gn/T/onyx-native-jdu6g7_x/embedding.safetensors\"}\n",
+                "stderr": "Failed to import MPS module\nnative text layer 10/50\nnative text layer 20/50\nnative text layer 30/50\nnative text layer 40/50\nnative text layer 50/50\n"
+              },
+              "dit": {
+                "stdout": "{\"stage\":\"dit\",\"profile\":\"max-quality\",\"steps\":6,\"seconds\":20.073504,\"output\":\"/var/folders/dl/z74jz9m52vn_js10hs9yyls80000gn/T/onyx-native-jdu6g7_x/latent.safetensors\",\"modulation_cache\":\"disabled\",\"prefetch_weights\":true,\"prefetch_wait_seconds\":0.014199,\"weight_cache\":{\"budget\":0,\"bytes\":0,\"entries\":0,\"hits\":0,\"read_calls\":2752,\"read_bytes\":85656876608}}\n",
+                "stderr": "Failed to import MPS module\nFailed to import MPS module\nnative DiT step 1/6, Metal allocated 8.17 GiB\nnative DiT step 2/6, Metal allocated 8.16 GiB\nnative DiT step 3/6, Metal allocated 8.16 GiB\nnative DiT step 4/6, Metal allocated 8.16 GiB\nnative DiT step 5/6, Metal allocated 8.16 GiB\nnative DiT step 6/6, Metal allocated 7.98 GiB\n"
+              },
+              "vae": {
+                "stdout": "{\"stage\":\"vae\",\"profile\":\"max-quality\",\"weights\":\"resident\",\"seconds\":7.392450,\"output\":\"/var/folders/dl/z74jz9m52vn_js10hs9yyls80000gn/T/onyx-native-jdu6g7_x/image.png\"}\n",
+                "stderr": "Failed to import MPS module\n"
+              }
+            },
+            "total_seconds": 31.342188165988773
+          }
+        }
+      ],
+      "seconds_median": 31.489021542,
+      "peak_bytes_max": 2094366720,
+      "all_outputs_identical": true
+    }
+  }
+}

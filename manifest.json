@@ -1,0 +1,280 @@
+{
+  "protocol": "onyx.generated-image-evidence.v1",
+  "base_revision": "35bc6f9",
+  "candidate_revision": "e0b4244",
+  "images": [
+    {
+      "file": "1024/teapot-baseline-35bc6f9.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+      "bytes": 1394345,
+      "label": "pr-1024",
+      "arm": "main"
+    },
+    {
+      "file": "1024/teapot-candidate-e0b4244.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+      "bytes": 1394420,
+      "label": "pr-1024",
+      "arm": "branch"
+    },
+    {
+      "file": "1024/teapot-m5-fast-e0b4244.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "sha256": "57f005b360f0428a30e0bee27532e05763e69c04bb6ed8c11c7c66e342520ba6",
+      "bytes": 1392691,
+      "label": "pr-1024-m5fast",
+      "arm": "m5-fast"
+    },
+    {
+      "file": "1024/moka-pot-baseline-35bc6f9.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "sha256": "2219cae12b928f46c4744256d3fa500bc5d2aaa0e230c85beb67eb1236c26053",
+      "bytes": 1605066,
+      "label": "pr-1024-mokapot",
+      "arm": "main"
+    },
+    {
+      "file": "1024/moka-pot-candidate-e0b4244.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "sha256": "6f6fc7faf79704c300610b82d04a90246bb4cfe5185f39ec5752db67b708a1ae",
+      "bytes": 1605054,
+      "label": "pr-1024-mokapot",
+      "arm": "branch"
+    },
+    {
+      "file": "1024/jet-engine-baseline-35bc6f9.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "sha256": "234e4c17fd5cba139dc9f1f842329789e829651551e0f3e22c9f4fc8e29413e0",
+      "bytes": 1713463,
+      "label": "pr-1024-jetengine",
+      "arm": "main"
+    },
+    {
+      "file": "1024/jet-engine-candidate-e0b4244.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "sha256": "c1fa829c0692220f3472a5203692a413ad099d6f7704778802b3cb9299e1d231",
+      "bytes": 1713421,
+      "label": "pr-1024-jetengine",
+      "arm": "branch"
+    },
+    {
+      "file": "4096/teapot-baseline-35bc6f9.png",
+      "size": [
+        4096,
+        4096
+      ],
+      "sha256": "0b9761b2416b57639d9fe387a528136c072b867fa54f394399a651be36557e3f",
+      "bytes": 21113610,
+      "label": "pr-4096",
+      "arm": "main",
+      "preview": "4096/preview/teapot-baseline-35bc6f9-2048.jpg",
+      "crops": [
+        {
+          "name": "knob",
+          "file": "4096/detail/teapot-baseline-35bc6f9-knob.jpg",
+          "box": [
+            1475,
+            928,
+            2499,
+            1952
+          ]
+        },
+        {
+          "name": "spout",
+          "file": "4096/detail/teapot-baseline-35bc6f9-spout.jpg",
+          "box": [
+            88,
+            1538,
+            1112,
+            2562
+          ]
+        },
+        {
+          "name": "cup",
+          "file": "4096/detail/teapot-baseline-35bc6f9-cup.jpg",
+          "box": [
+            3048,
+            2438,
+            4072,
+            3462
+          ]
+        },
+        {
+          "name": "wood",
+          "file": "4096/detail/teapot-baseline-35bc6f9-wood.jpg",
+          "box": [
+            1355,
+            3068,
+            2379,
+            4092
+          ]
+        }
+      ]
+    },
+    {
+      "file": "4096/teapot-candidate-e0b4244.png",
+      "size": [
+        4096,
+        4096
+      ],
+      "sha256": "c68d8fbe635ade8748f2be69477bc5d26f5493a5322d9052428e07d3e59d0c43",
+      "bytes": 21113549,
+      "label": "pr-4096",
+      "arm": "branch",
+      "preview": "4096/preview/teapot-candidate-e0b4244-2048.jpg",
+      "crops": [
+        {
+          "name": "knob",
+          "file": "4096/detail/teapot-candidate-e0b4244-knob.jpg",
+          "box": [
+            1475,
+            928,
+            2499,
+            1952
+          ]
+        },
+        {
+          "name": "spout",
+          "file": "4096/detail/teapot-candidate-e0b4244-spout.jpg",
+          "box": [
+            88,
+            1538,
+            1112,
+            2562
+          ]
+        },
+        {
+          "name": "cup",
+          "file": "4096/detail/teapot-candidate-e0b4244-cup.jpg",
+          "box": [
+            3048,
+            2438,
+            4072,
+            3462
+          ]
+        },
+        {
+          "name": "wood",
+          "file": "4096/detail/teapot-candidate-e0b4244-wood.jpg",
+          "box": [
+            1355,
+            3068,
+            2379,
+            4092
+          ]
+        }
+      ]
+    },
+    {
+      "file": "4096/teapot-m5-fast-e0b4244.png",
+      "size": [
+        4096,
+        4096
+      ],
+      "sha256": "b5b97fb3755632d9eebf45613803b22fce7c64eeae0626dceb35564a0db49886",
+      "bytes": 21096246,
+      "label": "pr-4096-m5fast",
+      "arm": "m5-fast",
+      "preview": "4096/preview/teapot-m5-fast-e0b4244-2048.jpg",
+      "crops": [
+        {
+          "name": "knob",
+          "file": "4096/detail/teapot-m5-fast-e0b4244-knob.jpg",
+          "box": [
+            1475,
+            928,
+            2499,
+            1952
+          ]
+        },
+        {
+          "name": "spout",
+          "file": "4096/detail/teapot-m5-fast-e0b4244-spout.jpg",
+          "box": [
+            88,
+            1538,
+            1112,
+            2562
+          ]
+        },
+        {
+          "name": "cup",
+          "file": "4096/detail/teapot-m5-fast-e0b4244-cup.jpg",
+          "box": [
+            3048,
+            2438,
+            4072,
+            3462
+          ]
+        },
+        {
+          "name": "wood",
+          "file": "4096/detail/teapot-m5-fast-e0b4244-wood.jpg",
+          "box": [
+            1355,
+            3068,
+            2379,
+            4092
+          ]
+        }
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "baseline": "1024/teapot-baseline-35bc6f9.png",
+      "candidate": "1024/teapot-candidate-e0b4244.png",
+      "differing_channel_values": 36,
+      "channel_values": 3145728,
+      "max_abs_difference_levels": 1,
+      "mean_abs_difference_levels": 1.1444091796875e-05
+    },
+    {
+      "baseline": "1024/moka-pot-baseline-35bc6f9.png",
+      "candidate": "1024/moka-pot-candidate-e0b4244.png",
+      "differing_channel_values": 71,
+      "channel_values": 3145728,
+      "max_abs_difference_levels": 1,
+      "mean_abs_difference_levels": 2.2570292154947918e-05
+    },
+    {
+      "baseline": "1024/jet-engine-baseline-35bc6f9.png",
+      "candidate": "1024/jet-engine-candidate-e0b4244.png",
+      "differing_channel_values": 71,
+      "channel_values": 3145728,
+      "max_abs_difference_levels": 1,
+      "mean_abs_difference_levels": 2.2570292154947918e-05
+    },
+    {
+      "baseline": "4096/teapot-baseline-35bc6f9.png",
+      "candidate": "4096/teapot-candidate-e0b4244.png",
+      "differing_channel_values": 653,
+      "channel_values": 50331648,
+      "max_abs_difference_levels": 1,
+      "mean_abs_difference_levels": 1.2973944346110025e-05
+    }
+  ]
+}

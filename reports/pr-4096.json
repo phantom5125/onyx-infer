@@ -1,0 +1,257 @@
+{
+  "protocol": "onyx.ab-compare.v1",
+  "label": "pr-4096",
+  "profile": "max-quality",
+  "request": {
+    "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+    "size": {
+      "width": 4096,
+      "height": 4096
+    },
+    "seed": "42"
+  },
+  "method": "Same machine and W4 package; arms alternate in rotating order after per-arm warmups",
+  "warmups_per_arm": 0,
+  "rounds": 1,
+  "common_args": [],
+  "profile_enabled": false,
+  "summary": {
+    "main": {
+      "samples_seconds": [
+        323.03589062497485
+      ],
+      "seconds_median": 323.03589062497485,
+      "seconds_min": 323.03589062497485,
+      "seconds_max": 323.03589062497485,
+      "stage_seconds_median": {
+        "text": 3.74907937500393,
+        "dit": 219.62209054100094,
+        "vae": 99.64438266598154
+      },
+      "peak_rss_bytes_max": 2860777472,
+      "contended_rounds": [],
+      "binary": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer-main/.build/onyx-native",
+      "args": [],
+      "env": [],
+      "launcher_root": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer-main",
+      "output_sha256": [
+        "0b9761b2416b57639d9fe387a528136c072b867fa54f394399a651be36557e3f"
+      ],
+      "all_outputs_identical": true
+    },
+    "branch": {
+      "samples_seconds": [
+        227.9286580000189
+      ],
+      "seconds_median": 227.9286580000189,
+      "seconds_min": 227.9286580000189,
+      "seconds_max": 227.9286580000189,
+      "stage_seconds_median": {
+        "text": 2.2218867919873446,
+        "dit": 196.73982562497258,
+        "vae": 28.945821041008458
+      },
+      "peak_rss_bytes_max": 2054799360,
+      "contended_rounds": [],
+      "binary": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/.build/onyx-native",
+      "args": [],
+      "env": [],
+      "launcher_root": null,
+      "output_sha256": [
+        "c68d8fbe635ade8748f2be69477bc5d26f5493a5322d9052428e07d3e59d0c43"
+      ],
+      "all_outputs_identical": true,
+      "speedup_vs_first_arm": 1.4172675496775313
+    }
+  },
+  "runs": [
+    {
+      "arm": "main",
+      "wall_seconds": 323.2053554999875,
+      "total_seconds": 323.03589062497485,
+      "stage_seconds": {
+        "text": 3.74907937500393,
+        "dit": 219.62209054100094,
+        "vae": 99.64438266598154
+      },
+      "token_count": 69,
+      "peak_rss_bytes": 2860777472,
+      "png_sha256": "0b9761b2416b57639d9fe387a528136c072b867fa54f394399a651be36557e3f",
+      "png_bytes": 21113610,
+      "stages": {
+        "text": {
+          "stage": "text",
+          "profile": "max-quality",
+          "tokens": 69,
+          "seconds": 3.711859,
+          "stderr_tail": "Failed to import MPS module\nnative text layer 10/50\nnative text layer 20/50\nnative text layer 30/50\nnative text layer 40/50\nnative text layer 50/50\n"
+        },
+        "dit": {
+          "stage": "dit",
+          "profile": "max-quality",
+          "steps": 6,
+          "seconds": 219.421929,
+          "modulation_cache": "disabled",
+          "prefetch_weights": true,
+          "prefetch_wait_seconds": 0.000404,
+          "weight_cache": {
+            "budget": 0,
+            "bytes": 0,
+            "entries": 0,
+            "hits": 0,
+            "read_calls": 2752,
+            "read_bytes": 85656876608
+          },
+          "stderr_tail": "Failed to import MPS module\nFailed to import MPS module\nnative DiT step 1/6, Metal allocated 10.66 GiB\nnative DiT step 2/6, Metal allocated 10.74 GiB\nnative DiT step 3/6, Metal allocated 10.78 GiB\nnative DiT step 4/6, Metal allocated 10.78 GiB\nnative DiT step 5/6, Metal allocated 11.33 GiB\nnative DiT step 6/6, Metal allocated 10.77 GiB\n"
+        },
+        "vae": {
+          "stage": "vae",
+          "profile": "max-quality",
+          "weights": "resident",
+          "seconds": 99.608847,
+          "stderr_tail": "Failed to import MPS module\n"
+        }
+      },
+      "idle_wait_seconds": 0.0,
+      "foreign_native_after": [],
+      "load_before": {
+        "loadavg_1m": 2.4,
+        "busiest": [
+          {
+            "pid": 96816,
+            "name": "Codex (Aperitif Renderer)",
+            "cpu_percent": 0.0
+          },
+          {
+            "pid": 97036,
+            "name": "Codex (Aperitif Renderer)",
+            "cpu_percent": 0.0
+          },
+          {
+            "pid": 97037,
+            "name": "Google Chrome Helper (Aperitif Renderer)",
+            "cpu_percent": 0.0
+          }
+        ]
+      },
+      "load_after": {
+        "loadavg_1m": 2.13,
+        "busiest": [
+          {
+            "pid": 68345,
+            "name": "ZCode Helper",
+            "cpu_percent": 5.3
+          },
+          {
+            "pid": 75002,
+            "name": "python3.13",
+            "cpu_percent": 15.3
+          },
+          {
+            "pid": 68648,
+            "name": "ZCode Helper (Renderer)",
+            "cpu_percent": 22.4
+          }
+        ]
+      },
+      "round": 0
+    },
+    {
+      "arm": "branch",
+      "wall_seconds": 228.1061359999585,
+      "total_seconds": 227.9286580000189,
+      "stage_seconds": {
+        "text": 2.2218867919873446,
+        "dit": 196.73982562497258,
+        "vae": 28.945821041008458
+      },
+      "token_count": 69,
+      "peak_rss_bytes": 2054799360,
+      "png_sha256": "c68d8fbe635ade8748f2be69477bc5d26f5493a5322d9052428e07d3e59d0c43",
+      "png_bytes": 21113549,
+      "stages": {
+        "text": {
+          "stage": "text",
+          "profile": "max-quality",
+          "tokens": 69,
+          "seconds": 2.18946,
+          "prefetch_weights": true,
+          "prefetch_wait_seconds": 0.47729,
+          "stderr_tail": "Failed to import MPS module\nnative text layer 10/50\nnative text layer 20/50\nnative text layer 30/50\nnative text layer 40/50\nnative text layer 50/50\n"
+        },
+        "dit": {
+          "stage": "dit",
+          "profile": "max-quality",
+          "steps": 6,
+          "seconds": 196.554314,
+          "modulation_cache": "hit",
+          "modulation_seconds": 0.039806,
+          "lazy_modulation": false,
+          "prefetch_weights": true,
+          "prefetch_wait_seconds": 0.000922,
+          "weight_cache": {
+            "budget": 0,
+            "bytes": 0,
+            "entries": 0,
+            "hits": 0,
+            "read_calls": 2646,
+            "read_bytes": 59514797120
+          },
+          "stderr_tail": "Failed to import MPS module\nFailed to import MPS module\nnative DiT step 1/6, 32.678 s, Metal allocated 11.78 GiB\nnative DiT step 2/6, 32.692 s, Metal allocated 11.85 GiB\nnative DiT step 3/6, 32.717 s, Metal allocated 12.28 GiB\nnative DiT step 4/6, 32.687 s, Metal allocated 11.85 GiB\nnative DiT step 5/6, 32.767 s, Metal allocated 11.95 GiB\nnative DiT step 6/6, 32.659 s, Metal allocated 11.77 GiB\n"
+        },
+        "vae": {
+          "stage": "vae",
+          "profile": "max-quality",
+          "weights": "resident",
+          "seconds": 28.90709,
+          "tiles": 441,
+          "decode_batch": 25,
+          "stderr_tail": "Failed to import MPS module\nFailed to import MPS module\n"
+        }
+      },
+      "idle_wait_seconds": 0.0,
+      "foreign_native_after": [],
+      "load_before": {
+        "loadavg_1m": 2.13,
+        "busiest": [
+          {
+            "pid": 68345,
+            "name": "ZCode Helper",
+            "cpu_percent": 5.1
+          },
+          {
+            "pid": 68648,
+            "name": "ZCode Helper (Renderer)",
+            "cpu_percent": 13.9
+          },
+          {
+            "pid": 75002,
+            "name": "python3.13",
+            "cpu_percent": 93.4
+          }
+        ]
+      },
+      "load_after": {
+        "loadavg_1m": 1.6,
+        "busiest": [
+          {
+            "pid": 68345,
+            "name": "ZCode Helper",
+            "cpu_percent": 5.9
+          },
+          {
+            "pid": 75002,
+            "name": "python3.13",
+            "cpu_percent": 15.7
+          },
+          {
+            "pid": 68648,
+            "name": "ZCode Helper (Renderer)",
+            "cpu_percent": 25.8
+          }
+        ]
+      },
+      "round": 0
+    }
+  ]
+}

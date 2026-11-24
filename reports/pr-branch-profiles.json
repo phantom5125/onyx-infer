@@ -1,0 +1,43 @@
+{
+  "protocol": "onyx.ci.v1",
+  "suite": "profiles",
+  "label": "pr-branch-profiles",
+  "status": "pass",
+  "reason": null,
+  "started_at": "2026-11-24T04:44:03.065090+00:00",
+  "finished_at": "2026-11-24T04:44:03.106755+00:00",
+  "duration_ns": 41530833,
+  "git": {
+    "revision": "e0b424489c61b6dad5433bd5d522eaf0b9a3f18f",
+    "dirty": false
+  },
+  "target": {
+    "target_id": "mac17-14-m5-max-36gb",
+    "chip": "Apple M5 Max",
+    "physical_memory_bytes": 38654705664,
+    "metal": "Metal 4",
+    "metal_compiler_version": "32023.921 (metalfe-32023.921.6)"
+  },
+  "checks": [
+    {
+      "name": "profile-registry",
+      "command": [
+        "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/.venv/bin/python",
+        "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/tools/check_profile_gates.py",
+        "--check-registry"
+      ],
+      "status": "pass",
+      "returncode": 0,
+      "duration_ns": 21376042,
+      "log_tail": "{\n  \"protocol\": \"onyx.profile-gate-report.v1\",\n  \"status\": \"pass\",\n  \"registry\": \"/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/config/profiles/profiles.v1.json\",\n  \"profiles\": [\n    \"m5-fast\",\n    \"max-quality\",\n    \"memory-min\",\n    \"speed-focus\"\n  ]\n}\n"
+    }
+  ],
+  "details": {
+    "profile_gates": {
+      "profile-stage-matrix-v1.json": {
+        "status": "historical",
+        "comparative": null
+      }
+    }
+  }
+}

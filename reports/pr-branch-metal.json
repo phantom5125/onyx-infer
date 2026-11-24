@@ -1,0 +1,132 @@
+{
+  "protocol": "onyx.ci.v1",
+  "suite": "metal",
+  "label": "pr-branch-metal",
+  "status": "pass",
+  "reason": null,
+  "started_at": "2026-11-24T04:44:03.138986+00:00",
+  "finished_at": "2026-11-24T04:44:15.957799+00:00",
+  "duration_ns": 12818609542,
+  "git": {
+    "revision": "e0b424489c61b6dad5433bd5d522eaf0b9a3f18f",
+    "dirty": false
+  },
+  "target": {
+    "target_id": "mac17-14-m5-max-36gb",
+    "chip": "Apple M5 Max",
+    "physical_memory_bytes": 38654705664,
+    "metal": "Metal 4",
+    "metal_compiler_version": "32023.921 (metalfe-32023.921.6)"
+  },
+  "checks": [
+    {
+      "name": "metal-ctest",
+      "command": [
+        "uvx",
+        "--from",
+        "cmake==4.4.5",
+        "ctest",
+        "--test-dir",
+        ".build",
+        "--output-on-failure"
+      ],
+      "status": "pass",
+      "returncode": 0,
+      "duration_ns": 10796728333,
+      "log_tail": "Test project /Users/daocheng/.zcode/worktrees/6fba/onyx-infer/.build\n      Start  1: onyx_mpsgraph_bf16\n 1/20 Test  #1: onyx_mpsgraph_bf16 ...............   Passed    0.05 sec\n      Start  2: onyx_mpsgraph_q4\n 2/20 Test  #2: onyx_mpsgraph_q4 .................   Passed    0.04 sec\n      Start  3: onyx_q4_gemm_small\n 3/20 Test  #3: onyx_q4_gemm_small ...............   Passed    0.03 sec\n      Start  4: onyx_q4_gemm_tile32\n 4/20 Test  #4: onyx_q4_gemm_tile32 ..............   Passed    0.03 sec\n      Start  5: onyx_q4_gemm_simd\n 5/20 Test  #5: onyx_q4_gemm_simd ................   Passed    0.03 sec\n      Start  6: onyx_q4_gemm_steel\n 6/20 Test  #6: onyx_q4_gemm_steel ...............   Passed    0.03 sec\n      Start  7: onyx_q4_gemm_mma_small\n 7/20 Test  #7: onyx_q4_gemm_mma_small ...........   Passed    0.03 sec\n      Start  8: onyx_q4_gemm_mma_ungrouped\n 8/20 Test  #8: onyx_q4_gemm_mma_ungrouped .......   Passed    0.02 sec\n      Start  9: onyx_q4_gemm_ragged\n 9/20 Test  #9: onyx_q4_gemm_ragged ..............   Passed    0.03 sec\n      Start 10: onyx_q4_gemm_ragged_mma\n10/20 Test #10: onyx_q4_gemm_ragged_mma ..........   Passed    0.03 sec\n      Start 11: onyx_q4_gemm_ragged_mma64\n11/20 Test #11: onyx_q4_gemm_ragged_mma64 ........   Passed    0.03 sec\n      Start 12: onyx_q4_gemm_ragged_splitk\n12/20 Test #12: onyx_q4_gemm_ragged_splitk .......   Passed    0.03 sec\n      Start 13: onyx_q4_gemm_splitk_multitile\n13/20 Test #13: onyx_q4_gemm_splitk_multitile ....   Passed    0.03 sec\n      Start 14: onyx_q4_linear_mpsgraph\n14/20 Test #14: onyx_q4_linear_mpsgraph ..........   Passed    0.56 sec\n      Start 15: onyx_q4_linear_dispatch\n15/20 Test #15: onyx_q4_linear_dispatch ..........   Passed    0.63 sec\n      Start 16: onyx_q4_linear_nax\n16/20 Test #16: onyx_q4_linear_nax ...............   Passed    0.50 sec\n      Start 17: onyx_q4_linear_mlx\n17/20 Test #17: onyx_q4_linear_mlx ...............   Passed    0.55 sec\n      Start 18: onyx_weight_store_cache\n18/20 Test #18: onyx_weight_store_cache ..........   Passed    0.08 sec\n      Start 19: onyx_steel_real_data\n19/20 Test #19: onyx_steel_real_data .............   Passed    0.78 sec\n      Start 20: onyx_linear_steel_probe\n20/20 Test #20: onyx_linear_steel_probe ..........   Passed    7.22 sec\n\n100% tests passed out of 20\n\nTotal Test time (real) =  10.72 sec\n"
+    },
+    {
+      "name": "kernel-tile16",
+      "command": [
+        "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/.build/onyx-metal-bench",
+        "--m",
+        "1024",
+        "--n",
+        "21504",
+        "--k",
+        "5376",
+        "--group",
+        "64",
+        "--iterations",
+        "10",
+        "--variant",
+        "tile16",
+        "--output",
+        "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/artifacts/ci/kernel-result.json"
+      ],
+      "status": "pass",
+      "returncode": 0,
+      "duration_ns": 1993084917,
+      "log_tail": "{\n  \"operator\": \"onyx.q4_gemm.v1\",\n  \"variant\": \"tile16\",\n  \"device\": \"Apple M5 Max\",\n  \"shape\": {\"m\": 1024, \"n\": 21504, \"k\": 5376, \"group_size\": 64},\n  \"correct\": true,\n  \"checked_outputs\": 32,\n  \"max_abs_error\": 0.00146913528,\n  \"max_relative_error\": 0.000441954617,\n  \"iterations\": 10,\n  \"gpu_median_ms\": 111.510250,\n  \"gpu_p95_ms\": 112.009250,\n  \"wall_median_ms\": 111.756500,\n  \"wall_p95_ms\": 112.204209,\n  \"effective_tflops\": 2.123214,\n  \"effective_bandwidth_gb_per_s\": 1.076837,\n  \"metal_allocated_bytes\": 120537088,\n  \"recommended_working_set_bytes\": 30150672384,\n  \"max_buffer_bytes\": 22613000192\n,\n  \"gpu_samples_ms\": [111.681,111.503,111.663,111.183,111.055,112.009,111.294,111.51,111.632,111.28],\n  \"wall_samples_ms\": [111.953,111.716,111.859,111.343,111.276,112.204,111.492,111.756,111.849,111.497],\n  \"arguments\": [\"/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/.build/onyx-metal-bench\",\"--m\",\"1024\",\"--n\",\"21504\",\"--k\",\"5376\",\"--group\",\"64\",\"--iterations\",\"10\",\"--variant\",\"tile16\",\"--output\",\"/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/artifacts/ci/kernel-result.json\"],\n  \"metallib\": \"/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/.build/onyx_q4.metallib\"\n}\n"
+    }
+  ],
+  "details": {
+    "kernel": {
+      "operator": "onyx.q4_gemm.v1",
+      "variant": "tile16",
+      "device": "Apple M5 Max",
+      "shape": {
+        "m": 1024,
+        "n": 21504,
+        "k": 5376,
+        "group_size": 64
+      },
+      "correct": true,
+      "checked_outputs": 32,
+      "max_abs_error": 0.00146913528,
+      "max_relative_error": 0.000441954617,
+      "iterations": 10,
+      "gpu_median_ms": 111.51025,
+      "gpu_p95_ms": 112.00925,
+      "wall_median_ms": 111.7565,
+      "wall_p95_ms": 112.204209,
+      "effective_tflops": 2.123214,
+      "effective_bandwidth_gb_per_s": 1.076837,
+      "metal_allocated_bytes": 120537088,
+      "recommended_working_set_bytes": 30150672384,
+      "max_buffer_bytes": 22613000192,
+      "gpu_samples_ms": [
+        111.681,
+        111.503,
+        111.663,
+        111.183,
+        111.055,
+        112.009,
+        111.294,
+        111.51,
+        111.632,
+        111.28
+      ],
+      "wall_samples_ms": [
+        111.953,
+        111.716,
+        111.859,
+        111.343,
+        111.276,
+        112.204,
+        111.492,
+        111.756,
+        111.849,
+        111.497
+      ],
+      "arguments": [
+        "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/.build/onyx-metal-bench",
+        "--m",
+        "1024",
+        "--n",
+        "21504",
+        "--k",
+        "5376",
+        "--group",
+        "64",
+        "--iterations",
+        "10",
+        "--variant",
+        "tile16",
+        "--output",
+        "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/artifacts/ci/kernel-result.json"
+      ],
+      "metallib": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/.build/onyx_q4.metallib"
+    }
+  }
+}

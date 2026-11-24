@@ -1,0 +1,257 @@
+{
+  "protocol": "onyx.ab-compare.v1",
+  "label": "pr-1024-jetengine",
+  "profile": "max-quality",
+  "request": {
+    "prompt": "Turn the jet engine into a high-precision exploded structural rendering. Use a solid dark-gray background and an oblique overhead isometric view, with components floating apart along a diagonal axis from the upper right to the lower left: intake cowling, compressor blade discs, combustion chamber, turbine discs, central shaft, and exhaust nozzle in sequence. Divide the engine casing into curved panels suspended around the main shaft; distribute the electronic control box, fuel pump, accessory gears, fuel lines, and copper-colored wiring harness on either side. Use cool gray, silver, and matte white for the outer shell and casing, with warm gold and bronze for the turbine core and shaft. Keep components aligned and evenly spaced, with soft studio lighting and realistic metallic reflections. Connect major components to both sides of the image with thin white leader lines and label them in Chinese: \u201c\u8fdb\u6c14\u7f69,\u201d \u201c\u538b\u6c14\u673a\u53f6\u7247\u76d8,\u201d \u201c\u71c3\u70e7\u5ba4,\u201d \u201c\u6da1\u8f6e\u76d8,\u201d \u201c\u4e2d\u5fc3\u4e3b\u8f74,\u201d \u201c\u5c3e\u55b7\u7ba1,\u201d \u201c\u673a\u5323\u5916\u58f3,\u201d \u201c\u7535\u5b50\u63a7\u5236\u5355\u5143,\u201d \u201c\u71c3\u6cb9\u6cf5,\u201d \u201c\u9644\u4ef6\u9f7f\u8f6e\u7bb1,\u201d and \u201c\u71c3\u6cb9\u7ba1\u8def\u201d (intake cowling, compressor blade discs, combustion chamber, turbine discs, central shaft, exhaust nozzle, engine casing, electronic control unit, fuel pump, accessory gearbox, and fuel lines, respectively). Use small, simple white sans-serif text in two neat columns, with leader lines that neither cross nor obscure components. Portrait 2:3, with no branding.",
+    "size": {
+      "width": 1024,
+      "height": 1024
+    },
+    "seed": "42"
+  },
+  "method": "Same machine and W4 package; arms alternate in rotating order after per-arm warmups",
+  "warmups_per_arm": 0,
+  "rounds": 1,
+  "common_args": [],
+  "profile_enabled": false,
+  "summary": {
+    "main": {
+      "samples_seconds": [
+        33.41200554196257
+      ],
+      "seconds_median": 33.41200554196257,
+      "seconds_min": 33.41200554196257,
+      "seconds_max": 33.41200554196257,
+      "stage_seconds_median": {
+        "text": 4.131748042011168,
+        "dit": 22.485144666978158,
+        "vae": 6.785816707997583
+      },
+      "peak_rss_bytes_max": 1882390528,
+      "contended_rounds": [],
+      "binary": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer-main/.build/onyx-native",
+      "args": [],
+      "env": [],
+      "launcher_root": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer-main",
+      "output_sha256": [
+        "234e4c17fd5cba139dc9f1f842329789e829651551e0f3e22c9f4fc8e29413e0"
+      ],
+      "all_outputs_identical": true
+    },
+    "branch": {
+      "samples_seconds": [
+        20.673363999987487
+      ],
+      "seconds_median": 20.673363999987487,
+      "seconds_min": 20.673363999987487,
+      "seconds_max": 20.673363999987487,
+      "stage_seconds_median": {
+        "text": 2.9367813330027275,
+        "dit": 15.786345041997265,
+        "vae": 1.935945958015509
+      },
+      "peak_rss_bytes_max": 2029060096,
+      "contended_rounds": [],
+      "binary": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/.build/onyx-native",
+      "args": [],
+      "env": [],
+      "launcher_root": null,
+      "output_sha256": [
+        "c1fa829c0692220f3472a5203692a413ad099d6f7704778802b3cb9299e1d231"
+      ],
+      "all_outputs_identical": true,
+      "speedup_vs_first_arm": 1.6161861969819133
+    }
+  },
+  "runs": [
+    {
+      "arm": "main",
+      "wall_seconds": 33.56120150000788,
+      "total_seconds": 33.41200554196257,
+      "stage_seconds": {
+        "text": 4.131748042011168,
+        "dit": 22.485144666978158,
+        "vae": 6.785816707997583
+      },
+      "token_count": 299,
+      "peak_rss_bytes": 1882390528,
+      "png_sha256": "234e4c17fd5cba139dc9f1f842329789e829651551e0f3e22c9f4fc8e29413e0",
+      "png_bytes": 1713463,
+      "stages": {
+        "text": {
+          "stage": "text",
+          "profile": "max-quality",
+          "tokens": 299,
+          "seconds": 4.095875,
+          "stderr_tail": "Failed to import MPS module\nnative text layer 10/50\nnative text layer 20/50\nnative text layer 30/50\nnative text layer 40/50\nnative text layer 50/50\n"
+        },
+        "dit": {
+          "stage": "dit",
+          "profile": "max-quality",
+          "steps": 6,
+          "seconds": 22.345669,
+          "modulation_cache": "disabled",
+          "prefetch_weights": true,
+          "prefetch_wait_seconds": 0.014317,
+          "weight_cache": {
+            "budget": 0,
+            "bytes": 0,
+            "entries": 0,
+            "hits": 0,
+            "read_calls": 2752,
+            "read_bytes": 85656876608
+          },
+          "stderr_tail": "Failed to import MPS module\nFailed to import MPS module\nnative DiT step 1/6, Metal allocated 7.64 GiB\nnative DiT step 2/6, Metal allocated 7.62 GiB\nnative DiT step 3/6, Metal allocated 7.62 GiB\nnative DiT step 4/6, Metal allocated 7.62 GiB\nnative DiT step 5/6, Metal allocated 7.62 GiB\nnative DiT step 6/6, Metal allocated 7.44 GiB\n"
+        },
+        "vae": {
+          "stage": "vae",
+          "profile": "max-quality",
+          "weights": "resident",
+          "seconds": 6.755329,
+          "stderr_tail": "Failed to import MPS module\n"
+        }
+      },
+      "idle_wait_seconds": 0.0,
+      "foreign_native_after": [],
+      "load_before": {
+        "loadavg_1m": 2.76,
+        "busiest": [
+          {
+            "pid": 96816,
+            "name": "Codex (Aperitif Renderer)",
+            "cpu_percent": 0.0
+          },
+          {
+            "pid": 97036,
+            "name": "Codex (Aperitif Renderer)",
+            "cpu_percent": 0.0
+          },
+          {
+            "pid": 97037,
+            "name": "Google Chrome Helper (Aperitif Renderer)",
+            "cpu_percent": 0.0
+          }
+        ]
+      },
+      "load_after": {
+        "loadavg_1m": 2.62,
+        "busiest": [
+          {
+            "pid": 68345,
+            "name": "ZCode Helper",
+            "cpu_percent": 5.6
+          },
+          {
+            "pid": 74946,
+            "name": "python3.13",
+            "cpu_percent": 14.0
+          },
+          {
+            "pid": 68648,
+            "name": "ZCode Helper (Renderer)",
+            "cpu_percent": 22.6
+          }
+        ]
+      },
+      "round": 0
+    },
+    {
+      "arm": "branch",
+      "wall_seconds": 20.852628666034434,
+      "total_seconds": 20.673363999987487,
+      "stage_seconds": {
+        "text": 2.9367813330027275,
+        "dit": 15.786345041997265,
+        "vae": 1.935945958015509
+      },
+      "token_count": 299,
+      "peak_rss_bytes": 2029060096,
+      "png_sha256": "c1fa829c0692220f3472a5203692a413ad099d6f7704778802b3cb9299e1d231",
+      "png_bytes": 1713421,
+      "stages": {
+        "text": {
+          "stage": "text",
+          "profile": "max-quality",
+          "tokens": 299,
+          "seconds": 2.89647,
+          "prefetch_weights": true,
+          "prefetch_wait_seconds": 0.000134,
+          "stderr_tail": "Failed to import MPS module\nnative text layer 10/50\nnative text layer 20/50\nnative text layer 30/50\nnative text layer 40/50\nnative text layer 50/50\n"
+        },
+        "dit": {
+          "stage": "dit",
+          "profile": "max-quality",
+          "steps": 6,
+          "seconds": 15.677492,
+          "modulation_cache": "hit",
+          "modulation_seconds": 0.039015,
+          "lazy_modulation": false,
+          "prefetch_weights": true,
+          "prefetch_wait_seconds": 0.000587,
+          "weight_cache": {
+            "budget": 0,
+            "bytes": 0,
+            "entries": 0,
+            "hits": 0,
+            "read_calls": 2646,
+            "read_bytes": 59514797120
+          },
+          "stderr_tail": "Failed to import MPS module\nFailed to import MPS module\nnative DiT step 1/6, 2.747 s, Metal allocated 7.62 GiB\nnative DiT step 2/6, 2.548 s, Metal allocated 7.62 GiB\nnative DiT step 3/6, 2.526 s, Metal allocated 7.60 GiB\nnative DiT step 4/6, 2.517 s, Metal allocated 7.60 GiB\nnative DiT step 5/6, 2.524 s, Metal allocated 7.60 GiB\nnative DiT step 6/6, 2.511 s, Metal allocated 7.42 GiB\n"
+        },
+        "vae": {
+          "stage": "vae",
+          "profile": "max-quality",
+          "weights": "resident",
+          "seconds": 1.904823,
+          "tiles": 25,
+          "decode_batch": 25,
+          "stderr_tail": "Failed to import MPS module\n"
+        }
+      },
+      "idle_wait_seconds": 0.0,
+      "foreign_native_after": [],
+      "load_before": {
+        "loadavg_1m": 2.62,
+        "busiest": [
+          {
+            "pid": 68345,
+            "name": "ZCode Helper",
+            "cpu_percent": 5.1
+          },
+          {
+            "pid": 68648,
+            "name": "ZCode Helper (Renderer)",
+            "cpu_percent": 15.3
+          },
+          {
+            "pid": 74946,
+            "name": "python3.13",
+            "cpu_percent": 99.9
+          }
+        ]
+      },
+      "load_after": {
+        "loadavg_1m": 2.87,
+        "busiest": [
+          {
+            "pid": 68345,
+            "name": "ZCode Helper",
+            "cpu_percent": 6.6
+          },
+          {
+            "pid": 74946,
+            "name": "python3.13",
+            "cpu_percent": 14.3
+          },
+          {
+            "pid": 68648,
+            "name": "ZCode Helper (Renderer)",
+            "cpu_percent": 25.1
+          }
+        ]
+      },
+      "round": 0
+    }
+  ]
+}

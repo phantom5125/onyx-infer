@@ -1,0 +1,122 @@
+{
+  "protocol": "onyx.ci.v1",
+  "suite": "contract",
+  "label": "pr-branch-contract",
+  "status": "pass",
+  "reason": null,
+  "started_at": "2026-11-24T04:43:50.196276+00:00",
+  "finished_at": "2026-11-24T04:44:03.031695+00:00",
+  "duration_ns": 12835121791,
+  "git": {
+    "revision": "e0b424489c61b6dad5433bd5d522eaf0b9a3f18f",
+    "dirty": false
+  },
+  "target": {
+    "target_id": "mac17-14-m5-max-36gb",
+    "chip": "Apple M5 Max",
+    "physical_memory_bytes": 38654705664,
+    "metal": "Metal 4",
+    "metal_compiler_version": "32023.921 (metalfe-32023.921.6)"
+  },
+  "checks": [
+    {
+      "name": "uv-sync",
+      "command": [
+        "uv",
+        "sync",
+        "--locked",
+        "--extra",
+        "reference"
+      ],
+      "status": "pass",
+      "returncode": 0,
+      "duration_ns": 13409292,
+      "log_tail": "Resolved 34 packages in 3ms\nChecked 32 packages in 1ms\n"
+    },
+    {
+      "name": "schema-compile",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "tools/compile_schema.py"
+      ],
+      "status": "pass",
+      "returncode": 0,
+      "duration_ns": 60495584,
+      "log_tail": "Compiled 6 protocol files\n"
+    },
+    {
+      "name": "schema-compatibility",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "tools/check_schema.py"
+      ],
+      "status": "pass",
+      "returncode": 0,
+      "duration_ns": 47042417,
+      "log_tail": "Schema v1 compatibility OK (0 additive changes)\n"
+    },
+    {
+      "name": "python-tests",
+      "command": [
+        "uv",
+        "run",
+        "pytest"
+      ],
+      "status": "pass",
+      "returncode": 0,
+      "duration_ns": 1491570500,
+      "log_tail": "........................................................................ [ 98%]\n.                                                                        [100%]\n73 passed in 1.31s\n"
+    },
+    {
+      "name": "python-compileall",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "compileall",
+        "-q",
+        "src",
+        "tools",
+        "benchmarks"
+      ],
+      "status": "pass",
+      "returncode": 0,
+      "duration_ns": 38055958,
+      "log_tail": ""
+    },
+    {
+      "name": "git-diff-check",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "status": "pass",
+      "returncode": 0,
+      "duration_ns": 10387041,
+      "log_tail": ""
+    },
+    {
+      "name": "metal-ctest",
+      "command": [
+        "uvx",
+        "--from",
+        "cmake==4.4.5",
+        "ctest",
+        "--test-dir",
+        ".build",
+        "--output-on-failure"
+      ],
+      "status": "pass",
+      "returncode": 0,
+      "duration_ns": 11152730542,
+      "log_tail": "Test project /Users/daocheng/.zcode/worktrees/6fba/onyx-infer/.build\n      Start  1: onyx_mpsgraph_bf16\n 1/20 Test  #1: onyx_mpsgraph_bf16 ...............   Passed    0.05 sec\n      Start  2: onyx_mpsgraph_q4\n 2/20 Test  #2: onyx_mpsgraph_q4 .................   Passed    0.04 sec\n      Start  3: onyx_q4_gemm_small\n 3/20 Test  #3: onyx_q4_gemm_small ...............   Passed    0.03 sec\n      Start  4: onyx_q4_gemm_tile32\n 4/20 Test  #4: onyx_q4_gemm_tile32 ..............   Passed    0.02 sec\n      Start  5: onyx_q4_gemm_simd\n 5/20 Test  #5: onyx_q4_gemm_simd ................   Passed    0.03 sec\n      Start  6: onyx_q4_gemm_steel\n 6/20 Test  #6: onyx_q4_gemm_steel ...............   Passed    0.03 sec\n      Start  7: onyx_q4_gemm_mma_small\n 7/20 Test  #7: onyx_q4_gemm_mma_small ...........   Passed    0.03 sec\n      Start  8: onyx_q4_gemm_mma_ungrouped\n 8/20 Test  #8: onyx_q4_gemm_mma_ungrouped .......   Passed    0.02 sec\n      Start  9: onyx_q4_gemm_ragged\n 9/20 Test  #9: onyx_q4_gemm_ragged ..............   Passed    0.03 sec\n      Start 10: onyx_q4_gemm_ragged_mma\n10/20 Test #10: onyx_q4_gemm_ragged_mma ..........   Passed    0.03 sec\n      Start 11: onyx_q4_gemm_ragged_mma64\n11/20 Test #11: onyx_q4_gemm_ragged_mma64 ........   Passed    0.03 sec\n      Start 12: onyx_q4_gemm_ragged_splitk\n12/20 Test #12: onyx_q4_gemm_ragged_splitk .......   Passed    0.03 sec\n      Start 13: onyx_q4_gemm_splitk_multitile\n13/20 Test #13: onyx_q4_gemm_splitk_multitile ....   Passed    0.03 sec\n      Start 14: onyx_q4_linear_mpsgraph\n14/20 Test #14: onyx_q4_linear_mpsgraph ..........   Passed    0.57 sec\n      Start 15: onyx_q4_linear_dispatch\n15/20 Test #15: onyx_q4_linear_dispatch ..........   Passed    0.64 sec\n      Start 16: onyx_q4_linear_nax\n16/20 Test #16: onyx_q4_linear_nax ...............   Passed    0.50 sec\n      Start 17: onyx_q4_linear_mlx\n17/20 Test #17: onyx_q4_linear_mlx ...............   Passed    0.56 sec\n      Start 18: onyx_weight_store_cache\n18/20 Test #18: onyx_weight_store_cache ..........   Passed    0.09 sec\n      Start 19: onyx_steel_real_data\n19/20 Test #19: onyx_steel_real_data .............   Passed    0.78 sec\n      Start 20: onyx_linear_steel_probe\n20/20 Test #20: onyx_linear_steel_probe ..........   Passed    7.22 sec\n\n100% tests passed out of 20\n\nTotal Test time (real) =  10.78 sec\n"
+    }
+  ],
+  "details": {}
+}

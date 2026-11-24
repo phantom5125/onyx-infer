@@ -1,0 +1,117 @@
+{
+  "protocol": "onyx.ci.v1",
+  "suite": "h3",
+  "label": "pr-branch-4096",
+  "status": "pass",
+  "reason": null,
+  "started_at": "2026-11-24T04:33:26.188698+00:00",
+  "finished_at": "2026-11-24T04:37:17.299694+00:00",
+  "duration_ns": 231109366125,
+  "git": {
+    "revision": "e0b424489c61b6dad5433bd5d522eaf0b9a3f18f",
+    "dirty": false
+  },
+  "target": {
+    "target_id": "mac17-14-m5-max-36gb",
+    "chip": "Apple M5 Max",
+    "physical_memory_bytes": 38654705664,
+    "metal": "Metal 4",
+    "metal_compiler_version": "32023.921 (metalfe-32023.921.6)"
+  },
+  "checks": [
+    {
+      "name": "native-generation",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "benchmarks/run_native.py",
+        "--label",
+        "pr-branch-4096",
+        "--runs",
+        "1",
+        "--case",
+        "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/benchmarks/requests/teapot-4096.json",
+        "--plan-id",
+        "pr-branch-4096",
+        "--target",
+        "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/config/targets/m5-max-36gb.json"
+      ],
+      "status": "pass",
+      "returncode": 0,
+      "duration_ns": 231076481416,
+      "log_tail": "{\n  \"run_id\": \"85f38a07-2480-4178-b102-c2c42263469f\",\n  \"return_code\": 0,\n  \"seconds\": 230.908714042,\n  \"peak_bytes\": 2066644992,\n  \"output\": \"/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/artifacts/benchmarks/onyx-native-h3/h3-teapot-4096-seed42-v1/85f38a07-2480-4178-b102-c2c42263469f/output.png\",\n  \"output_sha256\": \"c68d8fbe635ade8748f2be69477bc5d26f5493a5322d9052428e07d3e59d0c43\",\n  \"run_record\": \"/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/artifacts/benchmarks/onyx-native-h3/h3-teapot-4096-seed42-v1/85f38a07-2480-4178-b102-c2c42263469f/run.pb\",\n  \"error\": null\n}\n{\n  \"label\": \"pr-branch-4096\",\n  \"plan_id\": \"pr-branch-4096\",\n  \"seconds_median\": 230.908714042,\n  \"peak_bytes_max\": 2066644992,\n  \"all_outputs_identical\": true\n}\n"
+    }
+  ],
+  "details": {
+    "native": {
+      "label": "pr-branch-4096",
+      "plan_id": "pr-branch-4096",
+      "runs": [
+        {
+          "run_id": "85f38a07-2480-4178-b102-c2c42263469f",
+          "return_code": 0,
+          "seconds": 230.908714042,
+          "peak_bytes": 2066644992,
+          "output": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/artifacts/benchmarks/onyx-native-h3/h3-teapot-4096-seed42-v1/85f38a07-2480-4178-b102-c2c42263469f/output.png",
+          "output_sha256": "c68d8fbe635ade8748f2be69477bc5d26f5493a5322d9052428e07d3e59d0c43",
+          "run_record": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/artifacts/benchmarks/onyx-native-h3/h3-teapot-4096-seed42-v1/85f38a07-2480-4178-b102-c2c42263469f/run.pb",
+          "error": null,
+          "stage_seconds": {
+            "text": 2.200112542,
+            "dit": 194.750355875,
+            "vae": 33.787734709
+          },
+          "backend": {
+            "backend": "onyx-native-cpp-metal",
+            "profile": "max-quality",
+            "profile_knobs": {
+              "text_weights": "stream",
+              "dit_weights": "stream",
+              "vae_weights": "resident",
+              "vae_tiling": "tile16",
+              "dit_block_cache": "none",
+              "weight_prefetch": "next",
+              "q4_kernel": "mpsgraph"
+            },
+            "profile_registry_sha256": "a006d9a45081b1ca9319bb0d4453699ec1002de865a4cd2a1e55fa9e2942e7c9",
+            "dit_weight_cache_bytes": 0,
+            "weight_prefetch": {
+              "text": true,
+              "dit": true
+            },
+            "modulation_cache": {
+              "directory": "/Users/daocheng/Library/Caches/onyx-infer/modulation",
+              "status": "hit",
+              "pruned": []
+            },
+            "token_count": 69,
+            "stage_seconds": {
+              "text": 2.2001125420210883,
+              "dit": 194.75035587500315,
+              "vae": 33.78773470898159
+            },
+            "stage_logs": {
+              "text": {
+                "stdout": "{\"stage\":\"text\",\"profile\":\"max-quality\",\"tokens\":69,\"seconds\":2.170408,\"output\":\"/var/folders/dl/z74jz9m52vn_js10hs9yyls80000gn/T/onyx-native-jm5v13t6/embedding.safetensors\",\"prefetch_weights\":true,\"prefetch_wait_seconds\":0.413622}\n",
+                "stderr": "Failed to import MPS module\nnative text layer 10/50\nnative text layer 20/50\nnative text layer 30/50\nnative text layer 40/50\nnative text layer 50/50\n"
+              },
+              "dit": {
+                "stdout": "{\"stage\":\"dit\",\"profile\":\"max-quality\",\"steps\":6,\"seconds\":194.571847,\"output\":\"/var/folders/dl/z74jz9m52vn_js10hs9yyls80000gn/T/onyx-native-jm5v13t6/latent.safetensors\",\"modulation_cache\":\"hit\",\"modulation_seconds\":0.038524,\"lazy_modulation\":false,\"prefetch_weights\":true,\"prefetch_wait_seconds\":0.000996,\"weight_cache\":{\"budget\":0,\"bytes\":0,\"entries\":0,\"hits\":0,\"read_calls\":2646,\"read_bytes\":59514797120}}\n",
+                "stderr": "Failed to import MPS module\nFailed to import MPS module\nnative DiT step 1/6, 32.478 s, Metal allocated 11.80 GiB\nnative DiT step 2/6, 32.375 s, Metal allocated 11.78 GiB\nnative DiT step 3/6, 32.248 s, Metal allocated 11.70 GiB\nnative DiT step 4/6, 32.384 s, Metal allocated 11.91 GiB\nnative DiT step 5/6, 32.371 s, Metal allocated 11.70 GiB\nnative DiT step 6/6, 32.371 s, Metal allocated 11.52 GiB\n"
+              },
+              "vae": {
+                "stdout": "{\"stage\":\"vae\",\"profile\":\"max-quality\",\"weights\":\"resident\",\"seconds\":33.749892,\"output\":\"/var/folders/dl/z74jz9m52vn_js10hs9yyls80000gn/T/onyx-native-jm5v13t6/image.png\",\"tiles\":441,\"decode_batch\":25}\n",
+                "stderr": "Failed to import MPS module\nFailed to import MPS module\n"
+              }
+            },
+            "total_seconds": 230.75377191702137
+          }
+        }
+      ],
+      "seconds_median": 230.908714042,
+      "peak_bytes_max": 2066644992,
+      "all_outputs_identical": true
+    }
+  }
+}

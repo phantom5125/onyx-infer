@@ -1,0 +1,145 @@
+{
+  "protocol": "onyx.ab-compare.v1",
+  "label": "pr-1024-m5fast",
+  "profile": "max-quality",
+  "request": {
+    "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+    "size": {
+      "width": 1024,
+      "height": 1024
+    },
+    "seed": "42"
+  },
+  "method": "Same machine and W4 package; arms alternate in rotating order after per-arm warmups",
+  "warmups_per_arm": 0,
+  "rounds": 1,
+  "common_args": [],
+  "profile_enabled": false,
+  "summary": {
+    "m5-fast": {
+      "samples_seconds": [
+        19.95555091596907
+      ],
+      "seconds_median": 19.95555091596907,
+      "seconds_min": 19.95555091596907,
+      "seconds_max": 19.95555091596907,
+      "stage_seconds_median": {
+        "text": 2.1422715000226162,
+        "dit": 15.753949292004108,
+        "vae": 2.0500641249818727
+      },
+      "peak_rss_bytes_max": 3300114432,
+      "contended_rounds": [],
+      "binary": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer/.build/onyx-native",
+      "args": [
+        "--profile",
+        "m5-fast"
+      ],
+      "env": [],
+      "launcher_root": null,
+      "output_sha256": [
+        "57f005b360f0428a30e0bee27532e05763e69c04bb6ed8c11c7c66e342520ba6"
+      ],
+      "all_outputs_identical": true
+    }
+  },
+  "runs": [
+    {
+      "arm": "m5-fast",
+      "wall_seconds": 20.10678845801158,
+      "total_seconds": 19.95555091596907,
+      "stage_seconds": {
+        "text": 2.1422715000226162,
+        "dit": 15.753949292004108,
+        "vae": 2.0500641249818727
+      },
+      "token_count": 69,
+      "peak_rss_bytes": 3300114432,
+      "png_sha256": "57f005b360f0428a30e0bee27532e05763e69c04bb6ed8c11c7c66e342520ba6",
+      "png_bytes": 1392691,
+      "stages": {
+        "text": {
+          "stage": "text",
+          "profile": "m5-fast",
+          "tokens": 69,
+          "seconds": 2.102721,
+          "prefetch_weights": true,
+          "prefetch_wait_seconds": 0.516181,
+          "stderr_tail": "Failed to import MPS module\nnative text layer 10/50\nnative text layer 20/50\nnative text layer 30/50\nnative text layer 40/50\nnative text layer 50/50\n"
+        },
+        "dit": {
+          "stage": "dit",
+          "profile": "m5-fast",
+          "steps": 6,
+          "seconds": 15.716246,
+          "modulation_cache": "hit",
+          "modulation_seconds": 0.038726,
+          "lazy_modulation": false,
+          "prefetch_weights": true,
+          "prefetch_wait_seconds": 0.000664,
+          "weight_cache": {
+            "budget": 0,
+            "bytes": 0,
+            "entries": 0,
+            "hits": 0,
+            "read_calls": 2646,
+            "read_bytes": 59514797120
+          },
+          "stderr_tail": "Failed to import MPS module\nFailed to import MPS module\nnative DiT step 1/6, 2.900 s, Metal allocated 2.94 GiB\nnative DiT step 2/6, 2.506 s, Metal allocated 2.94 GiB\nnative DiT step 3/6, 2.520 s, Metal allocated 2.94 GiB\nnative DiT step 4/6, 2.528 s, Metal allocated 2.94 GiB\nnative DiT step 5/6, 2.521 s, Metal allocated 2.94 GiB\nnative DiT step 6/6, 2.514 s, Metal allocated 2.76 GiB\n"
+        },
+        "vae": {
+          "stage": "vae",
+          "profile": "m5-fast",
+          "weights": "resident",
+          "seconds": 2.018025,
+          "tiles": 25,
+          "decode_batch": 25,
+          "stderr_tail": "Failed to import MPS module\n"
+        }
+      },
+      "idle_wait_seconds": 0.0,
+      "foreign_native_after": [],
+      "load_before": {
+        "loadavg_1m": 2.87,
+        "busiest": [
+          {
+            "pid": 96816,
+            "name": "Codex (Aperitif Renderer)",
+            "cpu_percent": 0.0
+          },
+          {
+            "pid": 97036,
+            "name": "Codex (Aperitif Renderer)",
+            "cpu_percent": 0.0
+          },
+          {
+            "pid": 97037,
+            "name": "Google Chrome Helper (Aperitif Renderer)",
+            "cpu_percent": 0.0
+          }
+        ]
+      },
+      "load_after": {
+        "loadavg_1m": 2.4,
+        "busiest": [
+          {
+            "pid": 68345,
+            "name": "ZCode Helper",
+            "cpu_percent": 5.6
+          },
+          {
+            "pid": 74993,
+            "name": "python3.13",
+            "cpu_percent": 14.6
+          },
+          {
+            "pid": 68648,
+            "name": "ZCode Helper (Renderer)",
+            "cpu_percent": 22.8
+          }
+        ]
+      },
+      "round": 0
+    }
+  ]
+}
