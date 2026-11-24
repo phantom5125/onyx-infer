@@ -46,6 +46,34 @@ MPSGraphTensor* cast_to(MPSGraph* graph, MPSGraphTensor* value, MPSDataType dtyp
   return value.dataType == dtype ? value : [graph castTensor:value toType:dtype name:nil];
 }
 
+MPSGraphTensor* rms_unit(MPSGraph* graph, MPSGraphTensor* value, double epsilon) {
+  const NSInteger axis = static_cast<NSInteger>(value.shape.count) - 1;
+  MPSGraphTensor* square = [graph squareWithTensor:value name:nil];
+  MPSGraphTensor* mean = [graph meanOfTensor:square axes:@[@(axis)] name:nil];
+  MPSGraphTensor* eps = [graph constantWithScalar:epsilon shape:@[@1] dataType:value.dataType];
+  MPSGraphTensor* sum = [graph additionWithPrimaryTensor:mean secondaryTensor:eps name:nil];
+  MPSGraphTensor* inverse = [graph reciprocalSquareRootWithTensor:sum name:nil];
+  return [graph multiplicationWithPrimaryTensor:value secondaryTensor:inverse name:nil];
+}
+
+MPSGraphTensor* apply_rope(MPSGraph* graph, MPSGraphTensor* value, MPSGraphTensor* cosine, MPSGraphTensor* sine) {
+  const int64_t dimension = value.shape.lastObject.longLongValue;
+  const int64_t rotary = cosine.shape.lastObject.longLongValue;
+  MPSGraphTensor* first = [graph sliceTensor:value dimension:3 start:0 length:rotary / 2 name:nil];
+  MPSGraphTensor* second = [graph sliceTensor:value dimension:3 start:rotary / 2 length:rotary / 2 name:nil];
+  MPSGraphTensor* negative = [graph negativeWithTensor:second name:nil];
+  MPSGraphTensor* rotated = [graph concatTensors:@[negative, first] dimension:3 interleave:NO name:nil];
+  MPSGraphTensor* original = [graph concatTensors:@[first, second] dimension:3 interleave:NO name:nil];
+  MPSGraphTensor* a = [graph multiplicationWithPrimaryTensor:original secondaryTensor:cosine name:nil];
+  MPSGraphTensor* b = [graph multiplicationWithPrimaryTensor:rotated secondaryTensor:sine name:nil];
+  MPSGraphTensor* result = [graph additionWithPrimaryTensor:a secondaryTensor:b name:nil];
+  if (rotary < dimension) {
+    MPSGraphTensor* pass = [graph sliceTensor:value dimension:3 start:rotary length:dimension - rotary name:nil];
+    result = [graph concatTensors:@[result, pass] dimension:3 interleave:NO name:nil];
+  }
+  return result;
+}
+
 MPSGraphTensor* scaled_attention(MPSGraph* graph, MPSGraphTensor* query,
                                  MPSGraphTensor* key, MPSGraphTensor* value,
                                  bool causal, float scale) {
@@ -619,12 +647,7 @@ Tensor GraphSession::matmul(const Tensor& x, const Tensor& weight) {
 Tensor GraphSession::rms_norm(const Tensor& x, const Tensor& weight, double epsilon) {
   return run("rms:" + std::to_string(epsilon), {x, weight}, x.shape, x.dtype,
              ^MPSGraphTensor*(MPSGraph* graph, NSArray<MPSGraphTensor*>* input) {
-    MPSGraphTensor* square = [graph squareWithTensor:input[0] name:nil];
-    MPSGraphTensor* mean = [graph meanOfTensor:square axes:@[@((NSInteger)input[0].shape.count - 1)] name:nil];
-    MPSGraphTensor* eps = [graph constantWithScalar:epsilon shape:@[@1] dataType:input[0].dataType];
-    MPSGraphTensor* sum = [graph additionWithPrimaryTensor:mean secondaryTensor:eps name:nil];
-    MPSGraphTensor* inverse = [graph reciprocalSquareRootWithTensor:sum name:nil];
-    MPSGraphTensor* y = [graph multiplicationWithPrimaryTensor:input[0] secondaryTensor:inverse name:nil];
+    MPSGraphTensor* y = rms_unit(graph, input[0], epsilon);
     MPSGraphTensor* w = cast_to(graph, input[1], input[0].dataType);
     return [graph multiplicationWithPrimaryTensor:y secondaryTensor:w name:nil];
   });
@@ -661,21 +684,7 @@ Tensor GraphSession::layer_norm(const Tensor& x, const Tensor& weight, const Ten
 Tensor GraphSession::rope(const Tensor& x, const Tensor& cosine, const Tensor& sine) {
   return run("rope", {x, cosine, sine}, x.shape, x.dtype,
              ^MPSGraphTensor*(MPSGraph* graph, NSArray<MPSGraphTensor*>* input) {
-    const int64_t dimension = x.shape.back();
-    const int64_t rotary = cosine.shape.back();
-    MPSGraphTensor* first = [graph sliceTensor:input[0] dimension:3 start:0 length:rotary / 2 name:nil];
-    MPSGraphTensor* second = [graph sliceTensor:input[0] dimension:3 start:rotary / 2 length:rotary / 2 name:nil];
-    MPSGraphTensor* negative = [graph negativeWithTensor:second name:nil];
-    MPSGraphTensor* rotated = [graph concatTensors:@[negative, first] dimension:3 interleave:NO name:nil];
-    MPSGraphTensor* original = [graph concatTensors:@[first, second] dimension:3 interleave:NO name:nil];
-    MPSGraphTensor* a = [graph multiplicationWithPrimaryTensor:original secondaryTensor:input[1] name:nil];
-    MPSGraphTensor* b = [graph multiplicationWithPrimaryTensor:rotated secondaryTensor:input[2] name:nil];
-    MPSGraphTensor* result = [graph additionWithPrimaryTensor:a secondaryTensor:b name:nil];
-    if (rotary < dimension) {
-      MPSGraphTensor* pass = [graph sliceTensor:input[0] dimension:3 start:rotary length:dimension - rotary name:nil];
-      result = [graph concatTensors:@[result, pass] dimension:3 interleave:NO name:nil];
-    }
-    return result;
+    return apply_rope(graph, input[0], input[1], input[2]);
   });
 }
 
@@ -683,6 +692,26 @@ Tensor GraphSession::attention(const Tensor& q, const Tensor& k, const Tensor& v
   return run("attention:" + std::to_string(causal) + ":" + std::to_string(scale), {q, k, v}, q.shape, q.dtype,
              ^MPSGraphTensor*(MPSGraph* graph, NSArray<MPSGraphTensor*>* input) {
     return scaled_attention(graph, input[0], input[1], input[2], causal, scale);
+  });
+}
+
+Tensor GraphSession::tile_attention(const Tensor& qkv, const Tensor& cosine, const Tensor& sine) {
+  // Q, K and V are contiguous within each head. Keep tiles on the batch axis.
+  const int64_t batch = qkv.shape[0];
+  const int64_t tokens = qkv.shape[1];
+  const int64_t head_dim = 64;
+  const int64_t dim = qkv.shape[2] * head_dim;
+  return run("vae-tile-attention", {qkv, cosine, sine}, {batch, tokens, dim}, qkv.dtype,
+             ^MPSGraphTensor*(MPSGraph* graph, NSArray<MPSGraphTensor*>* input) {
+    MPSGraphTensor* heads = [graph transposeTensor:input[0] permutation:@[@0, @2, @1, @3] name:nil];
+    MPSGraphTensor* q = [graph sliceTensor:heads dimension:3 start:0 length:head_dim name:nil];
+    MPSGraphTensor* k = [graph sliceTensor:heads dimension:3 start:head_dim length:head_dim name:nil];
+    MPSGraphTensor* v = [graph sliceTensor:heads dimension:3 start:2 * head_dim length:head_dim name:nil];
+    q = apply_rope(graph, rms_unit(graph, q, 1e-5), input[1], input[2]);
+    k = apply_rope(graph, rms_unit(graph, k, 1e-5), input[1], input[2]);
+    MPSGraphTensor* result = scaled_attention(graph, q, k, v, false, 0.125f);
+    result = [graph transposeTensor:result permutation:@[@0, @2, @1, @3] name:nil];
+    return [graph reshapeTensor:result withShape:@[@(batch), @(tokens), @(dim)] name:nil];
   });
 }
 
