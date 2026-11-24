@@ -31,7 +31,7 @@ GITHUB = "https://github.com/phantom5125/onyx-infer"
 MARK_SVG = """<svg viewBox="0 0 64 64" width="26" height="26" aria-hidden="true"><defs><linearGradient id="m{uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7a6e"/><stop offset="0.5" stop-color="#e5484d"/><stop offset="1" stop-color="#8f1220"/></linearGradient></defs><polygon points="32,4 56,18 56,46 32,60 8,46 8,18" fill="#131722" stroke="url(#m{uid})" stroke-width="3"/><polygon points="32,18 44,25 44,39 32,46 20,39 20,25" fill="url(#m{uid})" opacity="0.85"/></svg>"""
 
 
-def chrome(rel: str, title: str, description: str, og_image: str | None, body: str, uid: str) -> str:
+def chrome(rel: str, title: str, description: str, og_image: str | None, body: str, uid: str, *, lang: str = "en") -> str:
     og = ""
     if og_image:
         og = (
@@ -39,7 +39,7 @@ def chrome(rel: str, title: str, description: str, og_image: str | None, body: s
             f'<meta name="twitter:card" content="summary_large_image">\n'
         )
     return f"""<!doctype html>
-<html lang="en">
+<html lang="{html.escape(lang)}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -270,7 +270,8 @@ def article_page(post: dict) -> str:
 </main>
 """
     og_image = f"{post['image']}" if post.get("image") else None
-    return chrome(rel, f"{post['title']} — Onyx Infer", post["summary"], og_image, body, uid="a")
+    return chrome(rel, f"{post['title']} — Onyx Infer", post["summary"], og_image, body, uid="a",
+                  lang=post.get("lang", "en"))
 
 
 def index_page(posts: list[dict]) -> str:
@@ -278,8 +279,9 @@ def index_page(posts: list[dict]) -> str:
     cards = []
     for p in posts:
         img = f'<img src="{rel}{p["image"]}" alt="">' if p.get("image") else ""
+        lang = f' lang="{html.escape(p["lang"])}"' if p.get("lang") else ""
         cards.append(
-            f'<a class="post-card" href="{p["slug"]}.html">{img}'
+            f'<a class="post-card" href="{p["slug"]}.html"{lang}>{img}'
             f"<div><div class=\"date\">{p['date']}</div>"
             f"<h3>{inline(p['title'])}</h3>"
             f"<p>{inline(p['summary'])}</p></div></a>"
@@ -290,9 +292,8 @@ def index_page(posts: list[dict]) -> str:
     <div class="section-head">
       <div class="eyebrow">Engineering notes</div>
       <h2>Build logs from a native inference engine</h2>
-      <p class="lede">Short, evidence-first write-ups: what we changed, what we measured, and the
-      output hashes that prove nothing drifted. Numbers come from the JSON measurement files
-      committed next to the code.</p>
+      <p class="lede">Short engineering write-ups on what we changed, what we measured, and how
+      each result affected the model output.</p>
     </div>
     <div class="blog-list">
       {''.join(cards)}
