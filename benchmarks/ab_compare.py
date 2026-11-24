@@ -33,7 +33,13 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def case_request(case_path):
     if case_path:
-        return json.loads(Path(case_path).read_text())["request"]
+        case = json.loads(Path(case_path).read_text())
+        if "request" in case:
+            return case["request"]
+        # The text-rendering requests are flat: prompt, width, height, and seed.
+        if "prompt" in case and "width" in case and "height" in case and "seed" in case:
+            return {"prompt": case["prompt"], "size": {"width": case["width"], "height": case["height"]}, "seed": str(case["seed"])}
+        raise SystemExit(f"{case_path} carries no request")
     return {"prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.", "size": {"width": 1024, "height": 1024}, "seed": "42"}
 
 
@@ -102,7 +108,9 @@ def wait_for_idle(timeout):
 
 
 def run_arm(arm, common, request, output, work):
-    command = [sys.executable, "-m", "onyx.native", "--models", common.models, "--prompt", request["prompt"],
+    # An arm bound to another checkout runs that checkout's launcher, so a baseline is the
+    # whole engine as shipped there: launcher, profile registry, and binary.
+    command = [arm.get("python", sys.executable), "-m", "onyx.native", "--models", common.models, "--prompt", request["prompt"],
                "--output", str(output), "--width", str(request["size"]["width"]),
                "--height", str(request["size"]["height"]), "--seed", str(request["seed"]),
                "--profile", common.profile, "--native-bin", arm["binary"], *arm["args"], *common.args]
@@ -116,7 +124,7 @@ def run_arm(arm, common, request, output, work):
     idle_wait = wait_for_idle(common.idle_timeout)
     before = load_snapshot()
     began = time.monotonic()
-    process = subprocess.Popen(command, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=environment)
+    process = subprocess.Popen(command, cwd=arm.get("cwd", ROOT), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=environment)
     sampler = PeakSampler(process.pid)
     sampler.thread.start()
     stdout, stderr = process.communicate()
@@ -161,6 +169,8 @@ def main():
                         help="One quoted arm: a name, a native binary, and native-generate options; repeat per arm")
     parser.add_argument("--env", action="append", default=[], metavar="NAME=KEY=VALUE",
                         help="Environment variable for one arm, for example cand=ONYX_PROFILE=1")
+    parser.add_argument("--arm-root", action="append", default=[], metavar="NAME=PATH",
+                        help="Checkout whose launcher and profile registry drive one arm; repeatable")
     parser.add_argument("--native-arg", action="append", default=[], help="native-generate option shared by every arm")
     parser.add_argument("--models", default=str(ROOT / "artifacts/models/h3-w4"))
     parser.add_argument("--profile", default="max-quality")
@@ -188,6 +198,14 @@ def main():
         if not target or not key or target not in names:
             parser.error(f"--env must be NAME=KEY=VALUE with a known arm: {item}")
         arms[names.index(target)]["env"].append(f"{key}={value}")
+    for item in args.arm_root:
+        target, _, checkout = item.partition("=")
+        if not target or not checkout or target not in names:
+            parser.error(f"--arm-root must be NAME=PATH with a known arm: {item}")
+        root = Path(checkout).resolve()
+        if not (root / ".venv/bin/python").is_file() or not (root / "src/onyx/native.py").is_file():
+            parser.error(f"{root} is not a checkout with a synced environment")
+        arms[names.index(target)].update(root=str(root), python=str(root / ".venv/bin/python"), cwd=str(root))
     request = case_request(args.case)
     common = argparse.Namespace(models=str(Path(args.models).resolve()), profile=args.profile, args=args.native_arg,
                                 cache_dirs=args.cache_dir, idle_timeout=args.idle_timeout)
@@ -221,7 +239,7 @@ def main():
                                           for name in samples[0]["stage_seconds"]},
                  "peak_rss_bytes_max": max(record["peak_rss_bytes"] for record in samples),
                  "contended_rounds": [record["round"] for record in samples if record.get("foreign_native_after")],
-                 "binary": arm["binary"], "args": arm["args"], "env": arm["env"],
+                 "binary": arm["binary"], "args": arm["args"], "env": arm["env"], "launcher_root": arm.get("root"),
                  "output_sha256": sorted({record["png_sha256"] for record in samples})}
         entry["all_outputs_identical"] = len(entry["output_sha256"]) == 1
         summary[arm["name"]] = entry

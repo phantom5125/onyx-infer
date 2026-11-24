@@ -74,6 +74,8 @@ group-wise W4 量化、分阶段驻留、逐 block 流式、分块注意力，�
 | 4 | Q4 线性层运行在 M5 神经网络加速器上（`m5-fast`） | 22.71 → 20.98 s | 数值变体 |
 | 5 | 默认启用调制缓存 | 22.71 → 19.35 s | 逐字节一致 |
 
+`main` 的 `35bc6f9` 已经让 DiT 权重提前一个块流式读取。rebase 之后以它为基线重新测量：1024×1024 下本分支为 19.58 s，对 33.54 s；4096×4096 下为 227.9 s，对 323.0 s。默认输出与它的差异在 1024 下是 3,145,728 个通道值中的 36 个，在 4096 下是 50,331,648 个中的 653 个，每个相差 1 级。[各轮记录](benchmarks/results/campaign-20261123/)
+
 ## 核心特性
 
 - **全原生链路，运行时零复用**——MPSGraph + 手写 MSL kernel，加载自有 packed Q4 权重；
@@ -97,6 +99,7 @@ group-wise W4 量化、分阶段驻留、逐 block 流式、分块注意力，�
 | 测量项 | 数值 | 来源 |
 | --- | --- | --- |
 | 1024×1024 原生生成 | 19.18 s median（text 2.23 / DiT 14.89 / VAE 2.09），峰值 1.70 GiB，调制缓存已预热 | [final-comparison.json](benchmarks/results/campaign-20261123/final-comparison.json) |
+| 4096×4096 茶壶，五轮之后 | 227.93 s（text 2.22 / DiT 196.74 / VAE 28.95），峰值 1.91 GiB，单次运行 | [against-main-4096.json](benchmarks/results/campaign-20261123/against-main-4096.json) |
 | 1024×1024，`35bc6f9`（本地单图五轮优化之前） | 32.81 s median（text 5.25 / DiT 22.95 / VAE 4.65），峰值 1.79 GiB | `m5-max-36gb-dit-prefetch-default-v1.json` |
 | 1024×1024，启用权重预取之前 | 34.65 s median（text 3.83 / DiT 26.02 / VAE 4.41），峰值 1.86 GiB | `native-round4-fused-attention-views.json` |
 | 4096×4096 茶壶基准 | 329.61 s，该次运行采样到的进程树峰值 RSS 为 2.14 GB，已回放验证 | [native-v1-stability.json](benchmarks/results/native-v1-stability.json) |

@@ -85,6 +85,8 @@ interleaved runs. [Round records](benchmarks/results/campaign-20261123/) · [Wri
 | 4 | Q4 linears on the M5 neural accelerators, `m5-fast` | 22.71 → 20.98 s | Numeric variant |
 | 5 | Modulation cache on by default | 22.71 → 19.35 s | Byte-identical |
 
+`main` at `35bc6f9` already streams DiT weights one block ahead. Measured against it after the rebase, the branch takes 19.58 s against 33.54 s at 1024×1024 and 227.9 s against 323.0 s at 4096×4096. The default output differs from it in 36 of 3,145,728 channel values at 1024 and 653 of 50,331,648 at 4096, each by one level. [Records](benchmarks/results/campaign-20261123/)
+
 ## Key features
 
 - **Full-native pipeline, zero runtime reuse** — MPSGraph + hand-written MSL kernels over our
@@ -108,6 +110,7 @@ leaderboard above. We publish the gaps next to the wins.
 | Measurement | Value | Source |
 | --- | --- | --- |
 | 1024×1024 native generation | 19.18 s median (text 2.23 / DiT 14.89 / VAE 2.09), 1.70 GiB peak, with a warm modulation cache | [final-comparison.json](benchmarks/results/campaign-20261123/final-comparison.json) |
+| 4096×4096 teapot, five rounds | 227.93 s (text 2.22 / DiT 196.74 / VAE 28.95), 1.91 GiB peak, single run | [against-main-4096.json](benchmarks/results/campaign-20261123/against-main-4096.json) |
 | 1024×1024 at `35bc6f9`, before the local single-image campaign | 32.81 s median (text 5.25 / DiT 22.95 / VAE 4.65), 1.79 GiB peak | `m5-max-36gb-dit-prefetch-default-v1.json` |
 | 1024×1024 before weight prefetch | 34.65 s median (text 3.83 / DiT 26.02 / VAE 4.41), 1.86 GiB peak | `native-round4-fused-attention-views.json` |
 | 4096×4096 teapot benchmark run | 329.61 s, sampled process-tree peak RSS 2.14 GB, replay verified | [native-v1-stability.json](benchmarks/results/native-v1-stability.json) |

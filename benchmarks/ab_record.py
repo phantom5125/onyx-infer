@@ -14,7 +14,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CASES = {"h3-teapot-1024-seed42-v1": "1024×1024"}
+CASES = {"h3-teapot-1024-seed42-v1": "1024×1024", "h3-teapot-4096-seed42-v1": "4096×4096"}
 
 
 def sha256(path):
@@ -40,6 +40,7 @@ def arm(report, name, binary, env):
         })
     return {
         "binary": binary,
+        "launcher_root": summary.get("launcher_root"),
         "native_args": summary["args"],
         "environment": env,
         "samples_seconds": summary["samples_seconds"],
@@ -48,6 +49,7 @@ def arm(report, name, binary, env):
         "peak_bytes_max": summary["peak_rss_bytes_max"],
         "output_sha256": summary["output_sha256"],
         "all_outputs_identical": summary["all_outputs_identical"],
+        "contended_rounds": summary.get("contended_rounds", []),
         "runs": runs,
     }
 
@@ -55,7 +57,7 @@ def arm(report, name, binary, env):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--report", type=Path, required=True)
-    parser.add_argument("--round", type=int, required=True)
+    parser.add_argument("--round", type=lambda value: int(value) if value.isdigit() else value, required=True)
     parser.add_argument("--change", required=True)
     parser.add_argument("--base-commit", required=True)
     parser.add_argument("--baseline", required=True, help="Arm name of the baseline")
@@ -64,6 +66,7 @@ def main():
     parser.add_argument("--candidate-binary", type=Path, required=True)
     parser.add_argument("--baseline-env", default=[], help="KEY=VALUE applied to the baseline arm; repeatable")
     parser.add_argument("--candidate-env", default=[], help="KEY=VALUE applied to the candidate arm; repeatable")
+    parser.add_argument("--case-id", help="Case ID to record; the default is derived from the request size and seed")
     parser.add_argument("--decision", default="accepted", choices=["accepted", "rejected", "inconclusive"])
     parser.add_argument("--note", action="append", default=[], help="Free-text caveat; repeatable")
     parser.add_argument("--attribution", type=Path, help="JSON file with free-form attribution facts")
@@ -74,8 +77,8 @@ def main():
     baseline = arm(report, args.baseline, str(args.baseline_binary), args.baseline_env)
     candidate = arm(report, args.candidate, str(args.candidate_binary), args.candidate_env)
     request = report["request"]
-    case = next((key for key, label in CASES.items() if label == f"{request['size']['width']}×{request['size']['height']}"
-                 and str(request["seed"]) == "42"), "custom")
+    case = args.case_id or next((key for key, label in CASES.items() if label == f"{request['size']['width']}×{request['size']['height']}"
+                                 and str(request["seed"]) == "42"), "custom")
     target = json.loads((ROOT / "config/targets/m5-max-36gb.json").read_text())
     record = {
         "protocol": "onyx.native-optimization.v1",
@@ -96,6 +99,7 @@ def main():
             "baseline_sha256": sha256(args.baseline_binary),
             "candidate_sha256": sha256(args.candidate_binary),
             "same_binary": sha256(args.baseline_binary) == sha256(args.candidate_binary),
+            "baseline_launcher_root": baseline["launcher_root"],
         },
         "method": report["method"] + ". Arm order: " + " | ".join(
             f"round {index + 1}: " + ", ".join(record["arm"] for record in report["runs"] if record["round"] == index)

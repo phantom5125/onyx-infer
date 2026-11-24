@@ -91,7 +91,18 @@ Three checks ran alongside:
 - Batched VAE decoding also holds at 512×768: VAE 2.45 → 1.51 s, with 17 of 1,179,648 channel values one level apart.
 - `--dit-cache-mib 10240` is now slower than the default. It beat serial reads before round 1, but prefetch already hides the reads: 21.88 s against 18.70 s median, with peak RSS at 6.35 GiB against 1.80 GiB.
 
-The 16 MP path was not measured end to end in this campaign.
+### Against `main` after the rebase
+
+`main` at `35bc6f9` already streams DiT weights one block ahead, so the branch was measured against it again after the rebase. The engine binary is bit-identical to the one above, and the baseline arm runs the `35bc6f9` build from its own checkout with its own launcher.
+
+| Case | `main` `35bc6f9` | This branch | Speed | Output |
+| --- | ---: | ---: | ---: | --- |
+| 1024×1024 teapot, three runs per arm | 33.54 s | **19.58 s** | 1.71× | 36 of 3,145,728 channel values differ by one level |
+| 1024×1024 moka pot, one run | 32.28 s | 19.54 s | 1.65× | 71 channel values differ by one level |
+| 1024×1024 jet engine, one run | 33.41 s | 20.67 s | 1.62× | 71 channel values differ by one level |
+| 4096×4096 teapot, one run | 323.04 s | **227.93 s** | 1.42× | 653 of 50,331,648 channel values differ by one level |
+
+At 4096 the VAE stage falls from 99.6 to 29.0 s and peak RSS from 2.66 to 1.91 GiB. `m5-fast` took 19.96 s at 1024 and 218.44 s at 4096. Against the `max-quality` image of the branch its correlation is 0.987 at 1024 and 0.996 at 4096, which is the numeric variant of round 4. The text-rendering cases keep their lettering: `MOKA POT` is legible in both images, and the jet-engine labels carry the same misspellings in both. [1024 record](../benchmarks/results/campaign-20261123/against-main-1024.json) · [4096 record](../benchmarks/results/campaign-20261123/against-main-4096.json) · [Generated-image evidence](../benchmarks/results/campaign-20261123/generated-image-evidence.json)
 
 ## Production and isolated measurements
 

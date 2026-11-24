@@ -1,0 +1,186 @@
+{
+  "protocol": "onyx.native-optimization.v1",
+  "campaign": "local-single-image-20261123",
+  "round": "against-main-1024",
+  "change": "The branch against main at 35bc6f9, which already streams DiT weights one block ahead. One interleaved session after the rebase.",
+  "base_commit": "35bc6f9",
+  "case": "h3-teapot-1024-seed42-v1",
+  "profile": "max-quality",
+  "device": {
+    "model_identifier": "Mac17,14",
+    "chip": "Apple M5 Max",
+    "gpu_cores": 32,
+    "physical_memory_bytes": 38654705664,
+    "os_version": "27.2.1"
+  },
+  "native_binary": {
+    "baseline_sha256": "bdeb725f3a49b7f697d635e781d9b4631c69eacda16e0a3fc4364df1a3c15fd9",
+    "candidate_sha256": "ec58291ce7f112f40170a84de8647a74dcfe1dc727ee07d4d54bbd34c7e7f5f3",
+    "same_binary": false,
+    "baseline_launcher_root": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer-main"
+  },
+  "method": "Same machine and W4 package; arms alternate in rotating order after per-arm warmups. Arm order: round 1: main, branch | round 2: branch, main | round 3: main, branch",
+  "baseline": {
+    "binary": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer-main/.build/onyx-native",
+    "launcher_root": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer-main",
+    "native_args": [],
+    "environment": [],
+    "samples_seconds": [
+      35.12574341701111,
+      33.54039437498432,
+      32.82865074998699
+    ],
+    "seconds_median": 33.54039437498432,
+    "stage_seconds_median": {
+      "text": 3.7951826250064187,
+      "dit": 22.196881917014252,
+      "vae": 7.015455499989912
+    },
+    "peak_bytes_max": 1927741440,
+    "output_sha256": [
+      "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1"
+    ],
+    "all_outputs_identical": true,
+    "runs": [
+      {
+        "seconds": 35.12574341701111,
+        "stage_seconds": {
+          "text": 5.287777916993946,
+          "dit": 24.47940120799467,
+          "vae": 5.342611792031676
+        },
+        "peak_rss_bytes": 1927741440,
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "dit_step_seconds": [],
+        "dit_native_seconds": 24.314342,
+        "dit_prefetch_wait_seconds": 0.018775,
+        "dit_read_bytes": 85656876608
+      },
+      {
+        "seconds": 33.54039437498432,
+        "stage_seconds": {
+          "text": 3.7951826250064187,
+          "dit": 22.196881917014252,
+          "vae": 7.533945583971217
+        },
+        "peak_rss_bytes": 1811349504,
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "dit_step_seconds": [],
+        "dit_native_seconds": 22.036397,
+        "dit_prefetch_wait_seconds": 0.013853,
+        "dit_read_bytes": 85656876608
+      },
+      {
+        "seconds": 32.82865074998699,
+        "stage_seconds": {
+          "text": 3.736375832988415,
+          "dit": 22.06749200000195,
+          "vae": 7.015455499989912
+        },
+        "peak_rss_bytes": 1906753536,
+        "png_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "dit_step_seconds": [],
+        "dit_native_seconds": 21.929169,
+        "dit_prefetch_wait_seconds": 0.014679,
+        "dit_read_bytes": 85656876608
+      }
+    ]
+  },
+  "candidate": {
+    "binary": ".build/onyx-native",
+    "launcher_root": null,
+    "native_args": [],
+    "environment": [],
+    "samples_seconds": [
+      19.62470675003715,
+      19.581606832973193,
+      19.00330129096983
+    ],
+    "seconds_median": 19.581606832973193,
+    "stage_seconds_median": {
+      "text": 2.223808332986664,
+      "dit": 15.192080750013702,
+      "vae": 2.1298057080130093
+    },
+    "peak_bytes_max": 1831649280,
+    "output_sha256": [
+      "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac"
+    ],
+    "all_outputs_identical": true,
+    "runs": [
+      {
+        "seconds": 19.62470675003715,
+        "stage_seconds": {
+          "text": 2.2608091669972055,
+          "dit": 15.220547083998099,
+          "vae": 2.1298057080130093
+        },
+        "peak_rss_bytes": 1783513088,
+        "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+        "dit_step_seconds": [
+          2.655,
+          2.458,
+          2.403,
+          2.417,
+          2.408,
+          2.425
+        ],
+        "dit_native_seconds": 15.074353,
+        "dit_prefetch_wait_seconds": 0.000641,
+        "dit_read_bytes": 59514797120
+      },
+      {
+        "seconds": 19.581606832973193,
+        "stage_seconds": {
+          "text": 2.211231624998618,
+          "dit": 15.192080750013702,
+          "vae": 2.169837124994956
+        },
+        "peak_rss_bytes": 1831649280,
+        "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+        "dit_step_seconds": [
+          2.534,
+          2.535,
+          2.462,
+          2.41,
+          2.431,
+          2.424
+        ],
+        "dit_native_seconds": 15.093308,
+        "dit_prefetch_wait_seconds": 0.000613,
+        "dit_read_bytes": 59514797120
+      },
+      {
+        "seconds": 19.00330129096983,
+        "stage_seconds": {
+          "text": 2.223808332986664,
+          "dit": 14.830837167042773,
+          "vae": 1.935255500022322
+        },
+        "peak_rss_bytes": 1830158336,
+        "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+        "dit_step_seconds": [
+          2.537,
+          2.445,
+          2.411,
+          2.361,
+          2.322,
+          2.351
+        ],
+        "dit_native_seconds": 14.72839,
+        "dit_prefetch_wait_seconds": 0.000601,
+        "dit_read_bytes": 59514797120
+      }
+    ]
+  },
+  "speedup_vs_baseline": 1.7128519973399792,
+  "latency_reduction": 0.4161783962928626,
+  "output_sha256": [
+    "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac"
+  ],
+  "outputs_match_baseline": false,
+  "decision": "accepted",
+  "notes": [
+    "The baseline arm runs the 35bc6f9 build from its own checkout with its own launcher and profile registry."
+  ]
+}

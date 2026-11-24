@@ -1,0 +1,113 @@
+{
+  "protocol": "onyx.native-optimization.v1",
+  "campaign": "local-single-image-20261123",
+  "round": "against-main-4096",
+  "change": "The branch against main at 35bc6f9 at 4096x4096. Single runs.",
+  "base_commit": "35bc6f9",
+  "case": "h3-teapot-4096-seed42-v1",
+  "profile": "max-quality",
+  "device": {
+    "model_identifier": "Mac17,14",
+    "chip": "Apple M5 Max",
+    "gpu_cores": 32,
+    "physical_memory_bytes": 38654705664,
+    "os_version": "27.2.1"
+  },
+  "native_binary": {
+    "baseline_sha256": "bdeb725f3a49b7f697d635e781d9b4631c69eacda16e0a3fc4364df1a3c15fd9",
+    "candidate_sha256": "ec58291ce7f112f40170a84de8647a74dcfe1dc727ee07d4d54bbd34c7e7f5f3",
+    "same_binary": false,
+    "baseline_launcher_root": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer-main"
+  },
+  "method": "Same machine and W4 package; arms alternate in rotating order after per-arm warmups. Arm order: round 1: main, branch",
+  "baseline": {
+    "binary": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer-main/.build/onyx-native",
+    "launcher_root": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer-main",
+    "native_args": [],
+    "environment": [],
+    "samples_seconds": [
+      323.03589062497485
+    ],
+    "seconds_median": 323.03589062497485,
+    "stage_seconds_median": {
+      "text": 3.74907937500393,
+      "dit": 219.62209054100094,
+      "vae": 99.64438266598154
+    },
+    "peak_bytes_max": 2860777472,
+    "output_sha256": [
+      "0b9761b2416b57639d9fe387a528136c072b867fa54f394399a651be36557e3f"
+    ],
+    "all_outputs_identical": true,
+    "runs": [
+      {
+        "seconds": 323.03589062497485,
+        "stage_seconds": {
+          "text": 3.74907937500393,
+          "dit": 219.62209054100094,
+          "vae": 99.64438266598154
+        },
+        "peak_rss_bytes": 2860777472,
+        "png_sha256": "0b9761b2416b57639d9fe387a528136c072b867fa54f394399a651be36557e3f",
+        "dit_step_seconds": [],
+        "dit_native_seconds": 219.421929,
+        "dit_prefetch_wait_seconds": 0.000404,
+        "dit_read_bytes": 85656876608
+      }
+    ]
+  },
+  "candidate": {
+    "binary": ".build/onyx-native",
+    "launcher_root": null,
+    "native_args": [],
+    "environment": [],
+    "samples_seconds": [
+      227.9286580000189
+    ],
+    "seconds_median": 227.9286580000189,
+    "stage_seconds_median": {
+      "text": 2.2218867919873446,
+      "dit": 196.73982562497258,
+      "vae": 28.945821041008458
+    },
+    "peak_bytes_max": 2054799360,
+    "output_sha256": [
+      "c68d8fbe635ade8748f2be69477bc5d26f5493a5322d9052428e07d3e59d0c43"
+    ],
+    "all_outputs_identical": true,
+    "runs": [
+      {
+        "seconds": 227.9286580000189,
+        "stage_seconds": {
+          "text": 2.2218867919873446,
+          "dit": 196.73982562497258,
+          "vae": 28.945821041008458
+        },
+        "peak_rss_bytes": 2054799360,
+        "png_sha256": "c68d8fbe635ade8748f2be69477bc5d26f5493a5322d9052428e07d3e59d0c43",
+        "dit_step_seconds": [
+          32.678,
+          32.692,
+          32.717,
+          32.687,
+          32.767,
+          32.659
+        ],
+        "dit_native_seconds": 196.554314,
+        "dit_prefetch_wait_seconds": 0.000922,
+        "dit_read_bytes": 59514797120
+      }
+    ]
+  },
+  "speedup_vs_baseline": 1.4172675496775313,
+  "latency_reduction": 0.294416922035978,
+  "output_sha256": [
+    "c68d8fbe635ade8748f2be69477bc5d26f5493a5322d9052428e07d3e59d0c43"
+  ],
+  "outputs_match_baseline": false,
+  "decision": "accepted",
+  "notes": [
+    "One run per arm, so each timing is a single sample. The interleaved tool waited for a quiet GPU before each run.",
+    "The baseline PNG is the 4096 output that main already documents, SHA-256 0b9761b2...."
+  ]
+}

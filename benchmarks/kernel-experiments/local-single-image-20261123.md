@@ -112,3 +112,12 @@ Two samples of a first round-2 session overlapped it and ran 50% slower, so that
 session was discarded. `benchmarks/ab_compare.py` now waits before each sample
 until no other native stage process runs and records any that appear, which makes
 a contended sample visible in the report.
+
+## After the rebase: the branch against main
+
+Main moved to `35bc6f9` during the campaign, which already streams DiT weights one block ahead. The branch was rebased onto it and measured against that build, run from its own checkout. The engine binary stayed bit-identical through the rebase.
+
+- 1024×1024 teapot, three runs per arm: 33.54 → 19.58 s (1.71×). The PNG differs in 36 of 3,145,728 channel values, each by one level.
+- 4096×4096 teapot, one run per arm: 323.04 → 227.93 s (1.42×), VAE 99.6 → 29.0 s, peak RSS 2.66 → 1.91 GiB. The PNG differs in 653 of 50,331,648 channel values, each by one level.
+- Text-rendering cases at 1024 keep their lettering: the moka-pot title is legible in both, and the jet-engine labels carry the same misspellings in both.
+- Evidence: `benchmarks/results/campaign-20261123/against-main-*.json` and `generated-image-evidence.json`.

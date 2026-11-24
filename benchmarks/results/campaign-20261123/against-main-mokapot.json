@@ -1,0 +1,112 @@
+{
+  "protocol": "onyx.native-optimization.v1",
+  "campaign": "local-single-image-20261123",
+  "round": "against-main-mokapot",
+  "change": "Text-rendering case at 1024x1024: the branch against main at 35bc6f9. Single runs.",
+  "base_commit": "35bc6f9",
+  "case": "text-baseline-moka-pot",
+  "profile": "max-quality",
+  "device": {
+    "model_identifier": "Mac17,14",
+    "chip": "Apple M5 Max",
+    "gpu_cores": 32,
+    "physical_memory_bytes": 38654705664,
+    "os_version": "27.2.1"
+  },
+  "native_binary": {
+    "baseline_sha256": "bdeb725f3a49b7f697d635e781d9b4631c69eacda16e0a3fc4364df1a3c15fd9",
+    "candidate_sha256": "ec58291ce7f112f40170a84de8647a74dcfe1dc727ee07d4d54bbd34c7e7f5f3",
+    "same_binary": false,
+    "baseline_launcher_root": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer-main"
+  },
+  "method": "Same machine and W4 package; arms alternate in rotating order after per-arm warmups. Arm order: round 1: main, branch",
+  "baseline": {
+    "binary": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer-main/.build/onyx-native",
+    "launcher_root": "/Users/daocheng/.zcode/worktrees/6fba/onyx-infer-main",
+    "native_args": [],
+    "environment": [],
+    "samples_seconds": [
+      32.28054637502646
+    ],
+    "seconds_median": 32.28054637502646,
+    "stage_seconds_median": {
+      "text": 3.881669875001535,
+      "dit": 22.09125929197762,
+      "vae": 6.294581791036762
+    },
+    "peak_bytes_max": 1854668800,
+    "output_sha256": [
+      "2219cae12b928f46c4744256d3fa500bc5d2aaa0e230c85beb67eb1236c26053"
+    ],
+    "all_outputs_identical": true,
+    "runs": [
+      {
+        "seconds": 32.28054637502646,
+        "stage_seconds": {
+          "text": 3.881669875001535,
+          "dit": 22.09125929197762,
+          "vae": 6.294581791036762
+        },
+        "peak_rss_bytes": 1854668800,
+        "png_sha256": "2219cae12b928f46c4744256d3fa500bc5d2aaa0e230c85beb67eb1236c26053",
+        "dit_step_seconds": [],
+        "dit_native_seconds": 21.956974,
+        "dit_prefetch_wait_seconds": 0.014869,
+        "dit_read_bytes": 85656876608
+      }
+    ]
+  },
+  "candidate": {
+    "binary": ".build/onyx-native",
+    "launcher_root": null,
+    "native_args": [],
+    "environment": [],
+    "samples_seconds": [
+      19.538212542014662
+    ],
+    "seconds_median": 19.538212542014662,
+    "stage_seconds_median": {
+      "text": 2.221909834013786,
+      "dit": 15.148925583052915,
+      "vae": 2.1542920419597067
+    },
+    "peak_bytes_max": 1831780352,
+    "output_sha256": [
+      "6f6fc7faf79704c300610b82d04a90246bb4cfe5185f39ec5752db67b708a1ae"
+    ],
+    "all_outputs_identical": true,
+    "runs": [
+      {
+        "seconds": 19.538212542014662,
+        "stage_seconds": {
+          "text": 2.221909834013786,
+          "dit": 15.148925583052915,
+          "vae": 2.1542920419597067
+        },
+        "peak_rss_bytes": 1831780352,
+        "png_sha256": "6f6fc7faf79704c300610b82d04a90246bb4cfe5185f39ec5752db67b708a1ae",
+        "dit_step_seconds": [
+          2.554,
+          2.464,
+          2.425,
+          2.422,
+          2.439,
+          2.458
+        ],
+        "dit_native_seconds": 15.06113,
+        "dit_prefetch_wait_seconds": 0.000587,
+        "dit_read_bytes": 59514797120
+      }
+    ]
+  },
+  "speedup_vs_baseline": 1.652175003502029,
+  "latency_reduction": 0.394737241587391,
+  "output_sha256": [
+    "6f6fc7faf79704c300610b82d04a90246bb4cfe5185f39ec5752db67b708a1ae"
+  ],
+  "outputs_match_baseline": false,
+  "decision": "accepted",
+  "notes": [
+    "One run per arm."
+  ]
+}

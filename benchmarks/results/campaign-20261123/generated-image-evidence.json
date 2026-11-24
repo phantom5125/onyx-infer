@@ -1,0 +1,313 @@
+{
+  "protocol": "onyx.generated-image-evidence.v1",
+  "campaign": "local-single-image-20261123",
+  "base_revision": "35bc6f9",
+  "candidate_revision": "The commit that carries this record. Its native binary is identified by candidate_sha256 below.",
+  "device": {
+    "model_identifier": "Mac17,14",
+    "chip": "Apple M5 Max",
+    "gpu_cores": 32,
+    "physical_memory_bytes": 38654705664,
+    "os_version": "27.2.1"
+  },
+  "model": {
+    "model_id": "minimax-h3-image",
+    "source_revision": "df334556f585a596a710cf4f7ce3a567c0738ee5",
+    "recipe_id": "h3.pdd6.v1",
+    "numeric_profile": "w4.bf16.fp32-sensitive",
+    "quantization_profile": "onyx-w4s64-linear-v1"
+  },
+  "native_binary": {
+    "baseline_sha256": "bdeb725f3a49b7f697d635e781d9b4631c69eacda16e0a3fc4364df1a3c15fd9",
+    "candidate_sha256": "ec58291ce7f112f40170a84de8647a74dcfe1dc727ee07d4d54bbd34c7e7f5f3"
+  },
+  "method": "The baseline arm runs the 35bc6f9 build from its own checkout with its own launcher and profile registry. The teapot 1024 case has one warmup and three measured runs per arm in rotating order; every other case is a single run per arm. Each run waited for a quiet GPU.",
+  "cases": [
+    {
+      "case": "h3-teapot-1024-seed42-v1",
+      "request": "benchmarks/requests/teapot-1024.json",
+      "resolution": "1024×1024",
+      "seed": "42",
+      "steps": 6,
+      "profile": "max-quality",
+      "baseline": {
+        "seconds": [
+          35.12574341701111,
+          33.54039437498432,
+          32.82865074998699
+        ],
+        "seconds_median": 33.54039437498432,
+        "stage_seconds_median": {
+          "text": 3.7951826250064187,
+          "dit": 22.196881917014252,
+          "vae": 7.015455499989912
+        },
+        "peak_bytes_max": 1927741440,
+        "output_sha256": "4160adb7ac0aa777d6cfe8bafaa9284dd0202198a3ea289c377edf8e93b577d1",
+        "png_bytes": 1394345,
+        "png_size": [
+          1024,
+          1024
+        ]
+      },
+      "candidate": {
+        "seconds": [
+          19.62470675003715,
+          19.581606832973193,
+          19.00330129096983
+        ],
+        "seconds_median": 19.581606832973193,
+        "stage_seconds_median": {
+          "text": 2.223808332986664,
+          "dit": 15.192080750013702,
+          "vae": 2.1298057080130093
+        },
+        "peak_bytes_max": 1831649280,
+        "output_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+        "png_bytes": 1394420,
+        "png_size": [
+          1024,
+          1024
+        ]
+      },
+      "pixel_difference": {
+        "differing_channel_values": 36,
+        "channel_values": 3145728,
+        "differing_fraction": 1.1444091796875e-05,
+        "max_abs_difference_levels": 1,
+        "mean_abs_difference_levels": 1.1444091796875e-05,
+        "psnr_db": 97.54499028099909,
+        "pixel_correlation": 0.9999999984623283
+      },
+      "visual_review": "Same composition and detail at full size; the two images are indistinguishable."
+    },
+    {
+      "case": "text-baseline-moka-pot",
+      "request": "benchmarks/requests/text-baseline-moka-pot.json",
+      "resolution": "1024×1024",
+      "seed": "42",
+      "steps": 6,
+      "profile": "max-quality",
+      "baseline": {
+        "seconds": [
+          32.28054637502646
+        ],
+        "seconds_median": 32.28054637502646,
+        "stage_seconds_median": {
+          "text": 3.881669875001535,
+          "dit": 22.09125929197762,
+          "vae": 6.294581791036762
+        },
+        "peak_bytes_max": 1854668800,
+        "output_sha256": "2219cae12b928f46c4744256d3fa500bc5d2aaa0e230c85beb67eb1236c26053",
+        "png_bytes": 1605066,
+        "png_size": [
+          1024,
+          1024
+        ]
+      },
+      "candidate": {
+        "seconds": [
+          19.538212542014662
+        ],
+        "seconds_median": 19.538212542014662,
+        "stage_seconds_median": {
+          "text": 2.221909834013786,
+          "dit": 15.148925583052915,
+          "vae": 2.1542920419597067
+        },
+        "peak_bytes_max": 1831780352,
+        "output_sha256": "6f6fc7faf79704c300610b82d04a90246bb4cfe5185f39ec5752db67b708a1ae",
+        "png_bytes": 1605054,
+        "png_size": [
+          1024,
+          1024
+        ]
+      },
+      "pixel_difference": {
+        "differing_channel_values": 71,
+        "channel_values": 3145728,
+        "differing_fraction": 2.2570292154947918e-05,
+        "max_abs_difference_levels": 1,
+        "mean_abs_difference_levels": 2.2570292154947918e-05,
+        "psnr_db": 94.59543180148123,
+        "pixel_correlation": 0.9999999988152777
+      },
+      "visual_review": "The title MOKA POT is legible in both images and the line drawings match."
+    },
+    {
+      "case": "text-baseline-jet-engine",
+      "request": "benchmarks/requests/text-baseline-jet-engine.json",
+      "resolution": "1024×1024",
+      "seed": "42",
+      "steps": 6,
+      "profile": "max-quality",
+      "baseline": {
+        "seconds": [
+          33.41200554196257
+        ],
+        "seconds_median": 33.41200554196257,
+        "stage_seconds_median": {
+          "text": 4.131748042011168,
+          "dit": 22.485144666978158,
+          "vae": 6.785816707997583
+        },
+        "peak_bytes_max": 1882390528,
+        "output_sha256": "234e4c17fd5cba139dc9f1f842329789e829651551e0f3e22c9f4fc8e29413e0",
+        "png_bytes": 1713463,
+        "png_size": [
+          1024,
+          1024
+        ]
+      },
+      "candidate": {
+        "seconds": [
+          20.673363999987487
+        ],
+        "seconds_median": 20.673363999987487,
+        "stage_seconds_median": {
+          "text": 2.9367813330027275,
+          "dit": 15.786345041997265,
+          "vae": 1.935945958015509
+        },
+        "peak_bytes_max": 2029060096,
+        "output_sha256": "c1fa829c0692220f3472a5203692a413ad099d6f7704778802b3cb9299e1d231",
+        "png_bytes": 1713421,
+        "png_size": [
+          1024,
+          1024
+        ]
+      },
+      "pixel_difference": {
+        "differing_channel_values": 71,
+        "channel_values": 3145728,
+        "differing_fraction": 2.2570292154947918e-05,
+        "max_abs_difference_levels": 1,
+        "mean_abs_difference_levels": 2.2570292154947918e-05,
+        "psnr_db": 94.59543180148123,
+        "pixel_correlation": 0.9999999961008692
+      },
+      "visual_review": "Both images carry the same labels with the same misspellings, which the benchmark notes already record for this prompt. Lettering is unchanged."
+    },
+    {
+      "case": "h3-teapot-4096-seed42-v1",
+      "request": "benchmarks/requests/teapot-4096.json",
+      "resolution": "4096×4096",
+      "seed": "42",
+      "steps": 6,
+      "profile": "max-quality",
+      "baseline": {
+        "seconds": [
+          323.03589062497485
+        ],
+        "seconds_median": 323.03589062497485,
+        "stage_seconds_median": {
+          "text": 3.74907937500393,
+          "dit": 219.62209054100094,
+          "vae": 99.64438266598154
+        },
+        "peak_bytes_max": 2860777472,
+        "output_sha256": "0b9761b2416b57639d9fe387a528136c072b867fa54f394399a651be36557e3f",
+        "png_bytes": 21113610,
+        "png_size": [
+          4096,
+          4096
+        ]
+      },
+      "candidate": {
+        "seconds": [
+          227.9286580000189
+        ],
+        "seconds_median": 227.9286580000189,
+        "stage_seconds_median": {
+          "text": 2.2218867919873446,
+          "dit": 196.73982562497258,
+          "vae": 28.945821041008458
+        },
+        "peak_bytes_max": 2054799360,
+        "output_sha256": "c68d8fbe635ade8748f2be69477bc5d26f5493a5322d9052428e07d3e59d0c43",
+        "png_bytes": 21113549,
+        "png_size": [
+          4096,
+          4096
+        ]
+      },
+      "pixel_difference": {
+        "differing_channel_values": 653,
+        "channel_values": 50331648,
+        "differing_fraction": 1.2973944346110025e-05,
+        "max_abs_difference_levels": 1,
+        "mean_abs_difference_levels": 1.2973944346110025e-05,
+        "psnr_db": 97.00008330248048,
+        "pixel_correlation": 0.9999999985908681
+      },
+      "visual_review": "Same composition. 100% crops of the knob, the spout, the cup, and the table grain show the same detail in both images."
+    }
+  ],
+  "m5_fast": {
+    "profile": "m5-fast",
+    "1024": {
+      "seconds": [
+        19.95555091596907
+      ],
+      "seconds_median": 19.95555091596907,
+      "stage_seconds_median": {
+        "text": 2.1422715000226162,
+        "dit": 15.753949292004108,
+        "vae": 2.0500641249818727
+      },
+      "peak_bytes_max": 3300114432,
+      "output_sha256": "57f005b360f0428a30e0bee27532e05763e69c04bb6ed8c11c7c66e342520ba6",
+      "png_bytes": 1392691,
+      "png_size": [
+        1024,
+        1024
+      ]
+    },
+    "4096": {
+      "seconds": [
+        218.4423194580013
+      ],
+      "seconds_median": 218.4423194580013,
+      "stage_seconds_median": {
+        "text": 2.13786566600902,
+        "dit": 187.75426183396485,
+        "vae": 28.53265820798697
+      },
+      "peak_bytes_max": 3272491008,
+      "output_sha256": "b5b97fb3755632d9eebf45613803b22fce7c64eeae0626dceb35564a0db49886",
+      "png_bytes": 21096246,
+      "png_size": [
+        4096,
+        4096
+      ]
+    },
+    "vs_max_quality_candidate": {
+      "1024": {
+        "differing_channel_values": 2542661,
+        "channel_values": 3145728,
+        "differing_fraction": 0.808290163675944,
+        "max_abs_difference_levels": 255,
+        "mean_abs_difference_levels": 3.8417816162109375,
+        "psnr_db": 28.323235258213145,
+        "pixel_correlation": 0.9871715817557739
+      },
+      "4096": {
+        "differing_channel_values": 37282544,
+        "channel_values": 50331648,
+        "differing_fraction": 0.7407375971476237,
+        "max_abs_difference_levels": 249,
+        "mean_abs_difference_levels": 2.144547442595164,
+        "psnr_db": 32.81982481589751,
+        "pixel_correlation": 0.9963391210825487
+      }
+    },
+    "visual_review": "Same composition at both sizes. It is the numeric variant of round 4: the fine detail differs from the max-quality image while the subject, layout, and materials match."
+  },
+  "expected_visual_differences": "Round 2 decodes VAE tiles in batches, so FP32 matrix products sum in another order. The default-profile images differ from the baseline in a few dozen to a few hundred channel values, each by one level of 255, which is not visible. m5-fast changes the Q4 kernel and is a numeric variant.",
+  "image_files": "The original PNGs, previews, and 100% crops of the 4096 outputs are attached to the pull request rather than committed.",
+  "system_swap_used_mb": {
+    "before": 5502,
+    "after": 5502
+  }
+}

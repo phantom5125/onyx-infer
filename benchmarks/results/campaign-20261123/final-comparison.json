@@ -176,6 +176,7 @@
   "notes": [
     "Each round was measured against the previous round, so the round speeds do not multiply into the final figure. The final figure comes from this session.",
     "Another session ran native benchmarks on the same machine during the campaign. Every sample here waited for a quiet GPU and none overlapped another native stage.",
-    "The 16 MP path was not measured end to end in this campaign."
+    "The 16 MP path was measured after the rebase, against main at 35bc6f9: see against-main-4096.json.",
+    "This session predates the rebase and compares against f90b0ce. The against-main-*.json records compare the same engine binary with main at 35bc6f9."
   ]
 }
