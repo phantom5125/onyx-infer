@@ -1,7 +1,9 @@
 import argparse
 import json
+import logging
 import os
 import shutil
+import stat
 import subprocess
 import tempfile
 import time
@@ -34,11 +36,21 @@ def prune_modulation_cache(directory: Path, keep: int = MODULATION_CACHE_KEEP) -
     Only the default directory is pruned. A directory that the caller chose may hold
     entries that it wants to keep.
     """
-    entries = sorted((path for path in directory.glob("*.adaln") if path.is_file()),
-                     key=lambda path: path.stat().st_mtime, reverse=True)
+    entries = []
+    for path in directory.glob("*.adaln"):
+        try:
+            info = path.stat()
+        except FileNotFoundError:
+            continue
+        if stat.S_ISREG(info.st_mode):
+            entries.append((info.st_mtime_ns, path))
+    entries.sort(reverse=True)
     removed = []
-    for stale in reversed(entries[keep:]):
-        stale.unlink()
+    for _, stale in reversed(entries[keep:]):
+        try:
+            stale.unlink()
+        except FileNotFoundError:
+            continue
         removed.append(stale.name)
     return removed
 
@@ -58,9 +70,10 @@ def main(argv=None):
     parser.add_argument("--no-modulation-cache", action="store_true",
                         help="Compute the DiT modulation tables on every request and write no cache")
     parser.add_argument("--dit-cache-mib", type=int, help="Override the DiT weight-cache budget in MiB")
-    parser.add_argument("--dit-prefetch", action="store_true", help="Read the next DiT block's weights during GPU computation, whatever the profile requests")
+    parser.add_argument("--dit-prefetch", action=argparse.BooleanOptionalAction, default=None,
+                        help="Override weight prefetch for the DiT stage only")
     parser.add_argument("--prefetch-weights", action=argparse.BooleanOptionalAction, default=None,
-                        help="Read the next block's weights during GPU computation (default: the profile's weight_prefetch knob)")
+                        help="Prefetch weights in the text and DiT stages (default: the profile's weight_prefetch knob)")
     args = parser.parse_args(argv)
     try:
         registry = load_registry()
@@ -134,14 +147,15 @@ def main(argv=None):
                               name == "dit" and modulation_cache is not None)
             if name == "dit":
                 modulation_cache_status = stage_details("dit", result.stdout).get("modulation_cache")
-        if modulation_cache_status == "miss" and modulation_cache is not None and \
-                modulation_cache.resolve() == DEFAULT_MODULATION_CACHE.resolve():
-            # The default directory holds only the newest entries of the current build.
-            pruned = prune_modulation_cache(modulation_cache)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         partial = args.output.with_suffix(args.output.suffix + ".part")
         shutil.copyfile(work / "image.png", partial)
         os.replace(partial, args.output)
+    if modulation_cache_status == "miss" and modulation_cache is not None and args.modulation_cache is None:
+        try:
+            pruned = prune_modulation_cache(modulation_cache)
+        except OSError as error:
+            logging.getLogger(__name__).warning("Could not prune modulation cache %s: %s", modulation_cache, error)
     print(json.dumps({
         "backend": "onyx-native-cpp-metal",
         "profile": args.profile,
@@ -158,16 +172,16 @@ def main(argv=None):
     }))
 
 
-def resolve_dit_prefetch(knob_prefetch: bool, requested: bool | None, dit_requested: bool, cache_bytes: int) -> bool:
+def resolve_dit_prefetch(knob_prefetch: bool, requested: bool | None, dit_requested: bool | None, cache_bytes: int) -> bool:
     """Return whether the DiT stage reads the next block's weights ahead of the GPU.
 
     A nonzero weight-cache budget replaces prefetch in the DiT stage unless the request asks
     for prefetch explicitly, which the caller rejects.
     """
-    if dit_requested or requested is True:
-        return True
-    if requested is False:
-        return False
+    if dit_requested is not None:
+        return dit_requested
+    if requested is not None:
+        return requested
     return knob_prefetch and cache_bytes == 0
 
 

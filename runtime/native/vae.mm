@@ -80,7 +80,9 @@ Tensor decode_tile(GraphSession& session, WeightStore& store, const Tensor& z, c
   const int64_t dim = store.shape("decoder.x_embedder.weight")[0];
   // Every tile in the batch carries the same registers and null token.
   std::vector<float> registers(static_cast<size_t>(batch) * 4 * static_cast<size_t>(dim));
-  const float* register_source = static_cast<const float*>(store.tensor("decoder.register_tokens").buffer.contents);
+  // The streaming store can release this buffer as soon as its Tensor is destroyed.
+  id<MTLBuffer> register_buffer __attribute__((objc_precise_lifetime)) = store.tensor("decoder.register_tokens").buffer;
+  const float* register_source = static_cast<const float*>(register_buffer.contents);
   for (size_t index = 0; index < registers.size(); ++index) registers[index] = register_source[index % (4 * static_cast<size_t>(dim))];
   Tensor null = float_tensor({static_cast<int64_t>(batch), 1, dim}, std::vector<float>(static_cast<size_t>(batch) * dim, 0.0f));
   x = session.concat({x, float_tensor({static_cast<int64_t>(batch), 4, dim}, registers), null}, 1);
