@@ -139,6 +139,13 @@ Six-step W4 teapot requests, seed 42. RSS is sampled across the inference proces
 | Mac Studio M5 Max · 36 GB | 4096×4096 | 329.61 s stability run; 302.26 s single run on the current binary | 2.14 GB | [native-v1-stability](benchmarks/results/native-v1-stability.json) · [4096 compatibility pair](benchmarks/results/m5-max-36gb-dit-modulation-cache-v1.json) |
 | MacBook Air M4 · 24 GB · battery | 1024×1024 | 174.98 s median | 1.92 GB | [m4-air-24gb](benchmarks/results/m4-air-24gb-dit-prefetch-v1.json) |
 
+A note on numbers you may have seen elsewhere: kernel-episode write-ups quote
+DiT-only extrapolations (block milliseconds × 300) from an isolated profiler with
+warm weights — for example a 20.1 s "DiT" figure on 2026-11-24, while the real
+end-to-end DiT median that day was 31.89 s. The gap is streaming weight reads
+(85.7 GB per 1024×1024 image), dispatch, and thermal drift. Only whole-image
+measurements appear in this table.
+
 ### Where the time goes (1024×1024 teapot, median stage seconds)
 
 | Machine | Text encoder | DiT (6 steps) | VAE decode |
@@ -152,17 +159,26 @@ concentrates there and why the operator-level gap below matters more than any ot
 
 ### Operator level: Q4 GEMM vs MLX (published gap)
 
-Same shapes as the H3 DiT/text towers, group size 64, wall-median after one warmup.
-This is the gap the current kernel campaign is closing — see
-[`kernel-agent/candidates.jsonl`](kernel-agent/candidates.jsonl) for the episode history.
+Same shapes as the H3 DiT/text towers, group size 64. The default pipeline does not
+dispatch these standalone kernels — MPSGraph dequantizes and multiplies inside the
+graph — so this table quantifies the kernel-level gap, not the production hot path.
+Episode history: [`kernel-agent/candidates.jsonl`](kernel-agent/candidates.jsonl).
 
-| Shape | Onyx tile16 | MLX `quantized_matmul` | Gap | Onyx tile32 variant |
+| Shape | Onyx tile16 (wall) | Onyx mma64, best hand-written (GPU) | MLX `quantized_matmul` (wall) | mma64 vs MLX |
 | --- | ---: | ---: | ---: | ---: |
-| linear m1024 · n5376 · k5376 | 28.12 ms | 1.71 ms | 16.5× | — |
-| qkv m1024 · n21504 · k5376 | 109.77 ms | 5.48 ms | 20.0× | 65.65 ms (1.67×) |
-| text qproj m69 · n8192 · k5120 | 3.29 ms | 0.77 ms | 4.3× | 2.44 ms (1.35×) |
+| linear m1024 · n5376 · k5376 | 28.12 ms | 8.45 ms | 1.71 ms | 4.9× |
+| qkv m1024 · n21504 · k5376 | 109.77 ms | 33.25 ms | 5.48 ms | 6.1× |
+| text qproj m69 · n8192 · k5120 | 3.29 ms (tile32: 2.44 ms) | — | 0.77 ms | 4.3× |
 
-[Operator comparison](benchmarks/results/m5-max-36gb-q4-operator-v1.json) · [tile32 measurements](benchmarks/results/m5-max-36gb-q4-tile32-v1.json)
+tile16 and MLX figures are wall-medians from the committed
+[operator comparison](benchmarks/results/m5-max-36gb-q4-operator-v1.json) and
+[tile32 study](benchmarks/results/m5-max-36gb-q4-tile32-v1.json); mma64 figures are
+ABBA GPU-median episode evidence in `candidates.jsonl`. Three findings frame the gap:
+episode e9 proved register-side dequant unreachable through the public simdgroup-MMA
+API on the Metal 4 toolchain (MLX's edge likely comes from primitives outside that
+API); at decode shapes (m≤32) our tile16 already beats MLX (0.47 ms vs 0.73 ms); and
+an opt-in MLX backend (`ONYX_Q4_BACKEND=mlx`, builds with `ONYX_ENABLE_MLX=ON`)
+reaches 4.10 ms on the linear shape for builds that accept the extra dependency.
 
 ### Against the community W8A8 path
 

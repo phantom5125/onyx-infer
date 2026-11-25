@@ -206,26 +206,28 @@
 
   <div class="section-head" style="margin-top:48px">
     <h3 style="margin:0">Operator level: Q4 GEMM vs MLX</h3>
-    <p class="lede">Same shapes as the H3 DiT and text towers, group size 64, wall-median after one warmup.
-    This is the gap the current kernel campaign is closing — the episode history is public in
+    <p class="lede">Same shapes as the H3 DiT and text towers, group size 64. The default pipeline does not
+    dispatch these standalone kernels — MPSGraph dequantizes and multiplies inside the graph — so this
+    table quantifies the kernel-level gap, not the production hot path. Episode history:
     <a href="https://github.com/phantom5125/onyx-infer/blob/main/kernel-agent/candidates.jsonl" style="color:var(--accent-soft)">kernel-agent/candidates.jsonl</a>.</p>
   </div>
   <div class="tbl-card">
     <table>
-      <thead><tr><th>Shape</th><th class="mono">Onyx tile16</th><th class="mono">MLX quantized_matmul</th><th class="mono">Gap</th><th class="mono">Onyx tile32 variant</th></tr></thead>
+      <thead><tr><th>Shape</th><th class="mono">Onyx tile16 (wall)</th><th class="mono">Onyx mma64 (GPU)</th><th class="mono">MLX quantized_matmul</th><th class="mono">mma64 vs MLX</th></tr></thead>
       <tbody>
-        <tr><td class="mono">linear m1024 · n5376 · k5376</td><td class="mono">28.12 ms</td><td class="mono">1.71 ms</td><td class="mono">16.5×</td><td class="mono">—</td></tr>
-        <tr><td class="mono">qkv m1024 · n21504 · k5376</td><td class="mono">109.77 ms</td><td class="mono">5.48 ms</td><td class="mono">20.0×</td><td class="mono">65.65 ms (1.67×)</td></tr>
-        <tr><td class="mono">text qproj m69 · n8192 · k5120</td><td class="mono">3.29 ms</td><td class="mono">0.77 ms</td><td class="mono">4.3×</td><td class="mono">2.44 ms (1.35×)</td></tr>
+        <tr><td class="mono">linear m1024 · n5376 · k5376</td><td class="mono">28.12 ms</td><td class="mono">8.45 ms</td><td class="mono">1.71 ms</td><td class="mono">4.9×</td></tr>
+        <tr><td class="mono">qkv m1024 · n21504 · k5376</td><td class="mono">109.77 ms</td><td class="mono">33.25 ms</td><td class="mono">5.48 ms</td><td class="mono">6.1×</td></tr>
+        <tr><td class="mono">text qproj m69 · n8192 · k5120</td><td class="mono">3.29 ms (tile32: 2.44 ms)</td><td class="mono">—</td><td class="mono">0.77 ms</td><td class="mono">4.3×</td></tr>
       </tbody>
     </table>
   </div>
 
   <div class="feat-grid" style="grid-template-columns:1fr 1fr 1fr">
     <div class="card"><h3><span class="pill red">gap · published</span></h3>
-      <p><b>Q4 GEMM kernel vs MLX.</b> Our tile16 kernel runs 28.12 ms median on
-      1024×5376×5376 (group 64) against MLX <code>quantized_matmul</code>'s 1.71 ms —
-      a 16.5× gap, measured and committed rather than omitted.</p></div>
+      <p><b>Q4 GEMM kernel vs MLX.</b> Our best hand-written kernel (mma64) runs 8.45 ms on
+      1024×5376×5376 (group 64) against MLX <code>quantized_matmul</code>'s 1.71 ms — a 4.9× gap
+      that episode e9 traced to the public simdgroup-MMA API ceiling. At decode shapes our
+      tile16 already wins (0.47 ms vs 0.73 ms).</p></div>
     <div class="card"><h3><span class="pill red">gap · published</span></h3>
       <p><b>Community W8A8 path.</b> Same 1024 teapot request: community MLX pipeline 23.61 s,
       native Onyx 38.74 s — 1.64× apart, with different quantization and execution. That's the

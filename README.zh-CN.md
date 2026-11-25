@@ -131,6 +131,8 @@ group-wise W4 量化、分阶段驻留、逐 block 流式、分块注意力，�
 | Mac Studio M5 Max · 36 GB | 4096×4096 | 329.61 s 稳定性运行；当前二进制单次 302.26 s | 2.14 GB | [native-v1-stability](benchmarks/results/native-v1-stability.json) · [4096 对照](benchmarks/results/m5-max-36gb-dit-modulation-cache-v1.json) |
 | MacBook Air M4 · 24 GB · 电池 | 1024×1024 | 174.98 s 中位数 | 1.92 GB | [m4-air-24gb](benchmarks/results/m4-air-24gb-dit-prefetch-v1.json) |
 
+关于你可能在其他地方见过的数字：内核攻关记录中引用的 DiT 数据是根据独立性能分析工具中的单项耗时推算得出的（block 毫秒数 × 300），测量时权重已加载到缓存——例如 2026-11-24 有一个“20.1 s DiT”的推算数字，而当天 DiT 的实际端到端中位数为 31.89 s。差距来自权重流式读取（每张 1024×1024 图像需要读取 85.7 GB 数据）、调度开销和热漂移。本表只列出整图实测结果。
+
 ### 时间花在哪（1024×1024 茶壶，各阶段中位数）
 
 | 机型 | 文本编码器 | DiT（6 步） | VAE 解码 |
@@ -144,17 +146,23 @@ DiT 阶段在所有机型上都占墙钟时间的 75–82%，这正是优化 Loo
 
 ### 算子级：Q4 GEMM 对比 MLX（已发布的差距）
 
-与 H3 DiT/文本塔相同的形状，group size 64，一次预热后的墙钟中位数。
-这是当前内核攻关正在弥合的差距——各轮次的 Episode 记录见
-[`kernel-agent/candidates.jsonl`](kernel-agent/candidates.jsonl)。
+与 H3 DiT/文本塔相同的形状，group size 64。默认管线不会调用这些独立 kernel——
+MPSGraph 在计算图内完成反量化与矩阵乘——因此本表量化的是内核层面的差距，而非
+生产热路径。各轮次的 Episode 记录见 [`kernel-agent/candidates.jsonl`](kernel-agent/candidates.jsonl)。
 
-| 形状 | Onyx tile16 | MLX `quantized_matmul` | 差距 | Onyx tile32 变体 |
+| 形状 | Onyx tile16（wall） | Onyx mma64，最佳手写内核（GPU） | MLX `quantized_matmul`（wall） | mma64 vs MLX |
 | --- | ---: | ---: | ---: | ---: |
-| linear m1024 · n5376 · k5376 | 28.12 ms | 1.71 ms | 16.5× | — |
-| qkv m1024 · n21504 · k5376 | 109.77 ms | 5.48 ms | 20.0× | 65.65 ms（1.67×） |
-| text qproj m69 · n8192 · k5120 | 3.29 ms | 0.77 ms | 4.3× | 2.44 ms（1.35×） |
+| linear m1024 · n5376 · k5376 | 28.12 ms | 8.45 ms | 1.71 ms | 4.9× |
+| qkv m1024 · n21504 · k5376 | 109.77 ms | 33.25 ms | 5.48 ms | 6.1× |
+| text qproj m69 · n8192 · k5120 | 3.29 ms（tile32：2.44 ms） | — | 0.77 ms | 4.3× |
 
-[算子对比](benchmarks/results/m5-max-36gb-q4-operator-v1.json) · [tile32 测量](benchmarks/results/m5-max-36gb-q4-tile32-v1.json)
+tile16 与 MLX 的数字来自已提交的[算子对比](benchmarks/results/m5-max-36gb-q4-operator-v1.json)
+与 [tile32 测量](benchmarks/results/m5-max-36gb-q4-tile32-v1.json)（墙钟中位数）；mma64 数字为
+`candidates.jsonl` 中的 ABBA GPU 中位数 Episode 证据。三项发现可以说明差距的边界：
+e9 探针证明在 Metal 4 工具链上无法通过公开 simdgroup-MMA API 在寄存器侧反量化
+（MLX 的优势很可能来自该 API 之外的原语）；在 decode 形状（m≤32）上 tile16 已快于
+MLX（0.47 ms vs 0.73 ms）；另提供可选的 MLX backend（`ONYX_Q4_BACKEND=mlx`，
+需 `ONYX_ENABLE_MLX=ON` 构建），在 linear 形状上可达 4.10 ms，适合可以接受额外依赖的构建。
 
 ### 对比社区 W8A8 方案
 
