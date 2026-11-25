@@ -17,6 +17,7 @@
   <a class="brand" href="index.html"><svg viewBox="0 0 64 64" width="26" height="26" aria-hidden="true"><defs><linearGradient id="mnav" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7a6e"/><stop offset="0.5" stop-color="#e5484d"/><stop offset="1" stop-color="#8f1220"/></linearGradient></defs><polygon points="32,4 56,18 56,46 32,60 8,46 8,18" fill="#131722" stroke="url(#mnav)" stroke-width="3"/><polygon points="32,18 44,25 44,39 32,46 20,39 20,25" fill="url(#mnav)" opacity="0.85"/></svg><span class="word">ONYX <b>INFER</b></span></a>
   <div class="nav-links">
     <a href="#engine">Engine</a>
+    <a href="#profiles">Profiles</a>
     <a href="#benchmarks">Benchmarks</a>
     <a href="blog/index.html">Blog</a>
     <a class="gh" href="https://github.com/phantom5125/onyx-infer" target="_blank" rel="noopener">GitHub &#8599;</a>
@@ -121,6 +122,40 @@
   </div>
 </div></section>
 
+<!-- ================= PROFILES ================= -->
+<section id="profiles"><div class="wrap">
+  <div class="section-head">
+    <div class="eyebrow">Profiles</div>
+    <h2>One W4 model, three execution profiles</h2>
+    <p class="lede">A profile changes only the execution plan — weights, sampler and seed stay the same,
+    so the choice is about memory and speed, not image identity. Settings and gates live in the
+    <a href="https://github.com/phantom5125/onyx-infer/blob/main/config/profiles/profiles.v1.json" style="color:var(--accent-soft)">profile registry</a>.</p>
+  </div>
+  <div class="feat-grid">
+    <div class="card"><div class="glyph">◆</div><h3>max-quality · default</h3>
+      <p>Text and DiT stream; VAE resident; MPSGraph FP32 dequant. Pick it when you want the
+      path with the <strong>best measured end-to-end time</strong>.</p></div>
+    <div class="card"><div class="glyph">▽</div><h3>memory-min</h3>
+      <p>Every stage streams, including the VAE. Pick it for the <strong>lowest footprint</strong> —
+      output is bitwise identical to <code>max-quality</code>, and that is a hard gate, not a hope.</p></div>
+    <div class="card"><div class="glyph">⚡</div><h3>speed-focus</h3>
+      <p>BF16 SIMD Q4 kernel plus a 24 GiB DiT LRU cache. Pick it when you are
+      <strong>experimenting</strong> with kernel and cache variants — a testbed, not a shortcut.</p></div>
+  </div>
+  <div class="tbl-card">
+    <table>
+      <thead><tr><th>Profile</th><th class="mono">VAE stage @1024×1024</th><th class="mono">VAE stage @4096×4096</th><th>Trade-off</th></tr></thead>
+      <tbody>
+        <tr><td><code>max-quality</code></td><td class="mono">6.30 s · 1.58 GiB</td><td class="mono">85.23 s · 1.87 GiB</td><td>Fastest measured end-to-end path</td></tr>
+        <tr><td><code>memory-min</code></td><td class="mono">10.25 s · 1.57 GiB</td><td class="mono">155.28 s · 1.78 GiB</td><td>+63% / +82% VAE time; nothing resident</td></tr>
+        <tr><td><code>speed-focus</code></td><td class="mono">5.55 s · 1.58 GiB</td><td class="mono">97.40 s · 1.87 GiB</td><td>Experimental kernels and caches</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="quickstart-prep" style="margin-top:14px">VAE-stage matrix with FP32 source weights, three rotated samples per configuration, on the 36 GB reference machine.
+  All three outputs matched per resolution. <a href="https://github.com/phantom5125/onyx-infer/blob/main/benchmarks/results/profile-stage-matrix-v1.json" style="color:var(--accent-soft)">Measurement JSON</a> · <a href="https://github.com/phantom5125/onyx-infer/blob/main/docs/PROFILES.md" style="color:var(--accent-soft)">Gate rules</a></p>
+</div></section>
+
 <!-- ================= BENCHMARKS ================= -->
 <section id="benchmarks" style="background:var(--bg-2); border-top:1px solid var(--border-soft); border-bottom:1px solid var(--border-soft)"><div class="wrap">
   <div class="section-head">
@@ -140,6 +175,48 @@
         <tr><td>Direct reads into Metal buffers</td><td class="mono">e3d1b87</td><td class="mono">38.74 s</td><td><span class="hash">identical</span></td></tr>
         <tr><td>Shared-memory BF16 modulation packing</td><td class="mono">fb4c0aa</td><td class="mono">37.50 s</td><td><span class="hash">identical</span></td></tr>
         <tr><td>Fused DiT attention and tensor views</td><td class="mono">40420aa</td><td class="mono"><b>34.65 s</b></td><td><span class="hash">identical</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <figure class="chart">
+    <img src="assets/optimization-progress.svg" alt="Line chart of optimization progress: median wall time falls from 42.30 s to 34.65 s over four rounds while peak memory drops from 3.19 GiB to 1.86 GiB">
+    <figcaption>FOUR ROUNDS · 1024×1024 MEDIAN WALL TIME AND PEAK PROCESS BYTES · GENERATED FROM COMMITTED MEASUREMENT JSONS</figcaption>
+  </figure>
+  <figure class="chart">
+    <img src="assets/optimization-progress.gif" alt="Animated version of the optimization progress chart, drawing the wall-time and peak-memory lines round by round">
+    <figcaption>THE SAME CHART, DRAWN ROUND BY ROUND · REGENERATE WITH tools/build_progress_chart.py</figcaption>
+  </figure>
+
+  <div class="section-head" style="margin-top:48px">
+    <h3 style="margin:0">Where the time goes</h3>
+    <p class="lede">Median stage seconds for the 1024×1024 teapot request. The DiT stage is 75–82% of wall
+    time on every machine — which is why the optimization loop concentrates there.</p>
+  </div>
+  <div class="tbl-card">
+    <table>
+      <thead><tr><th>Machine</th><th class="mono">Text encoder</th><th class="mono">DiT (6 steps)</th><th class="mono">VAE decode</th><th class="mono">Total</th></tr></thead>
+      <tbody>
+        <tr><td>M5 Max 36 GB · baseline</td><td class="mono">4.81 s</td><td class="mono">33.24 s</td><td class="mono">4.85 s</td><td class="mono">42.30 s</td></tr>
+        <tr><td>M5 Max 36 GB · round 4</td><td class="mono">3.83 s</td><td class="mono">26.02 s</td><td class="mono">4.41 s</td><td class="mono"><b>34.65 s</b></td></tr>
+        <tr><td>MacBook Air M4 24 GB · battery</td><td class="mono">9.90 s</td><td class="mono">143.48 s</td><td class="mono">19.99 s</td><td class="mono">174.98 s</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-head" style="margin-top:48px">
+    <h3 style="margin:0">Operator level: Q4 GEMM vs MLX</h3>
+    <p class="lede">Same shapes as the H3 DiT and text towers, group size 64, wall-median after one warmup.
+    This is the gap the current kernel campaign is closing — the episode history is public in
+    <a href="https://github.com/phantom5125/onyx-infer/blob/main/kernel-agent/candidates.jsonl" style="color:var(--accent-soft)">kernel-agent/candidates.jsonl</a>.</p>
+  </div>
+  <div class="tbl-card">
+    <table>
+      <thead><tr><th>Shape</th><th class="mono">Onyx tile16</th><th class="mono">MLX quantized_matmul</th><th class="mono">Gap</th><th class="mono">Onyx tile32 variant</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">linear m1024 · n5376 · k5376</td><td class="mono">28.12 ms</td><td class="mono">1.71 ms</td><td class="mono">16.5×</td><td class="mono">—</td></tr>
+        <tr><td class="mono">qkv m1024 · n21504 · k5376</td><td class="mono">109.77 ms</td><td class="mono">5.48 ms</td><td class="mono">20.0×</td><td class="mono">65.65 ms (1.67×)</td></tr>
+        <tr><td class="mono">text qproj m69 · n8192 · k5120</td><td class="mono">3.29 ms</td><td class="mono">0.77 ms</td><td class="mono">4.3×</td><td class="mono">2.44 ms (1.35×)</td></tr>
       </tbody>
     </table>
   </div>
@@ -239,6 +316,7 @@
       <a href="https://github.com/phantom5125/onyx-infer/blob/main/benchmarks/results/native-v1-stability.json" target="_blank" rel="noopener">native-v1-stability.json</a>
       <a href="https://github.com/phantom5125/onyx-infer/blob/main/benchmarks/results/native-round4-fused-attention-views.json" target="_blank" rel="noopener">Fused attention measurements</a>
       <a href="https://github.com/phantom5125/onyx-infer/blob/main/benchmarks/results/m5-max-36gb-q4-operator-v1.json" target="_blank" rel="noopener">Q4 operator comparison</a>
+      <a href="https://github.com/phantom5125/onyx-infer/blob/main/benchmarks/results/profile-stage-matrix-v1.json" target="_blank" rel="noopener">Profile stage matrix</a>
     </div>
   </div>
   <p class="foot-note">Onyx Infer source code is available under the <a href="https://github.com/phantom5125/onyx-infer/blob/main/LICENSE">MIT License</a>. &copy; 2026 Onyx Infer contributors.</p>

@@ -5,7 +5,7 @@ The `site/` directory serves a static site with no framework or build-time depen
 ## Files
 
 - `index.html` contains the landing page.
-- `assets/` contains shared CSS and the site mark.
+- `assets/` contains shared CSS, the site mark, and the optimization-progress chart (`optimization-progress.svg` / `.gif`). The chart is generated from the committed benchmark JSONs by `tools/build_progress_chart.py`; regenerate and commit both files after new optimization rounds land.
 - `blog/posts/` contains the Markdown sources. `tools/build_blog.py` generates the blog index and individual HTML pages.
 
 The repository root `assets/` directory contains the README banner.
