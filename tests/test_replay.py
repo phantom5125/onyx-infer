@@ -5,6 +5,10 @@ from pathlib import Path
 
 import psutil
 
+from google.protobuf import json_format
+
+from onyx.artifacts import artifact_from_path, write_proto_json
+from onyx.loop.v1 import loop_pb2
 from onyx.replay import ProcessMonitor
 from onyx.trace.v1 import trace_pb2
 
@@ -18,10 +22,10 @@ Image.new('RGB', (int(os.environ['ONYX_WIDTH']), int(os.environ['ONYX_HEIGHT']))
 """
 
 
-def run_replay(output_root, expected=None, target=None):
+def run_replay(output_root, expected=None, target=None, case=None, generator=None, arguments=()):
     command = [
         sys.executable, "-m", "onyx.replay",
-        "--case", str(ROOT / "benchmarks/requests/teapot-1024.json"),
+        "--case", str(case or ROOT / "benchmarks/requests/teapot-1024.json"),
         "--output-root", str(output_root),
         "--backend-version", "test-generator-v1",
         "--numeric-profile", "test-rgb",
@@ -33,7 +37,7 @@ def run_replay(output_root, expected=None, target=None):
         command += ["--expect-output-sha256", expected]
     if target is not None:
         command += ["--target", str(target)]
-    command += ["--", sys.executable, "-c", GENERATOR]
+    command += ["--", sys.executable, "-c", generator or GENERATOR, *arguments]
     result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
     return json.loads(result.stdout)
@@ -85,3 +89,20 @@ def test_replay_records_selected_device_instead_of_reference_machine(tmp_path):
     assert record.device.chip == "Apple M4"
     assert record.device.physical_memory_bytes == 24 * 1024**3
     assert record.device.gpu_cores == 10
+
+
+def test_replay_expands_verified_references_in_order(tmp_path):
+    benchmark = loop_pb2.BenchmarkCase()
+    json_format.Parse((ROOT / "benchmarks/requests/teapot-1024.json").read_text(), benchmark)
+    paths = [tmp_path / "ref 2.png", tmp_path / "ref-{seed}.png"]
+    for path in paths:
+        path.write_bytes(path.name.encode())
+        benchmark.request.references.append(artifact_from_path(path, locator=path.name))
+    case = tmp_path / "case.json"
+    write_proto_json(benchmark, case)
+    expected = [argument for path in paths for argument in ("--reference", str(path))]
+    encoded = json.dumps(expected).encode().hex()
+    generator = f"import json, sys\nassert sys.argv[1:] == json.loads(bytes.fromhex({encoded!r}))\n" + GENERATOR
+    result = run_replay(tmp_path / "runs", case=case, generator=generator, arguments=("{references}",))
+    record = trace_pb2.RunRecord.FromString(Path(result["run_record"]).read_bytes())
+    assert record.replay_request.references == benchmark.request.references

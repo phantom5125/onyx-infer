@@ -4,6 +4,8 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
+#include <memory>
 
 namespace onyx {
 namespace {
@@ -23,13 +25,17 @@ Tensor bf16_tensor(const std::vector<int64_t>& shape, const std::vector<float>& 
   return Tensor{buffer, shape, MPSDataTypeBFloat16};
 }
 
-std::pair<Tensor, Tensor> text_rope_angles(uint64_t tokens) {
+std::pair<Tensor, Tensor> text_rope_angles(uint64_t tokens, const int32_t* positions) {
   std::vector<float> cosine(tokens * 128);
   std::vector<float> sine(tokens * 128);
   for (uint64_t position = 0; position < tokens; ++position) {
     for (uint64_t dimension = 0; dimension < 128; ++dimension) {
-      const double frequency = std::pow(5000000.0, -static_cast<double>(dimension % 64) / 64.0);
-      const double angle = position * frequency;
+      const uint64_t frequency_index = dimension % 64;
+      const double frequency = std::pow(5000000.0, -static_cast<double>(frequency_index) / 64.0);
+      // Qwen3-VL interleaves the height and width frequencies with time, leaving 24 for time.
+      const uint64_t axis = frequency_index < 60 ? frequency_index % 3 : 0;
+      const double coordinate = positions ? positions[position * 3 + axis] : position;
+      const double angle = coordinate * frequency;
       const size_t index = position * 128 + dimension;
       cosine[index] = std::cos(angle);
       sine[index] = std::sin(angle);
@@ -39,9 +45,36 @@ std::pair<Tensor, Tensor> text_rope_angles(uint64_t tokens) {
   return {bf16_tensor(shape, cosine), bf16_tensor(shape, sine)};
 }
 
+void merge_visual_rows(Tensor& embedding, const Tensor& visual, const Tensor& rows, bool add) {
+  const int64_t width = embedding.shape[1];
+  if (rows.dtype != MPSDataTypeInt32 || rows.shape.size() != 1 ||
+      visual.shape != std::vector<int64_t>{rows.shape[0], width} ||
+      visual.dtype != MPSDataTypeBFloat16 || embedding.dtype != MPSDataTypeBFloat16) {
+    throw std::runtime_error("Invalid H3 vision embedding layout");
+  }
+  const auto* indices = static_cast<const int32_t*>(rows.data());
+  const auto* values = static_cast<const uint16_t*>(visual.data());
+  auto* dst = static_cast<uint16_t*>(embedding.data());
+  for (int64_t index = 0; index < rows.shape[0]; ++index) {
+    const int32_t row = indices[index];
+    if (row < 0 || row >= embedding.shape[0] || (index > 0 && row <= indices[index - 1])) {
+      throw std::runtime_error("Invalid H3 vision token index");
+    }
+    auto* output = dst + row * width;
+    const auto* input = values + index * width;
+    if (add) {
+      for (int64_t column = 0; column < width; ++column) {
+        output[column] = float_to_bf16(bf16_to_float(output[column]) + bf16_to_float(input[column]));
+      }
+    } else {
+      std::memcpy(output, input, width * sizeof(uint16_t));
+    }
+  }
+}
+
 }  // namespace
 
-Tensor encode_text(const std::string& model, const std::string& tokens_path, const std::string& output, const StageOptions& options) {
+Tensor encode_text(const std::string& model, const std::string& tokens_path, const std::string& output, const StageOptions& options, const std::string& vision_path) {
   const auto began = std::chrono::steady_clock::now();
   require_streaming_weights(options, "text", "W4 text pack 21.86 GB exceeds the resident budget");
   const auto ids = read_token_ids(tokens_path);
@@ -51,7 +84,20 @@ Tensor encode_text(const std::string& model, const std::string& tokens_path, con
   GraphSession session(device);
   if (std::getenv("ONYX_PROFILE")) session.enable_profiling(true);
   Tensor x = store.embedding("model.language_model.embed_tokens.weight", ids);
-  auto [cosine, sine] = text_rope_angles(count);
+  std::unique_ptr<WeightStore> vision;
+  Tensor positions{};
+  Tensor visual_rows{};
+  if (!vision_path.empty()) {
+    vision = std::make_unique<WeightStore>(vision_path);
+    positions = vision->tensor("positions");
+    if (positions.dtype != MPSDataTypeInt32 ||
+        positions.shape != std::vector<int64_t>{static_cast<int64_t>(count), 3}) {
+      throw std::runtime_error("Invalid H3 vision RoPE positions");
+    }
+    visual_rows = vision->tensor("rows");
+    merge_visual_rows(x, vision->tensor("vision"), visual_rows, false);
+  }
+  auto [cosine, sine] = text_rope_angles(count, vision ? static_cast<const int32_t*>(positions.data()) : nullptr);
   for (uint32_t layer = 0; layer < 50; ++layer) {
     @autoreleasepool {
       const std::string prefix = "model.language_model.layers." + std::to_string(layer) + ".";
@@ -85,6 +131,9 @@ Tensor encode_text(const std::string& model, const std::string& tokens_path, con
       Tensor hidden = session.multiply(session.silu(gate), up);
       hidden = session.linear(store, prefix + "mlp.down_proj", hidden);
       x = session.add(x, hidden);
+      if (vision && layer < 3) {
+        merge_visual_rows(x, vision->tensor("deepstack_" + std::to_string(layer)), visual_rows, true);
+      }
       if ((layer + 1) % 10 == 0) std::fprintf(stderr, "native text layer %u/50\n", layer + 1);
     }
   }
@@ -92,8 +141,9 @@ Tensor encode_text(const std::string& model, const std::string& tokens_path, con
   save_tensor(output, "embedding", x);
   const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - began).count();
   std::printf("{\"stage\":\"text\",\"profile\":\"%s\",\"tokens\":%llu,\"seconds\":%.6f,\"output\":\"%s\","
-              "\"prefetch_weights\":%s,\"prefetch_wait_seconds\":%.6f}\n",
+              "\"vision_rows\":%lld,\"prefetch_weights\":%s,\"prefetch_wait_seconds\":%.6f}\n",
               options.profile.c_str(), static_cast<unsigned long long>(count), seconds, output.c_str(),
+              vision ? static_cast<long long>(visual_rows.shape[0]) : 0LL,
               options.prefetch_weights ? "true" : "false", store.prefetch_wait_seconds());
   if (std::getenv("ONYX_PROFILE")) {
     std::printf("{\"profile\":%s,\"weight_read\":{\"bytes\":%llu,\"calls\":%llu,\"seconds\":%.6f}}\n",

@@ -88,7 +88,7 @@ GenerateRequest {
 - 同一 Session 内重复 `request_id` 且请求摘要相同，返回原 Job；摘要不相同则返回 `IDEMPOTENCY_CONFLICT`，不能执行两次。
 - `seed` 缺省时生成一次实际 seed 并写入 RunRecord。JSON 中 uint64 使用十进制字符串，避免 JavaScript 精度损失。
 - `size` 是最终输出尺寸；是否要求 32 的倍数、有效面积和比例由模型 recipe 校验，不能由通用引擎猜测。
-- `references` 的顺序属于语义。首发文生图要求为空；编辑支持后沿用同一字段，不复制一套隐式输入。
+- `references` 的顺序属于请求语义。原生 CLI 接收 0 到 16 张参考图。回放校验每张图的本地文件，并将独立的 `{references}` 参数展开为按原顺序排列的 `--reference` 参数。
 - `image_count` 首发可以为 1；不支持批量时必须明确拒绝，不能排队后伪装成支持。多样本请求的子 seed/noise 派生顺序由 recipe 和 RNG 规范定义，并逐样本记录，不能依赖循环执行顺序。
 - `recipe_id` 选择模型声明的能力。通用协议不强行暴露 `guidance_scale`、`negative_prompt` 或任意 steps；H3 固定 6 步、无 CFG，非法覆盖返回 `UNSUPPORTED_PARAMETER`。
 - `ExecutionHints` 可表达 backend、编译策略、缓存和 deadline 偏好，但不能暗中改变模型语义。任何数值近似都必须来自已声明的 numeric profile 并进入 RunRecord。

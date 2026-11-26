@@ -10,6 +10,7 @@
 #include <cstring>
 #include <filesystem>
 #include <numeric>
+#include <string_view>
 #include <vector>
 
 namespace onyx {
@@ -22,11 +23,55 @@ const std::vector<std::string> kBlockTensors = {
     "attn.out_proj.weight", "norm2.weight", "mlp.fc1.weight", "mlp.fc2.weight"};
 // Weight and bias appended to a linear-layer name, such as an AdaLN projection.
 const std::vector<std::string> kLinearSuffixes = {".weight", ".bias"};
-const std::vector<int64_t> kBlockModulationShape = {6, 3, 6, 5376};
-const std::vector<int64_t> kFinalModulationShape = {6, 1, 2, 5376};
-constexpr size_t kBlockModulationBytes = 6 * 3 * 6 * 5376 * sizeof(uint16_t);
-constexpr size_t kFinalModulationBytes = 6 * 2 * 5376 * sizeof(uint16_t);
-constexpr size_t kModulationBytes = kDiTBlocks * kBlockModulationBytes + kFinalModulationBytes;
+constexpr float kReferenceSigma = 0.001f;
+constexpr int64_t kSamplingSteps = 6;
+constexpr int64_t kHiddenSize = 5376;
+
+std::vector<int64_t> modulation_shape(int64_t timesteps, bool final) {
+  return {timesteps, final ? 1 : 3, final ? 2 : 6, kHiddenSize};
+}
+
+struct ReferenceConditioning {
+  using Grid = std::pair<uint32_t, uint32_t>;
+  std::vector<Grid> grids;
+  Tensor text_tags{};
+  Tensor patches{};
+};
+
+ReferenceConditioning load_references(const std::string& path, int64_t text_count) {
+  if (path.empty()) return {};
+  WeightStore store(path);
+  ReferenceConditioning references;
+  const Tensor grids = store.tensor("grids");
+  if (grids.dtype != MPSDataTypeInt32 || grids.shape.size() != 2 ||
+      grids.shape[1] != 2 || grids.shape[0] < 1 || grids.shape[0] > 16) {
+    throw std::runtime_error("Invalid H3 reference grids");
+  }
+  const auto* data = static_cast<const int32_t*>(grids.data());
+  int64_t patch_count = 0;
+  for (int64_t image = 0; image < grids.shape[0]; ++image) {
+    const int32_t height = data[image * 2];
+    const int32_t width = data[image * 2 + 1];
+    if (height < 1 || width < 1 || height > 256 || width > 256) {
+      throw std::runtime_error("Invalid H3 reference patch dimensions");
+    }
+    references.grids.emplace_back(height, width);
+    patch_count += height * width;
+  }
+  references.patches = store.tensor("patches");
+  references.text_tags = store.tensor("text_tags");
+  if (references.patches.dtype != MPSDataTypeFloat32 ||
+      references.patches.shape != std::vector<int64_t>{patch_count, 96} ||
+      references.text_tags.dtype != MPSDataTypeInt32 ||
+      references.text_tags.shape != std::vector<int64_t>{text_count}) {
+    throw std::runtime_error("Invalid H3 reference conditioning tensors");
+  }
+  const auto* tags = static_cast<const int32_t*>(references.text_tags.data());
+  if (std::any_of(tags, tags + text_count, [](int32_t tag) { return tag != 0 && tag != 1; })) {
+    throw std::runtime_error("Invalid H3 text modality tag");
+  }
+  return references;
+}
 
 Tensor make_tensor(const std::vector<int64_t>& shape, MPSDataType dtype, const std::vector<float>& values) {
   id<MTLDevice> device = MTLCreateSystemDefaultDevice();
@@ -61,8 +106,8 @@ std::vector<float> read_sigmas(const std::string& model) {
 }
 
 Tensor timestep_projection(const std::vector<float>& sigmas) {
-  std::vector<float> values(6 * 256);
-  for (uint32_t step = 0; step < 6; ++step) {
+  std::vector<float> values(sigmas.size() * 256);
+  for (size_t step = 0; step < sigmas.size(); ++step) {
     const float timestep = 1.0f - sigmas[step];
     for (uint32_t index = 0; index < 128; ++index) {
       const double angle = timestep * std::exp(-std::log(10000.0) * index / 128.0);
@@ -70,14 +115,14 @@ Tensor timestep_projection(const std::vector<float>& sigmas) {
       values[step * 256 + 128 + index] = std::sin(angle);
     }
   }
-  return make_tensor({6, 256}, MPSDataTypeFloat32, values);
+  return make_tensor({static_cast<int64_t>(sigmas.size()), 256}, MPSDataTypeFloat32, values);
 }
 
 Tensor original_projection(GraphSession& session, WeightStore& store, const std::string& prefix, const Tensor& temb, bool final) {
   Tensor activated = session.silu(temb);
   activated = session.cast(activated, MPSDataTypeBFloat16);
   Tensor value = session.linear(store, prefix + ".adaln_proj.linear", activated);
-  return session.reshape(value, final ? kFinalModulationShape : kBlockModulationShape);
+  return session.reshape(value, modulation_shape(temb.shape[0], final));
 }
 
 Tensor time_embedding(GraphSession& session, WeightStore& store, const std::vector<float>& sigmas, bool prefetch) {
@@ -163,22 +208,26 @@ NSString* modulation_cache_path(NSString* directory, const Digest& key) {
   return [directory stringByAppendingPathComponent:[NSString stringWithUTF8String:name.c_str()]];
 }
 
-std::vector<Tensor> load_modulations(id<MTLDevice> device, NSString* path, const Digest& key) {
+std::vector<Tensor> load_modulations(id<MTLDevice> device, NSString* path, const Digest& key, int64_t timesteps) {
+  const auto block_shape = modulation_shape(timesteps, false);
+  const auto final_shape = modulation_shape(timesteps, true);
+  const size_t block_bytes = timesteps * 3 * 6 * kHiddenSize * sizeof(uint16_t);
+  const size_t payload_bytes = kDiTBlocks * block_bytes + timesteps * 2 * kHiddenSize * sizeof(uint16_t);
   NSData* data = [NSData dataWithContentsOfFile:path options:NSDataReadingMappedIfSafe error:nil];
-  if (data.length != 2 * key.size() + kModulationBytes) return {};
+  if (data.length != 2 * key.size() + payload_bytes) return {};
   const auto* bytes = static_cast<const uint8_t*>(data.bytes);
   if (std::memcmp(bytes, key.data(), key.size()) != 0) return {};
   const auto* payload = bytes + 2 * key.size();
-  const auto checksum = sha256(payload, kModulationBytes);
+  const auto checksum = sha256(payload, payload_bytes);
   if (std::memcmp(bytes + key.size(), checksum.data(), checksum.size()) != 0) return {};
 
-  id<MTLBuffer> buffer = [device newBufferWithBytes:payload length:kModulationBytes options:MTLResourceStorageModeShared];
+  id<MTLBuffer> buffer = [device newBufferWithBytes:payload length:payload_bytes options:MTLResourceStorageModeShared];
   if (!buffer) return {};
   std::vector<Tensor> result;
   for (uint32_t layer = 0; layer < kDiTBlocks; ++layer) {
-    result.push_back({buffer, kBlockModulationShape, MPSDataTypeBFloat16, layer * kBlockModulationBytes});
+    result.push_back({buffer, block_shape, MPSDataTypeBFloat16, layer * block_bytes});
   }
-  result.push_back({buffer, kFinalModulationShape, MPSDataTypeBFloat16, kDiTBlocks * kBlockModulationBytes});
+  result.push_back({buffer, final_shape, MPSDataTypeBFloat16, kDiTBlocks * block_bytes});
   return result;
 }
 
@@ -186,7 +235,9 @@ bool save_modulations(NSString* directory, NSString* path, const Digest& key, co
   if (![NSFileManager.defaultManager createDirectoryAtPath:directory withIntermediateDirectories:YES
                                                attributes:@{NSFilePosixPermissions: @0700} error:nil]) return false;
   // The cache format stores the key and payload digest before the packed BF16 tables.
-  NSMutableData* data = [NSMutableData dataWithLength:2 * key.size() + kModulationBytes];
+  size_t payload_bytes = 0;
+  for (const Tensor& tensor : modulations) payload_bytes += tensor.byte_size();
+  NSMutableData* data = [NSMutableData dataWithLength:2 * key.size() + payload_bytes];
   auto* bytes = static_cast<uint8_t*>(data.mutableBytes);
   std::memcpy(bytes, key.data(), key.size());
   size_t offset = 2 * key.size();
@@ -194,7 +245,7 @@ bool save_modulations(NSString* directory, NSString* path, const Digest& key, co
     std::memcpy(bytes + offset, tensor.data(), tensor.byte_size());
     offset += tensor.byte_size();
   }
-  const auto checksum = sha256(bytes + 2 * key.size(), kModulationBytes);
+  const auto checksum = sha256(bytes + 2 * key.size(), payload_bytes);
   std::memcpy(bytes + key.size(), checksum.data(), checksum.size());
   return [data writeToFile:path options:NSDataWritingAtomic error:nil];
 }
@@ -217,7 +268,7 @@ std::vector<Tensor> get_modulations(GraphSession& session, WeightStore& store, c
 
     const auto key = modulation_cache_key(device, weights, sigmas, binary);
     NSString* path = modulation_cache_path(directory, key);
-    auto result = load_modulations(device, path, key);
+    auto result = load_modulations(device, path, key, sigmas.size());
     if (!result.empty()) {
       cache_status = "hit";
       return result;
@@ -255,25 +306,16 @@ Tensor prepare_text(GraphSession& session, WeightStore& store, const Tensor& emb
   return session.rms_norm(x, store.tensor("token_refiner.final_norm.weight"), 1e-5);
 }
 
-std::pair<Tensor, Tensor> rope_angles(WeightStore& store, uint64_t text_count, uint32_t rows, uint32_t columns) {
-  const uint64_t count = text_count + rows * columns;
+std::pair<Tensor, Tensor> rope_angles(WeightStore& store, int64_t text_count,
+                                       const std::vector<ReferenceConditioning::Grid>& grids) {
+  int64_t count = text_count;
+  for (const auto& [rows, columns] : grids) count += rows * columns;
   Tensor frequencies = store.tensor("rope.inv_freq");
-  const float* frequency = static_cast<const float*>(frequencies.buffer.contents);
+  const auto* frequency = static_cast<const float*>(frequencies.data());
   std::vector<float> cosine(count * 96);
   std::vector<float> sine(count * 96);
-  const double area = std::sqrt(static_cast<double>(rows * columns));
-  for (uint64_t row = 0; row < count; ++row) {
-    double position[3] = {0, 0, 0};
-    if (row < text_count) {
-      position[0] = row;
-    } else {
-      const uint64_t image = row - text_count;
-      const uint32_t y = image / columns;
-      const uint32_t x = image % columns;
-      position[0] = text_count;
-      position[1] = (y / area + (1 - static_cast<double>(rows) / area) / 2) * 32;
-      position[2] = (x / area + (1 - static_cast<double>(columns) / area) / 2) * 32;
-    }
+  int64_t row = 0;
+  const auto append_position = [&](const std::array<double, 3>& position) {
     for (uint32_t axis = 0; axis < 3; ++axis) {
       for (uint32_t index = 0; index < 16; ++index) {
         const double angle = position[axis] * frequency[index];
@@ -284,36 +326,53 @@ std::pair<Tensor, Tensor> rope_angles(WeightStore& store, uint64_t text_count, u
         }
       }
     }
+    ++row;
+  };
+  for (int64_t token = 0; token < text_count; ++token) {
+    append_position({static_cast<double>(token), 0, 0});
   }
-  const std::vector<int64_t> shape = {1, 1, static_cast<int64_t>(count), 96};
+  double time = text_count;
+  for (const auto& [rows, columns] : grids) {
+    const double area = std::sqrt(static_cast<double>(rows * columns));
+    for (uint32_t y = 0; y < rows; ++y) {
+      for (uint32_t x = 0; x < columns; ++x) {
+        append_position({time, (y / area + (1 - rows / area) / 2) * 32,
+                         (x / area + (1 - columns / area) / 2) * 32});
+      }
+    }
+    ++time;
+  }
+  const std::vector<int64_t> shape = {1, 1, count, 96};
   return {make_tensor(shape, MPSDataTypeBFloat16, cosine), make_tensor(shape, MPSDataTypeBFloat16, sine)};
 }
 
-// The six AdaLN parts that one block applies at the current step, one row per token.
-struct ModulationParts {
-  Tensor shift_msa;
-  Tensor scale_msa;
-  Tensor gate_msa;
-  Tensor shift_mlp;
-  Tensor scale_mlp;
-  Tensor gate_mlp;
+enum ModulationPart {
+  kAttentionShift = 0,
+  kAttentionGate = 2,
+  kMlpShift = 3,
+  kMlpGate = 5,
 };
 
-ModulationParts gather_parts(GraphSession& session, const Tensor& table, uint32_t step, const Tensor& token_indices) {
-  // A block table holds six steps of 12 rows. In each step, rows 0-5 modulate image tokens
-  // and rows 6-11 text tokens. The graph picks each token's rows, which replaces six
-  // per-token CPU copies with the same values.
-  constexpr int64_t width = 5376;
+Tensor block_modulation_rows(GraphSession& session, const Tensor& table, uint32_t step) {
+  // The current step supplies the target and text rows. Reference latents use the
+  // image row from the last table, computed once at their fixed conditioning timestep.
   Tensor rows = table;
-  rows.byte_offset += table.byte_size() / 6 * step;
-  rows.shape = {12, width};
-  const auto parts = session.modulation_parts(rows, token_indices);
-  return {parts[0], parts[1], parts[2], parts[3], parts[4], parts[5]};
+  const uint64_t step_bytes = table.byte_size() / table.shape[0];
+  rows.byte_offset += step_bytes * step;
+  rows.shape = {12, kHiddenSize};
+  if (table.shape[0] > kSamplingSteps) {
+    Tensor reference = table;
+    reference.byte_offset += step_bytes * kSamplingSteps;
+    reference.shape = {6, kHiddenSize};
+    rows = session.concat({rows, reference}, 0);
+  }
+  return rows;
 }
 
 }  // namespace
 
-Tensor denoise_image(const std::string& model, const std::string& embedding_path, const std::string& noise_path, const std::string& pdd_path, const std::string& output, uint32_t width, uint32_t height, const StageOptions& options) {
+Tensor denoise_image(const std::string& model, const std::string& embedding_path, const std::string& noise_path, const std::string& pdd_path, const std::string& output, uint32_t width, uint32_t height, const StageOptions& options,
+                     const std::string& references_path) {
   if (width % 32 || height % 32) throw std::runtime_error("H3 dimensions must be multiples of 32");
   require_streaming_weights(options, "dit", "W4 DiT pack 37.47 GB exceeds physical memory");
   if (options.prefetch_weights && options.cache_bytes != 0) {
@@ -326,6 +385,8 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
   WeightStore store(model, false, options.cache_bytes);
   WeightStore pdd(pdd_path);
   const auto sigmas = read_sigmas(model);
+  std::vector<float> modulation_sigmas(sigmas.begin(), sigmas.begin() + kSamplingSteps);
+  if (!references_path.empty()) modulation_sigmas.push_back(kReferenceSigma);
   const char* modulation_cache_status = nullptr;
   const auto modulation_began = std::chrono::steady_clock::now();
   // Without an on-disk modulation cache, the first sampling step computes each table right
@@ -336,12 +397,12 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
   Tensor temb{};
   if (lazy_modulation) {
     modulation_cache_status = "disabled";
-    temb = time_embedding(session, store, sigmas, true);
+    temb = time_embedding(session, store, modulation_sigmas, true);
     modulations.assign(kDiTBlocks + 1, Tensor{});
     queue_modulation_table(store, 0);
     queue_modulation_table(store, 1);
   } else {
-    modulations = get_modulations(session, store, sigmas, device, options.modulation_cache_dir,
+    modulations = get_modulations(session, store, modulation_sigmas, device, options.modulation_cache_dir,
                                   options.prefetch_weights, modulation_cache_status);
   }
   const double modulation_seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - modulation_began).count();
@@ -349,16 +410,28 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
   Tensor text = prepare_text(session, store, load_tensor(embedding_path, "embedding"));
   const uint32_t rows = height / 32;
   const uint32_t columns = width / 32;
-  const uint64_t text_count = text.shape[0];
-  const uint64_t image_count = rows * columns;
-  const uint64_t sequence_count = text_count + image_count;
-  auto [cosine, sine] = rope_angles(store, text_count, rows, columns);
-  Tensor indices = make_tensor({static_cast<int64_t>(sequence_count), 1}, MPSDataTypeInt32, std::vector<float>(sequence_count, 0));
-  auto* index_data = static_cast<int32_t*>(indices.buffer.contents);
-  for (uint64_t index = 0; index < sequence_count; ++index) index_data[index] = index < text_count ? 1 : 0;
-  // Token indices select between image rows and text rows during the modulation gather.
-  Tensor token_indices = indices;
-  token_indices.shape = {static_cast<int64_t>(sequence_count)};
+  const int64_t text_count = text.shape[0];
+  const int64_t image_count = rows * columns;
+  auto references = load_references(references_path, text_count);
+  const int64_t reference_patch_count = references.grids.empty() ? 0 : references.patches.shape[0];
+  const int64_t target_start = text_count + reference_patch_count;
+  const int64_t sequence_count = target_start + image_count;
+  const size_t reference_images = references.grids.size();
+  const char* indexed_modulation_env = std::getenv("ONYX_DIT_INDEXED_MODULATION");
+  const bool indexed_modulation = reference_images && indexed_modulation_env &&
+      std::string_view(indexed_modulation_env) == "1";
+  references.grids.emplace_back(rows, columns);
+  auto [cosine, sine] = rope_angles(store, text_count, references.grids);
+  Tensor token_indices = make_tensor({sequence_count}, MPSDataTypeInt32, std::vector<float>(sequence_count, 0));
+  auto* tags = static_cast<int32_t*>(token_indices.data());
+  if (reference_patch_count > 0) {
+    std::memcpy(tags, references.text_tags.data(), text_count * sizeof(int32_t));
+    std::fill(tags + text_count, tags + target_start, 2);
+    Tensor image = session.linear(store, "video_patch_proj", references.patches);
+    text = session.concat({text, session.cast(image, MPSDataTypeBFloat16)}, 0);
+  } else {
+    std::fill(tags, tags + text_count, 1);
+  }
   const Tensor one = scalar(1.0f, MPSDataTypeBFloat16);
   Tensor patches = load_tensor(noise_path, "latent");
   patches = session.reshape(patches, {24, static_cast<int64_t>(rows), 2, static_cast<int64_t>(columns), 2});
@@ -382,9 +455,25 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
     if (lazy_modulation && step == 0 && !modulations[0].buffer) {
       modulations[0] = modulation_table(session, store, 0, temb);
     }
-    ModulationParts parts = gather_parts(session, modulations[0], step, token_indices);
+    Tensor table{};
+    std::vector<Tensor> parts;
+    const auto prepare_modulation = [&](uint32_t layer) {
+      table = block_modulation_rows(session, modulations[layer], step);
+      if (!indexed_modulation) parts = session.modulation_parts(table, token_indices);
+    };
+    const auto modulate = [&](const Tensor& input, const Tensor& norm, ModulationPart shift) {
+      return indexed_modulation
+          ? session.indexed_modulated_rms_norm(input, norm, table, token_indices, shift, 1e-5)
+          : session.modulated_rms_norm(input, norm, parts[shift + 1], parts[shift], 1e-5);
+    };
+    const auto residual = [&](const Tensor& input, const Tensor& value, ModulationPart gate) {
+      return indexed_modulation
+          ? session.indexed_gated_residual(input, value, table, token_indices, gate)
+          : session.gated_residual(input, value, parts[gate]);
+    };
+    prepare_modulation(0);
     // The norm that opens each block follows the gated residual that closed the one before.
-    Tensor h = session.modulated_rms_norm(x, store.tensor("blocks.0.norm1.weight"), parts.scale_msa, parts.shift_msa, 1e-5);
+    Tensor h = modulate(x, store.tensor("blocks.0.norm1.weight"), kAttentionShift);
     for (uint32_t layer = 0; layer < kDiTBlocks; ++layer) {
       @autoreleasepool {
       if (layer + 1 < kDiTBlocks || step + 1 < 6) queue_block((layer + 1) % kDiTBlocks);
@@ -398,21 +487,20 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
       }
       const std::string prefix = "blocks." + std::to_string(layer) + ".";
       Tensor attended = qkv_attention(session, store, prefix + "attn", h, &cosine, &sine);
-      x = session.gated_residual(x, attended, parts.gate_msa);
-      h = session.modulated_rms_norm(x, store.tensor(prefix + "norm2.weight"), parts.scale_mlp, parts.shift_mlp, 1e-5);
+      x = residual(x, attended, kAttentionGate);
+      h = modulate(x, store.tensor(prefix + "norm2.weight"), kMlpShift);
       Tensor hidden = mlp(session, store, prefix + "mlp", h);
-      x = session.gated_residual(x, hidden, parts.gate_mlp);
+      x = residual(x, hidden, kMlpGate);
       if (layer + 1 < kDiTBlocks) {
-        parts = gather_parts(session, modulations[layer + 1], step, token_indices);
-        h = session.modulated_rms_norm(x, store.tensor("blocks." + std::to_string(layer + 1) + ".norm1.weight"),
-                                       parts.scale_msa, parts.shift_msa, 1e-5);
+        prepare_modulation(layer + 1);
+        h = modulate(x, store.tensor("blocks." + std::to_string(layer + 1) + ".norm1.weight"), kAttentionShift);
       }
       }
     }
     if (lazy_modulation && step == 0 && !modulations[kDiTBlocks].buffer) {
       modulations[kDiTBlocks] = modulation_table(session, store, kDiTBlocks, temb);
     }
-    Tensor target = session.slice(x, 0, text_count, image_count);
+    Tensor target = session.slice(x, 0, target_start, image_count);
     target = session.rms_norm(target, store.tensor("final_layer.norm.weight"), 1e-5);
     Tensor final = session.reshape(session.slice(final_modulation, 0, step, 1), {2, 5376});
     Tensor shift = session.slice(final, 0, 0, 1);
@@ -437,10 +525,11 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
   save_tensor(output, "latent", latent);
   const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - began).count();
   std::printf("{\"stage\":\"dit\",\"profile\":\"%s\",\"steps\":6,\"seconds\":%.6f,\"output\":\"%s\","
-              "\"modulation_cache\":\"%s\",\"modulation_seconds\":%.6f,\"lazy_modulation\":%s,"
+              "\"reference_images\":%zu,\"indexed_modulation\":%s,\"modulation_cache\":\"%s\",\"modulation_seconds\":%.6f,\"lazy_modulation\":%s,"
               "\"prefetch_weights\":%s,\"prefetch_wait_seconds\":%.6f,"
               "\"weight_cache\":{\"budget\":%llu,\"bytes\":%llu,\"entries\":%llu,\"hits\":%llu,\"read_calls\":%llu,\"read_bytes\":%llu}}\n",
-              options.profile.c_str(), seconds, output.c_str(), modulation_cache_status, modulation_seconds,
+              options.profile.c_str(), seconds, output.c_str(), reference_images, indexed_modulation ? "true" : "false",
+              modulation_cache_status, modulation_seconds,
               lazy_modulation ? "true" : "false",
               options.prefetch_weights ? "true" : "false", store.prefetch_wait_seconds(),
               static_cast<unsigned long long>(store.cache_budget()),

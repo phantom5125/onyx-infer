@@ -43,7 +43,7 @@ A request includes the ID, ModelRef, final UTF-8 prompt, output size in pixels, 
 
 - Submit the same request ID and digest to retrieve its existing job. Reusing the ID with a different digest returns `IDEMPOTENCY_CONFLICT`.
 - Resolve a missing seed once and record it. JSON represents `uint64` as a decimal string. A multi-image recipe defines the per-sample seed and noise order and records those values.
-- The model recipe validates dimensions, reference ordering, sample counts, and sampling options. The initial H3 text-to-image recipe accepts no reference images, one output, six PDD steps, and no CFG. Invalid overrides return `UNSUPPORTED_PARAMETER`.
+- The model recipe validates dimensions, reference ordering, sample counts, and sampling options. The H3 native CLI takes zero to 16 ordered references, produces one output, and runs six PDD steps without CFG. Replay verifies each declared local reference artifact and expands a standalone `{references}` command argument into ordered `--reference` arguments.
 - Execution hints cover backend, compilation, cache, and deadline preferences. Any numerical approximation has a declared profile recorded in the trace.
 - Request readers reject unknown parameters. If a caller expands a prompt, the caller submits the expanded prompt and can record both forms and the expansion provenance in its replay case.
 

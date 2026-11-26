@@ -109,7 +109,7 @@ target_link_libraries(onyx-mpsgraph-q4-probe PRIVATE "${FOUNDATION_FRAMEWORK}" "
 add_executable(onyx-steel-real-data-probe tools/steel_real_data_probe.mm)
 target_link_libraries(onyx-steel-real-data-probe PRIVATE "${FOUNDATION_FRAMEWORK}" "${METAL_FRAMEWORK}" "${MPSGRAPH_FRAMEWORK}")
 
-foreach(probe IN ITEMS mpsgraph_probe q4_linear_probe q4_path_compare dit_block_profile linear_steel_probe)
+foreach(probe IN ITEMS mpsgraph_probe q4_linear_probe q4_path_compare dit_block_profile dit_modulation_probe linear_steel_probe)
   string(REPLACE "_" "-" target "onyx-${probe}")
   add_executable(${target} "tools/${probe}.mm")
   target_link_libraries(${target} PRIVATE onyx_graph)
@@ -120,6 +120,8 @@ add_executable(onyx-mtl4-counter-probe tools/mtl4_counter_probe.mm)
 target_link_libraries(onyx-mtl4-counter-probe PRIVATE onyx_weight_store)
 
 enable_testing()
+add_test(NAME onyx_dit_modulation_single COMMAND onyx-dit-modulation-probe 1 --verify-only)
+add_test(NAME onyx_dit_modulation_ragged COMMAND onyx-dit-modulation-probe 17 --verify-only)
 add_test(NAME onyx_mpsgraph_bf16 COMMAND onyx-mpsgraph-probe)
 add_test(NAME onyx_mpsgraph_q4 COMMAND onyx-mpsgraph-q4-probe)
 add_test(NAME onyx_q4_gemm_small COMMAND onyx-metal-bench --m 16 --n 128 --k 256 --group 64 --iterations 5)

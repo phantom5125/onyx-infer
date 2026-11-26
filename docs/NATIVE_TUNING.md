@@ -43,3 +43,7 @@ shasum -a 256 "$trial"/{first,warm,resident}.png
 ```
 
 Compare the three PNG hashes. In each JSON record, inspect `total_seconds`, `dit_weight_cache_bytes`, and the first line of `stage_logs.dit.stdout`. That line is a JSON object with `modulation_cache` and the `weight_cache.hits` and `weight_cache.read_bytes` counters. The expected cache sequence is `miss`, `hit`, `hit`. The `resident` run should show weight hits and fewer bytes read. For timing claims, warm up first and repeat each arm in alternating orders. [Validation workflow](VALIDATION.md)
+
+## DiT modulation for reference edits
+
+Prefix `onyx native-generate` with `ONYX_DIT_INDEXED_MODULATION=1` to try the experimental path. It reads each token's modulation values from a compact table inside the normalization and residual graphs. A 16-reference, 1024×1024 output on the M5 Max measured a DiT child-process peak of 18.35 GiB with the option enabled and 20.22 GiB with the default path. Both outputs had the same PNG SHA-256. At 33,942 tokens the operator ABBA measured 79.25 ms on the default path and 45.39 ms with the option enabled. Another GPU job overlapped the candidate's complete generation, so the report excludes those end-to-end timings from speed comparisons. [Usage](QUICKSTART.md#edit-with-reference-images) · [Measurements](../benchmarks/results/m5-max-36gb-h3-ref16-adaln-v1.json)
