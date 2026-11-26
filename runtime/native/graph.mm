@@ -56,6 +56,37 @@ MPSGraphTensor* rms_unit(MPSGraph* graph, MPSGraphTensor* value, double epsilon)
   return [graph multiplicationWithPrimaryTensor:value secondaryTensor:inverse name:nil];
 }
 
+// The compact modulation table has six consecutive rows for each modality.
+MPSGraphTensor* modulation_part(MPSGraph* graph, MPSGraphTensor* table,
+                                MPSGraphTensor* base, uint32_t part) {
+  MPSGraphTensor* offset = [graph constantWithScalar:part shape:@[@1] dataType:MPSDataTypeInt32];
+  MPSGraphTensor* index = [graph additionWithPrimaryTensor:base secondaryTensor:offset name:nil];
+  return [graph gatherWithUpdatesTensor:table indicesTensor:index axis:0 batchDimensions:0 name:nil];
+}
+
+MPSGraphTensor* modulation_base(MPSGraph* graph, MPSGraphTensor* indices) {
+  MPSGraphTensor* stride = [graph constantWithScalar:6 shape:@[@1] dataType:MPSDataTypeInt32];
+  return [graph multiplicationWithPrimaryTensor:indices secondaryTensor:stride name:nil];
+}
+
+MPSGraphTensor* modulated_norm(MPSGraph* graph, MPSGraphTensor* x, MPSGraphTensor* weight,
+                               MPSGraphTensor* scale, MPSGraphTensor* shift, double epsilon) {
+  MPSGraphTensor* w = cast_to(graph, weight, x.dataType);
+  MPSGraphTensor* normalized = [graph multiplicationWithPrimaryTensor:rms_unit(graph, x, epsilon)
+                                                     secondaryTensor:w name:nil];
+  MPSGraphTensor* one = [graph constantWithScalar:1.0 shape:@[@1] dataType:scale.dataType];
+  MPSGraphTensor* modulation = [graph additionWithPrimaryTensor:one secondaryTensor:scale name:nil];
+  MPSGraphTensor* y = [graph multiplicationWithPrimaryTensor:normalized secondaryTensor:modulation name:nil];
+  return [graph additionWithPrimaryTensor:y secondaryTensor:shift name:nil];
+}
+
+MPSGraphTensor* residual_with_gate(MPSGraph* graph, MPSGraphTensor* x,
+                                   MPSGraphTensor* value, MPSGraphTensor* gate) {
+  MPSGraphTensor* scale = cast_to(graph, gate, value.dataType);
+  MPSGraphTensor* scaled = [graph multiplicationWithPrimaryTensor:value secondaryTensor:scale name:nil];
+  return [graph additionWithPrimaryTensor:x secondaryTensor:scaled name:nil];
+}
+
 MPSGraphTensor* apply_rope(MPSGraph* graph, MPSGraphTensor* value, MPSGraphTensor* cosine, MPSGraphTensor* sine) {
   const int64_t dimension = value.shape.lastObject.longLongValue;
   const int64_t rotary = cosine.shape.lastObject.longLongValue;
@@ -196,22 +227,18 @@ std::vector<Tensor> GraphSession::run_outputs(const std::string& key,
 }
 
 std::vector<Tensor> GraphSession::modulation_parts(const Tensor& rows, const Tensor& indices) {
-  // Token index m selects row m * (rows / 2) + part for each part, so the six parts of the
-  // image modality come first and those of the text modality follow. Gathering them on the GPU
-  // replaces six per-token CPU copies, and the values equal those copies bit for bit.
+  // Each index selects one row of six modulation parts: target image, text, or reference image.
+  // A reference uses the image modality at its fixed conditioning timestep.
   const int64_t tokens = indices.shape[0];
   const int64_t width = rows.shape[1];
-  const int64_t parts = rows.shape[0] / 2;
+  constexpr int64_t parts = 6;
   std::vector<std::vector<int64_t>> shapes(parts, std::vector<int64_t>{tokens, width});
   return run_outputs("modulation-parts", {rows, indices}, shapes, rows.dtype,
                      ^NSArray<MPSGraphTensor*>*(MPSGraph* graph, NSArray<MPSGraphTensor*>* input) {
     NSMutableArray<MPSGraphTensor*>* gathered = [NSMutableArray new];
-    MPSGraphTensor* stride = [graph constantWithScalar:parts shape:@[@1] dataType:MPSDataTypeInt32];
-    MPSGraphTensor* base = [graph multiplicationWithPrimaryTensor:input[1] secondaryTensor:stride name:nil];
-    for (int64_t part = 0; part < parts; ++part) {
-      MPSGraphTensor* offset = [graph constantWithScalar:part shape:@[@1] dataType:MPSDataTypeInt32];
-      MPSGraphTensor* index = [graph additionWithPrimaryTensor:base secondaryTensor:offset name:nil];
-      [gathered addObject:[graph gatherWithUpdatesTensor:input[0] indicesTensor:index axis:0 batchDimensions:0 name:nil]];
+    MPSGraphTensor* base = modulation_base(graph, input[1]);
+    for (uint32_t part = 0; part < parts; ++part) {
+      [gathered addObject:modulation_part(graph, input[0], base, part)];
     }
     return gathered;
   });
@@ -656,16 +683,19 @@ Tensor GraphSession::rms_norm(const Tensor& x, const Tensor& weight, double epsi
 Tensor GraphSession::modulated_rms_norm(const Tensor& x, const Tensor& weight, const Tensor& scale, const Tensor& shift, double epsilon) {
   return run("rms-modulated:" + std::to_string(epsilon), {x, weight, scale, shift}, x.shape, x.dtype,
              ^MPSGraphTensor*(MPSGraph* graph, NSArray<MPSGraphTensor*>* input) {
-    MPSGraphTensor* square = [graph squareWithTensor:input[0] name:nil];
-    MPSGraphTensor* mean = [graph meanOfTensor:square axes:@[@((NSInteger)input[0].shape.count - 1)] name:nil];
-    MPSGraphTensor* eps = [graph constantWithScalar:epsilon shape:@[@1] dataType:input[0].dataType];
-    MPSGraphTensor* inverse = [graph reciprocalSquareRootWithTensor:[graph additionWithPrimaryTensor:mean secondaryTensor:eps name:nil] name:nil];
-    MPSGraphTensor* w = cast_to(graph, input[1], input[0].dataType);
-    MPSGraphTensor* normalized = [graph multiplicationWithPrimaryTensor:[graph multiplicationWithPrimaryTensor:input[0] secondaryTensor:inverse name:nil] secondaryTensor:w name:nil];
-    MPSGraphTensor* one = [graph constantWithScalar:1.0 shape:@[@1] dataType:input[2].dataType];
-    MPSGraphTensor* modulation = [graph additionWithPrimaryTensor:one secondaryTensor:input[2] name:nil];
-    MPSGraphTensor* y = [graph multiplicationWithPrimaryTensor:normalized secondaryTensor:modulation name:nil];
-    return [graph additionWithPrimaryTensor:y secondaryTensor:input[3] name:nil];
+    return modulated_norm(graph, input[0], input[1], input[2], input[3], epsilon);
+  });
+}
+
+Tensor GraphSession::indexed_modulated_rms_norm(const Tensor& x, const Tensor& weight, const Tensor& table,
+                                                const Tensor& indices, uint32_t shift_part, double epsilon) {
+  const std::string key = "rms-modulated-indexed:" + std::to_string(shift_part) + ":" + std::to_string(epsilon);
+  return run(key, {x, weight, table, indices}, x.shape, x.dtype,
+             ^MPSGraphTensor*(MPSGraph* graph, NSArray<MPSGraphTensor*>* input) {
+    MPSGraphTensor* base = modulation_base(graph, input[3]);
+    MPSGraphTensor* scale = modulation_part(graph, input[2], base, shift_part + 1);
+    MPSGraphTensor* shift = modulation_part(graph, input[2], base, shift_part);
+    return modulated_norm(graph, input[0], input[1], scale, shift, epsilon);
   });
 }
 
@@ -857,9 +887,17 @@ Tensor GraphSession::gated_activation(const Tensor& x) {
 Tensor GraphSession::gated_residual(const Tensor& x, const Tensor& value, const Tensor& gate) {
   return run("gated-residual", {x, value, gate}, x.shape, x.dtype,
              ^MPSGraphTensor*(MPSGraph* graph, NSArray<MPSGraphTensor*>* input) {
-    MPSGraphTensor* second = cast_to(graph, input[2], input[1].dataType);
-    MPSGraphTensor* scaled = [graph multiplicationWithPrimaryTensor:input[1] secondaryTensor:second name:nil];
-    return [graph additionWithPrimaryTensor:input[0] secondaryTensor:scaled name:nil];
+    return residual_with_gate(graph, input[0], input[1], input[2]);
+  });
+}
+
+Tensor GraphSession::indexed_gated_residual(const Tensor& x, const Tensor& value, const Tensor& table,
+                                           const Tensor& indices, uint32_t gate_part) {
+  return run("gated-residual-indexed:" + std::to_string(gate_part), {x, value, table, indices}, x.shape, x.dtype,
+             ^MPSGraphTensor*(MPSGraph* graph, NSArray<MPSGraphTensor*>* input) {
+    MPSGraphTensor* base = modulation_base(graph, input[3]);
+    MPSGraphTensor* gate = modulation_part(graph, input[2], base, gate_part);
+    return residual_with_gate(graph, input[0], input[1], gate);
   });
 }
 

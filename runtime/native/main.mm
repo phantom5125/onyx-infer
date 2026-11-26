@@ -55,7 +55,8 @@ int main(int argc, char** argv) {
       if (stage == "text") {
         onyx::StageOptions text_options = options;
         text_options.prefetch_weights = weight_prefetch(argc, argv);
-        onyx::encode_text(argument(argc, argv, "--model"), argument(argc, argv, "--tokens"), argument(argc, argv, "--output"), text_options);
+        onyx::encode_text(argument(argc, argv, "--model"), argument(argc, argv, "--tokens"), argument(argc, argv, "--output"), text_options,
+                          argument(argc, argv, "--vision", false));
         return 0;
       }
       if (stage == "dit") {
@@ -70,7 +71,8 @@ int main(int argc, char** argv) {
             argument(argc, argv, "--model"), argument(argc, argv, "--embedding"),
             argument(argc, argv, "--noise"), argument(argc, argv, "--pdd"),
             argument(argc, argv, "--output"), std::stoul(argument(argc, argv, "--width")),
-            std::stoul(argument(argc, argv, "--height")), dit_options);
+            std::stoul(argument(argc, argv, "--height")), dit_options,
+            argument(argc, argv, "--references", false));
         return 0;
       }
       if (stage == "vae") {

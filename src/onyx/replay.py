@@ -14,7 +14,7 @@ import psutil
 from google.protobuf import json_format
 
 from onyx import __version__
-from onyx.artifacts import artifact_from_path, message_digest, write_proto_json
+from onyx.artifacts import artifact_from_path, message_digest, sha256_file, write_proto_json
 from onyx.common.v1 import types_pb2
 from onyx.job.v1 import job_pb2
 from onyx.loop.v1 import loop_pb2
@@ -48,6 +48,8 @@ def load_case(path: Path):
         raise ValueError("Replay requires request_id, prompt and seed")
     if case.request.image_count != 1:
         raise ValueError("The initial replay runner supports one output image")
+    if len(case.request.references) > 16:
+        raise ValueError("H3 accepts up to 16 reference images")
     if case.request.size.width % 32 or case.request.size.height % 32:
         raise ValueError("H3 image dimensions must be multiples of 32")
     return case
@@ -114,6 +116,17 @@ class ProcessMonitor:
 def execute_case(case: Path, output_root: Path, command, args):
     benchmark = load_case(case)
     request = benchmark.request
+    reference_arguments = []
+    if request.references:
+        if command.count("{references}") != 1:
+            raise ValueError("Replay with reference images requires one {references} command argument")
+        for ref in request.references:
+            if not ref.local_locator or not ref.sha256:
+                raise ValueError("Replay requires a local path and SHA-256 for every reference")
+            path = (case.parent / ref.local_locator).resolve()
+            if path.stat().st_size != ref.byte_size or sha256_file(path) != ref.sha256.hex():
+                raise ValueError(f"Reference artifact integrity check failed: {path}")
+            reference_arguments.extend(("--reference", str(path)))
     run_id = str(uuid.uuid4())
     run_dir = output_root / benchmark.case_id / run_id
     run_dir.mkdir(parents=True, exist_ok=False)
@@ -128,6 +141,9 @@ def execute_case(case: Path, output_root: Path, command, args):
     }
     actual_command = []
     for part in command:
+        if part == "{references}":
+            actual_command.extend(reference_arguments)
+            continue
         for key, value in replacements.items():
             part = part.replace("{" + key + "}", value)
         actual_command.append(part)

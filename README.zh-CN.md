@@ -88,6 +88,20 @@ M5 Max 的两组测量均命中 DiT 调制缓存。首次请求需要计算调�
 项目主页与工程博客：**https://phantom5125.github.io/onyx-infer/**
 （源码在 [`site/`](site/)，博客由 [`tools/build_blog.py`](tools/build_blog.py) 构建）。
 
+## 用参考图编辑
+
+Apple Silicon 上的 CLI 可以用 H3 W4 模型编辑图像，每次最多传入 16 张参考图。从当前源码构建引擎并安装可选的 `reference` 依赖。每张图写一个 `--reference`，提示词中的 `<Picture 1>`、`<Picture 2>` 按传入顺序对应图片。
+
+```bash
+uv run --frozen --no-dev --extra reference onyx native-generate \
+  --models artifacts/models/h3-w4 \
+  --reference room.png --reference chair.png \
+  --prompt '把 <Picture 2> 里的椅子放进 <Picture 1> 的房间。' \
+  --output artifacts/edit.png
+```
+
+[参考图编辑指南](docs/QUICKSTART.md#edit-with-reference-images)说明了安装、输入限制、回放用法和 DiT 实验性内存优化开关。
+
 ## 指南
 
 工程博客上已发布的指南，按时间倒序：
@@ -98,7 +112,7 @@ M5 Max 的两组测量均命中 DiT 调制缓存。首次请求需要计算调�
 
 ## 许可证
 
-Onyx Infer 自有源码采用 [MIT 许可证](LICENSE)。仓库内的 MLX 代码及其派生部分保留 [Apple MLX 许可证](ops/metal/mlx_root/LICENSE)。H3 模型文件须单独获取，适用 [MiniMax 上游许可证](https://github.com/MiniMax-AI/MiniMax-H3-Image/blob/main/LICENSE)。
+Onyx Infer 自有源码采用 [MIT 许可证](LICENSE)。仓库内的 MLX 代码及其派生部分保留 [Apple MLX 许可证](ops/metal/mlx_root/LICENSE)。参考图编码器包含改编自 h3-image-mlx 的代码，采用 [Apache-2.0](LICENSE.h3-image-mlx)。H3 模型文件须单独获取，适用 [MiniMax 上游许可证](https://github.com/MiniMax-AI/MiniMax-H3-Image/blob/main/LICENSE)。
 
 ## 引用
 

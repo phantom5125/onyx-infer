@@ -9,7 +9,7 @@ Review the [MiniMax-H3-Image license at the pinned ModelScope revision](https://
 ## Build the native runtime
 
 ```bash
-git clone --branch v0.4.0 https://github.com/phantom5125/onyx-infer.git
+git clone https://github.com/phantom5125/onyx-infer.git
 cd onyx-infer
 uv sync --frozen --no-dev
 
@@ -57,3 +57,23 @@ open artifacts/native-output.png
 ```
 
 See the [hardware validation guide](VALIDATION.md) for test commands and the [native tuning guide](NATIVE_TUNING.md) for optional caches and larger images.
+
+## Edit with reference images
+
+Build `onyx-native` from the current source and install the optional Python `reference` extra. The extra uses MLX to encode the reference pixels. Onyx runs the language encoder, DiT and VAE decoder with the existing H3 W4 package.
+
+```bash
+uv sync --frozen --no-dev --extra reference
+uv run --frozen --no-dev --extra reference onyx native-generate \
+  --models artifacts/models/h3-w4 \
+  --reference room.png --reference chair.png \
+  --prompt "Add the chair from <Picture 2> to the room in <Picture 1>." \
+  --width 1024 --height 1024 --seed 42 \
+  --output artifacts/native-edit.png
+```
+
+Pass `--reference` once per image, up to 16 times. `<Picture 1>` refers to the first argument. Each image must have sides between 128 and 8192 pixels and an aspect ratio of at most 4:1. Larger reference sets and output sizes increase the number of tokens and the memory required. The 16-reference path was verified with square inputs and 1024×1024 output on an M5 Max with 36 GB of unified memory. Reference edits are exposed through the CLI. [16-reference validation](../benchmarks/results/m5-max-36gb-h3-ref16-adaln-v1.json)
+
+To try the experimental DiT memory optimization, prefix the generation command with `ONYX_DIT_INDEXED_MODULATION=1`. It uses a compact modulation table for reference edits. The reported memory figures come from the verified 16-reference case.
+
+For a replay case, record the inputs in `request.references` in order, with each file's byte size, SHA-256 and local path. A relative path is resolved from the case file's directory. Include a standalone `{references}` argument in the generator command to pass the verified files to `onyx native-generate`.

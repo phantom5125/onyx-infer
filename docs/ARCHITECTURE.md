@@ -4,7 +4,7 @@ The v1 contracts are stable. The runtime and its plan and kernel optimizations c
 
 ## 1. Product scope
 
-Onyx Infer is a local image-generation engine for Apple Silicon. The initial target is one M5 Max Mac Studio with one GPU, native execution, explicit memory planning, and replayable runs. MiniMax-H3-Image text-to-image is the first supported workload. Image editing with the same checkpoint and independently distributable operators are follow-up work. The initial scope excludes training, distributed execution, hosted inference, and a public binary plugin ABI.
+Onyx Infer is a local image-generation engine for Apple Silicon. The initial target is one M5 Max Mac Studio with one GPU, native execution, explicit memory planning, and replayable runs. MiniMax-H3-Image text-to-image is the first supported workload. The reference-image CLI uses the same checkpoint and W4 package, with MLX vision and VAE encoding before native text conditioning, denoising and decoding. Independently distributable operators are follow-up work. The initial scope excludes training, distributed execution, hosted inference, and a public binary plugin ABI.
 
 ## 2. Model and hardware constraints
 

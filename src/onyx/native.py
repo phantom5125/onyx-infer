@@ -5,8 +5,10 @@ import os
 import shutil
 import stat
 import subprocess
+import sys
 import tempfile
 import time
+from importlib.util import find_spec
 from pathlib import Path
 
 import numpy as np
@@ -17,8 +19,8 @@ from onyx.profiles import ProfileError, dit_cache_bytes, load_registry, registry
 
 
 ROOT = Path(__file__).resolve().parents[2]
-# Regenerable tables belong in the user cache. An entry binds one native build, so every
-# rebuild of the engine leaves the previous entry behind at about 55.5 MiB.
+# Regenerable tables belong in the user cache. Each native build creates distinct entries.
+# Text-to-image uses about 55.5 MiB per entry, and editing adds one conditioning timestep.
 DEFAULT_MODULATION_CACHE = Path.home() / "Library" / "Caches" / "onyx-infer" / "modulation"
 MODULATION_CACHE_KEEP = 2
 
@@ -59,6 +61,8 @@ def main(argv=None):
     parser = argparse.ArgumentParser(prog="onyx native-generate")
     parser.add_argument("--models", type=Path, required=True)
     parser.add_argument("--prompt", required=True)
+    parser.add_argument("--reference", type=Path, action="append", default=[],
+                        help="Ordered H3 reference image. Repeat for up to 16 images.")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--width", type=int, default=1024)
     parser.add_argument("--height", type=int, default=1024)
@@ -75,6 +79,14 @@ def main(argv=None):
     parser.add_argument("--prefetch-weights", action=argparse.BooleanOptionalAction, default=None,
                         help="Prefetch weights in the text and DiT stages (default: the profile's weight_prefetch knob)")
     args = parser.parse_args(argv)
+    if len(args.reference) > 16:
+        parser.error("H3 accepts up to 16 reference images")
+    if args.reference:
+        if find_spec("mlx") is None:
+            parser.error("Reference images require the onyx-infer[reference] extra")
+        for path in args.reference:
+            if not path.is_file():
+                parser.error(f"Reference image does not exist: {path}")
     try:
         registry = load_registry()
         resolved = resolve_profile(registry, args.profile)
@@ -109,7 +121,23 @@ def main(argv=None):
     pruned = []
     with tempfile.TemporaryDirectory(prefix="onyx-native-") as temporary:
         work = Path(temporary)
-        (work / "tokens.json").write_text(json.dumps({"ids": ids, "count": len(ids)}))
+        reference_arguments = {}
+        token_count = len(ids)
+        if args.reference:
+            (work / "reference-request.json").write_text(json.dumps({
+                "models": str(models), "prompt_ids": ids, "seed": args.seed,
+                "paths": [str(path.resolve()) for path in args.reference],
+            }))
+            start = time.monotonic()
+            subprocess.run([sys.executable, "-m", "onyx.reference.conditioning", str(work)], check=True)
+            timings["references"] = time.monotonic() - start
+            token_count = json.loads((work / "tokens.json").read_text())["count"]
+            reference_arguments = {
+                "text": ["--vision", str(work / "vision.safetensors")],
+                "dit": ["--references", str(work / "references.safetensors")],
+            }
+        else:
+            (work / "tokens.json").write_text(json.dumps({"ids": ids, "count": len(ids)}))
         noise = np.random.default_rng(args.seed).standard_normal((24, args.height // 16, args.width // 16), dtype=np.float32)
         save_file({"latent": noise}, str(work / "noise.safetensors"))
         stages = [
@@ -129,7 +157,8 @@ def main(argv=None):
         ]
         for name, arguments in stages:
             declared_weights = stage_weights(args.profile, profile_knobs, name)
-            command = [str(binary), name, *arguments, "--profile", args.profile, "--weights", declared_weights]
+            command = [str(binary), name, *arguments, *reference_arguments.get(name, []),
+                       "--profile", args.profile, "--weights", declared_weights]
             declared_cache = dit_weight_cache_bytes if name == "dit" else 0
             if name == "dit":
                 command.extend(["--cache-bytes", str(declared_cache)])
@@ -145,8 +174,13 @@ def main(argv=None):
                 raise RuntimeError(f"Native {name} failed: {result.stderr.strip()}")
             verify_stage_echo(name, result.stdout, args.profile, declared_weights, declared_cache, prefetch.get(name, False),
                               name == "dit" and modulation_cache is not None)
+            details = stage_details(name, result.stdout)
+            if args.reference and name == "text" and details.get("vision_rows", 0) <= 0:
+                raise RuntimeError("The native text stage did not consume vision features. Rebuild onyx-native.")
             if name == "dit":
-                modulation_cache_status = stage_details("dit", result.stdout).get("modulation_cache")
+                if details.get("reference_images", 0) != len(args.reference):
+                    raise RuntimeError("The native DiT stage did not consume the requested references. Rebuild onyx-native.")
+                modulation_cache_status = details.get("modulation_cache")
         args.output.parent.mkdir(parents=True, exist_ok=True)
         partial = args.output.with_suffix(args.output.suffix + ".part")
         shutil.copyfile(work / "image.png", partial)
@@ -165,7 +199,8 @@ def main(argv=None):
         "weight_prefetch": prefetch,
         "modulation_cache": {"directory": str(modulation_cache) if modulation_cache is not None else None,
                              "status": modulation_cache_status, "pruned": pruned},
-        "token_count": len(ids),
+        "token_count": token_count,
+        "reference_count": len(args.reference),
         "stage_seconds": timings,
         "stage_logs": stage_logs,
         "total_seconds": time.monotonic() - began,

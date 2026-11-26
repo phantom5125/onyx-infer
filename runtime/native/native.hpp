@@ -137,6 +137,10 @@ class GraphSession {
   Tensor matmul(const Tensor& x, const Tensor& weight);
   Tensor rms_norm(const Tensor& x, const Tensor& weight, double epsilon);
   Tensor modulated_rms_norm(const Tensor& x, const Tensor& weight, const Tensor& scale, const Tensor& shift, double epsilon);
+  Tensor indexed_modulated_rms_norm(const Tensor& x, const Tensor& weight, const Tensor& table,
+                                    const Tensor& indices, uint32_t shift_part, double epsilon);
+  Tensor indexed_gated_residual(const Tensor& x, const Tensor& value, const Tensor& table,
+                                const Tensor& indices, uint32_t gate_part);
   Tensor layer_norm(const Tensor& x, const Tensor& weight, const Tensor& bias, double epsilon);
   Tensor rope(const Tensor& x, const Tensor& cosine, const Tensor& sine);
   Tensor attention(const Tensor& q, const Tensor& k, const Tensor& v, bool causal, double scale);
@@ -208,8 +212,10 @@ class GraphSession {
              MPSGraphTensor* (^build)(MPSGraph*, NSArray<MPSGraphTensor*>*));
 };
 
-Tensor encode_text(const std::string& model, const std::string& tokens, const std::string& output, const StageOptions& options);
-Tensor denoise_image(const std::string& model, const std::string& embedding, const std::string& noise, const std::string& pdd, const std::string& output, uint32_t width, uint32_t height, const StageOptions& options);
+Tensor encode_text(const std::string& model, const std::string& tokens, const std::string& output, const StageOptions& options,
+    const std::string& vision_path = {});
+Tensor denoise_image(const std::string& model, const std::string& embedding, const std::string& noise, const std::string& pdd, const std::string& output, uint32_t width, uint32_t height, const StageOptions& options,
+    const std::string& references_path = {});
 Tensor decode_image(const std::string& model, const std::string& latent, const std::string& config, const std::string& output, const StageOptions& options);
 
 }  // namespace onyx

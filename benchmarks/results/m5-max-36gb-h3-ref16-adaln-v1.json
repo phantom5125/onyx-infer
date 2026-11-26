@@ -1,0 +1,1278 @@
+{
+  "machine": "m5-max-36gb",
+  "date": "2026-11-25",
+  "branch": "opt/h3-ref16-20261125",
+  "contract": "kernel-agent/contract-h3-ref16-adaln.md",
+  "candidate": "h3-ref16-adaln-v1-r1",
+  "incumbent": "h3-reference-images-dense-adaln",
+  "validation_shape": {
+    "references": 16,
+    "encoded_square_reference_px": 1024,
+    "target_square_px": 1024,
+    "vision_and_text_tokens": 16534,
+    "reference_latent_tokens": 16384,
+    "target_latent_tokens": 1024,
+    "rows": 33942,
+    "hidden": 5376
+  },
+  "explicit_modulation_graph_outputs": {
+    "method": "Count of separately allocated GraphSession outputs from the tensor shapes. This does not include MPSGraph internal workspace.",
+    "baseline_bytes_per_block": 2189666304,
+    "candidate_bytes_per_block": 0,
+    "baseline_output_bytes_written_per_6_step_dit": 656899891200
+  },
+  "historical_1024_row_context": {
+    "source": "kernel-agent/contract-dit-fused-block.md in the original checkout",
+    "block_ms": 66.99,
+    "q4_linears_ms_per_block": 39.71,
+    "rms_ms_per_block": 10.18,
+    "note": "Historical per-op baseline, with no 16-image timing."
+  },
+  "build": {
+    "status": "passed",
+    "configuration": "Release",
+    "native_and_probe": true
+  },
+  "python_tests": {
+    "status": "passed",
+    "passed": 78
+  },
+  "metal_ctest": {
+    "status": "passed",
+    "passed": 21,
+    "elapsed_seconds": 15.49,
+    "boundary_rows": [
+      1,
+      17
+    ]
+  },
+  "operator_abba": {
+    "status": "passed",
+    "metric": "Synchronous wall time for two RMS modulation operations, two gated residuals, and the baseline standalone gather.",
+    "initial_warmup_pairs": 12,
+    "warmup_pairs_per_block": 3,
+    "abba_repeats_per_block": 10,
+    "accepted_probe": {
+      "rows": 33942,
+      "bitwise_equal": true,
+      "unequal_values": 0,
+      "max_abs_error": 0,
+      "baseline_modulation_output_bytes": 2189666304,
+      "candidate_modulation_output_bytes": 0,
+      "timings_ms": [
+        [
+          {
+            "variant": "baseline",
+            "ms": 73.976167
+          },
+          {
+            "variant": "indexed",
+            "ms": 46.702
+          },
+          {
+            "variant": "indexed",
+            "ms": 46.273875
+          },
+          {
+            "variant": "baseline",
+            "ms": 73.386708
+          },
+          {
+            "variant": "baseline",
+            "ms": 80.924625
+          },
+          {
+            "variant": "indexed",
+            "ms": 47.347
+          },
+          {
+            "variant": "indexed",
+            "ms": 41.276667
+          },
+          {
+            "variant": "baseline",
+            "ms": 74.284291
+          },
+          {
+            "variant": "baseline",
+            "ms": 82.296833
+          },
+          {
+            "variant": "indexed",
+            "ms": 45.554667
+          },
+          {
+            "variant": "indexed",
+            "ms": 41.577875
+          },
+          {
+            "variant": "baseline",
+            "ms": 76.27125
+          },
+          {
+            "variant": "baseline",
+            "ms": 82.263958
+          },
+          {
+            "variant": "indexed",
+            "ms": 47.016458
+          },
+          {
+            "variant": "indexed",
+            "ms": 41.93275
+          },
+          {
+            "variant": "baseline",
+            "ms": 82.188083
+          },
+          {
+            "variant": "baseline",
+            "ms": 80.547208
+          },
+          {
+            "variant": "indexed",
+            "ms": 47.192041
+          },
+          {
+            "variant": "indexed",
+            "ms": 40.563417
+          },
+          {
+            "variant": "baseline",
+            "ms": 73.107709
+          },
+          {
+            "variant": "baseline",
+            "ms": 80.597375
+          },
+          {
+            "variant": "indexed",
+            "ms": 46.276875
+          },
+          {
+            "variant": "indexed",
+            "ms": 41.748541
+          },
+          {
+            "variant": "baseline",
+            "ms": 75.509625
+          },
+          {
+            "variant": "baseline",
+            "ms": 80.56975
+          },
+          {
+            "variant": "indexed",
+            "ms": 45.951167
+          },
+          {
+            "variant": "indexed",
+            "ms": 42.01175
+          },
+          {
+            "variant": "baseline",
+            "ms": 77.953292
+          },
+          {
+            "variant": "baseline",
+            "ms": 85.903875
+          },
+          {
+            "variant": "indexed",
+            "ms": 47.083083
+          },
+          {
+            "variant": "indexed",
+            "ms": 42.357916
+          },
+          {
+            "variant": "baseline",
+            "ms": 77.162042
+          },
+          {
+            "variant": "baseline",
+            "ms": 82.849584
+          },
+          {
+            "variant": "indexed",
+            "ms": 46.935375
+          },
+          {
+            "variant": "indexed",
+            "ms": 43.313375
+          },
+          {
+            "variant": "baseline",
+            "ms": 76.208708
+          },
+          {
+            "variant": "baseline",
+            "ms": 81.877167
+          },
+          {
+            "variant": "indexed",
+            "ms": 46.709084
+          },
+          {
+            "variant": "indexed",
+            "ms": 41.102792
+          },
+          {
+            "variant": "baseline",
+            "ms": 72.714834
+          }
+        ],
+        [
+          {
+            "variant": "indexed",
+            "ms": 42.195417
+          },
+          {
+            "variant": "baseline",
+            "ms": 73.67625
+          },
+          {
+            "variant": "baseline",
+            "ms": 80.31875
+          },
+          {
+            "variant": "indexed",
+            "ms": 46.441417
+          },
+          {
+            "variant": "indexed",
+            "ms": 40.986792
+          },
+          {
+            "variant": "baseline",
+            "ms": 74.091375
+          },
+          {
+            "variant": "baseline",
+            "ms": 79.908833
+          },
+          {
+            "variant": "indexed",
+            "ms": 46.855667
+          },
+          {
+            "variant": "indexed",
+            "ms": 41.219458
+          },
+          {
+            "variant": "baseline",
+            "ms": 75.3045
+          },
+          {
+            "variant": "baseline",
+            "ms": 83.041708
+          },
+          {
+            "variant": "indexed",
+            "ms": 46.2985
+          },
+          {
+            "variant": "indexed",
+            "ms": 42.275209
+          },
+          {
+            "variant": "baseline",
+            "ms": 78.191333
+          },
+          {
+            "variant": "baseline",
+            "ms": 85.314875
+          },
+          {
+            "variant": "indexed",
+            "ms": 46.974584
+          },
+          {
+            "variant": "indexed",
+            "ms": 41.973625
+          },
+          {
+            "variant": "baseline",
+            "ms": 78.068125
+          },
+          {
+            "variant": "baseline",
+            "ms": 82.134542
+          },
+          {
+            "variant": "indexed",
+            "ms": 47.478375
+          },
+          {
+            "variant": "indexed",
+            "ms": 41.835375
+          },
+          {
+            "variant": "baseline",
+            "ms": 76.631291
+          },
+          {
+            "variant": "baseline",
+            "ms": 81.4235
+          },
+          {
+            "variant": "indexed",
+            "ms": 47.3845
+          },
+          {
+            "variant": "indexed",
+            "ms": 42.21675
+          },
+          {
+            "variant": "baseline",
+            "ms": 77.276333
+          },
+          {
+            "variant": "baseline",
+            "ms": 81.213334
+          },
+          {
+            "variant": "indexed",
+            "ms": 47.944
+          },
+          {
+            "variant": "indexed",
+            "ms": 42.369417
+          },
+          {
+            "variant": "baseline",
+            "ms": 78.270834
+          },
+          {
+            "variant": "baseline",
+            "ms": 81.022584
+          },
+          {
+            "variant": "indexed",
+            "ms": 46.253833
+          },
+          {
+            "variant": "indexed",
+            "ms": 40.079375
+          },
+          {
+            "variant": "baseline",
+            "ms": 73.90025
+          },
+          {
+            "variant": "baseline",
+            "ms": 83.750791
+          },
+          {
+            "variant": "indexed",
+            "ms": 46.341708
+          },
+          {
+            "variant": "indexed",
+            "ms": 41.25
+          },
+          {
+            "variant": "baseline",
+            "ms": 76.027
+          },
+          {
+            "variant": "baseline",
+            "ms": 81.578041
+          },
+          {
+            "variant": "indexed",
+            "ms": 56.437584
+          }
+        ],
+        [
+          {
+            "variant": "baseline",
+            "ms": 75.7105
+          },
+          {
+            "variant": "indexed",
+            "ms": 47.337709
+          },
+          {
+            "variant": "indexed",
+            "ms": 41.025125
+          },
+          {
+            "variant": "baseline",
+            "ms": 78.956042
+          },
+          {
+            "variant": "baseline",
+            "ms": 82.688291
+          },
+          {
+            "variant": "indexed",
+            "ms": 47.34575
+          },
+          {
+            "variant": "indexed",
+            "ms": 40.822333
+          },
+          {
+            "variant": "baseline",
+            "ms": 75.199958
+          },
+          {
+            "variant": "baseline",
+            "ms": 82.950041
+          },
+          {
+            "variant": "indexed",
+            "ms": 58.744333
+          },
+          {
+            "variant": "indexed",
+            "ms": 45.5295
+          },
+          {
+            "variant": "baseline",
+            "ms": 79.3025
+          },
+          {
+            "variant": "baseline",
+            "ms": 86.424917
+          },
+          {
+            "variant": "indexed",
+            "ms": 49.992625
+          },
+          {
+            "variant": "indexed",
+            "ms": 41.815666
+          },
+          {
+            "variant": "baseline",
+            "ms": 81.832041
+          },
+          {
+            "variant": "baseline",
+            "ms": 81.456416
+          },
+          {
+            "variant": "indexed",
+            "ms": 45.693625
+          },
+          {
+            "variant": "indexed",
+            "ms": 42.18075
+          },
+          {
+            "variant": "baseline",
+            "ms": 71.856375
+          },
+          {
+            "variant": "baseline",
+            "ms": 80.3765
+          },
+          {
+            "variant": "indexed",
+            "ms": 45.247791
+          },
+          {
+            "variant": "indexed",
+            "ms": 41.0175
+          },
+          {
+            "variant": "baseline",
+            "ms": 74.257
+          },
+          {
+            "variant": "baseline",
+            "ms": 81.05575
+          },
+          {
+            "variant": "indexed",
+            "ms": 58.010125
+          },
+          {
+            "variant": "indexed",
+            "ms": 44.83975
+          },
+          {
+            "variant": "baseline",
+            "ms": 81.252083
+          },
+          {
+            "variant": "baseline",
+            "ms": 81.329708
+          },
+          {
+            "variant": "indexed",
+            "ms": 47.551583
+          },
+          {
+            "variant": "indexed",
+            "ms": 41.120875
+          },
+          {
+            "variant": "baseline",
+            "ms": 72.190416
+          },
+          {
+            "variant": "baseline",
+            "ms": 81.91525
+          },
+          {
+            "variant": "indexed",
+            "ms": 47.404458
+          },
+          {
+            "variant": "indexed",
+            "ms": 41.119042
+          },
+          {
+            "variant": "baseline",
+            "ms": 72.77575
+          },
+          {
+            "variant": "baseline",
+            "ms": 82.220167
+          },
+          {
+            "variant": "indexed",
+            "ms": 62.012875
+          },
+          {
+            "variant": "indexed",
+            "ms": 44.634625
+          },
+          {
+            "variant": "baseline",
+            "ms": 82.026083
+          }
+        ]
+      ]
+    },
+    "accepted_summary": {
+      "blocks_median_ms": [
+        {
+          "baseline": 79.25025,
+          "indexed": 45.752917
+        },
+        {
+          "baseline": 79.0898335,
+          "indexed": 44.311625
+        },
+        {
+          "baseline": 81.15391650000001,
+          "indexed": 45.388645499999996
+        }
+      ],
+      "between_block_drift": {
+        "baseline": 0.026097956066629013,
+        "indexed": 0.03252627273317099
+      },
+      "speedup": 1.7460369025552878
+    },
+    "invalidated_batches": [
+      {
+        "name": "first",
+        "reason": "Between-block drift exceeded 5% in at least one arm.",
+        "probe": {
+          "rows": 33942,
+          "bitwise_equal": true,
+          "unequal_values": 0,
+          "max_abs_error": 0,
+          "baseline_modulation_output_bytes": 2189666304,
+          "candidate_modulation_output_bytes": 0,
+          "timings_ms": [
+            [
+              {
+                "variant": "baseline",
+                "ms": 74.9675
+              },
+              {
+                "variant": "indexed",
+                "ms": 47.412334
+              },
+              {
+                "variant": "indexed",
+                "ms": 42.271
+              },
+              {
+                "variant": "baseline",
+                "ms": 78.807625
+              }
+            ],
+            [
+              {
+                "variant": "indexed",
+                "ms": 42.54375
+              },
+              {
+                "variant": "baseline",
+                "ms": 76.102917
+              },
+              {
+                "variant": "baseline",
+                "ms": 82.374125
+              },
+              {
+                "variant": "indexed",
+                "ms": 47.766708
+              }
+            ],
+            [
+              {
+                "variant": "baseline",
+                "ms": 79.472167
+              },
+              {
+                "variant": "indexed",
+                "ms": 47.636708
+              },
+              {
+                "variant": "indexed",
+                "ms": 43.200333
+              },
+              {
+                "variant": "baseline",
+                "ms": 82.16925
+              }
+            ]
+          ]
+        },
+        "summary": {
+          "blocks_median_ms": [
+            {
+              "baseline": 76.8875625,
+              "indexed": 44.841667
+            },
+            {
+              "baseline": 79.238521,
+              "indexed": 45.155229000000006
+            },
+            {
+              "baseline": 80.8207085,
+              "indexed": 45.4185205
+            }
+          ],
+          "between_block_drift": {
+            "baseline": 0.05115451540032878,
+            "indexed": 0.012864229601455168
+          },
+          "speedup": 1.7548027715682717
+        }
+      },
+      {
+        "name": "second",
+        "reason": "Between-block drift exceeded 5% in at least one arm.",
+        "probe": {
+          "rows": 33942,
+          "bitwise_equal": true,
+          "unequal_values": 0,
+          "max_abs_error": 0,
+          "baseline_modulation_output_bytes": 2189666304,
+          "candidate_modulation_output_bytes": 0,
+          "timings_ms": [
+            [
+              {
+                "variant": "baseline",
+                "ms": 72.748083
+              },
+              {
+                "variant": "indexed",
+                "ms": 46.318458
+              },
+              {
+                "variant": "indexed",
+                "ms": 42.204958
+              },
+              {
+                "variant": "baseline",
+                "ms": 74.485083
+              }
+            ],
+            [
+              {
+                "variant": "indexed",
+                "ms": 40.972375
+              },
+              {
+                "variant": "baseline",
+                "ms": 74.967083
+              },
+              {
+                "variant": "baseline",
+                "ms": 80.911292
+              },
+              {
+                "variant": "indexed",
+                "ms": 48.174083
+              }
+            ],
+            [
+              {
+                "variant": "baseline",
+                "ms": 75.650709
+              },
+              {
+                "variant": "indexed",
+                "ms": 47.780834
+              },
+              {
+                "variant": "indexed",
+                "ms": 42.287375
+              },
+              {
+                "variant": "baseline",
+                "ms": 77.6755
+              }
+            ]
+          ]
+        },
+        "summary": {
+          "blocks_median_ms": [
+            {
+              "baseline": 73.61658299999999,
+              "indexed": 44.261708
+            },
+            {
+              "baseline": 77.9391875,
+              "indexed": 44.573229
+            },
+            {
+              "baseline": 76.6631045,
+              "indexed": 45.0341045
+            }
+          ],
+          "between_block_drift": {
+            "baseline": 0.05871780954571082,
+            "indexed": 0.017450670904972654
+          },
+          "speedup": 1.7199360741847984
+        }
+      },
+      {
+        "name": "third",
+        "reason": "Between-block drift exceeded 5% in at least one arm.",
+        "probe": {
+          "rows": 33942,
+          "bitwise_equal": true,
+          "unequal_values": 0,
+          "max_abs_error": 0,
+          "baseline_modulation_output_bytes": 2189666304,
+          "candidate_modulation_output_bytes": 0,
+          "timings_ms": [
+            [
+              {
+                "variant": "baseline",
+                "ms": 72.866875
+              },
+              {
+                "variant": "indexed",
+                "ms": 46.490791
+              },
+              {
+                "variant": "indexed",
+                "ms": 42.539167
+              },
+              {
+                "variant": "baseline",
+                "ms": 73.120916
+              },
+              {
+                "variant": "baseline",
+                "ms": 81.11325
+              },
+              {
+                "variant": "indexed",
+                "ms": 47.396916
+              },
+              {
+                "variant": "indexed",
+                "ms": 41.778417
+              },
+              {
+                "variant": "baseline",
+                "ms": 77.138041
+              },
+              {
+                "variant": "baseline",
+                "ms": 81.815542
+              },
+              {
+                "variant": "indexed",
+                "ms": 46.285625
+              },
+              {
+                "variant": "indexed",
+                "ms": 41.36725
+              },
+              {
+                "variant": "baseline",
+                "ms": 77.86125
+              },
+              {
+                "variant": "baseline",
+                "ms": 87.966167
+              },
+              {
+                "variant": "indexed",
+                "ms": 47.095791
+              },
+              {
+                "variant": "indexed",
+                "ms": 41.353208
+              },
+              {
+                "variant": "baseline",
+                "ms": 73.650292
+              },
+              {
+                "variant": "baseline",
+                "ms": 79.452209
+              },
+              {
+                "variant": "indexed",
+                "ms": 46.357417
+              },
+              {
+                "variant": "indexed",
+                "ms": 41.477542
+              },
+              {
+                "variant": "baseline",
+                "ms": 73.442416
+              }
+            ],
+            [
+              {
+                "variant": "indexed",
+                "ms": 42.411708
+              },
+              {
+                "variant": "baseline",
+                "ms": 78.845833
+              },
+              {
+                "variant": "baseline",
+                "ms": 87.869666
+              },
+              {
+                "variant": "indexed",
+                "ms": 54.099583
+              },
+              {
+                "variant": "indexed",
+                "ms": 50.382333
+              },
+              {
+                "variant": "baseline",
+                "ms": 86.498292
+              },
+              {
+                "variant": "baseline",
+                "ms": 94.560625
+              },
+              {
+                "variant": "indexed",
+                "ms": 52.787083
+              },
+              {
+                "variant": "indexed",
+                "ms": 51.242625
+              },
+              {
+                "variant": "baseline",
+                "ms": 87.841166
+              },
+              {
+                "variant": "baseline",
+                "ms": 79.976042
+              },
+              {
+                "variant": "indexed",
+                "ms": 47.060917
+              },
+              {
+                "variant": "indexed",
+                "ms": 45.407959
+              },
+              {
+                "variant": "baseline",
+                "ms": 81.484583
+              },
+              {
+                "variant": "baseline",
+                "ms": 84.088916
+              },
+              {
+                "variant": "indexed",
+                "ms": 47.908542
+              },
+              {
+                "variant": "indexed",
+                "ms": 46.977208
+              },
+              {
+                "variant": "baseline",
+                "ms": 86.624
+              },
+              {
+                "variant": "baseline",
+                "ms": 88.355625
+              },
+              {
+                "variant": "indexed",
+                "ms": 51.597333
+              }
+            ],
+            [
+              {
+                "variant": "baseline",
+                "ms": 80.080583
+              },
+              {
+                "variant": "indexed",
+                "ms": 50.548333
+              },
+              {
+                "variant": "indexed",
+                "ms": 47.334
+              },
+              {
+                "variant": "baseline",
+                "ms": 80.627334
+              },
+              {
+                "variant": "baseline",
+                "ms": 85.956709
+              },
+              {
+                "variant": "indexed",
+                "ms": 50.592375
+              },
+              {
+                "variant": "indexed",
+                "ms": 46.554292
+              },
+              {
+                "variant": "baseline",
+                "ms": 80.671625
+              },
+              {
+                "variant": "baseline",
+                "ms": 84.114416
+              },
+              {
+                "variant": "indexed",
+                "ms": 52.842917
+              },
+              {
+                "variant": "indexed",
+                "ms": 47.159084
+              },
+              {
+                "variant": "baseline",
+                "ms": 81.910584
+              },
+              {
+                "variant": "baseline",
+                "ms": 86.280833
+              },
+              {
+                "variant": "indexed",
+                "ms": 50.72375
+              },
+              {
+                "variant": "indexed",
+                "ms": 45.153375
+              },
+              {
+                "variant": "baseline",
+                "ms": 76.888333
+              },
+              {
+                "variant": "baseline",
+                "ms": 90.640625
+              },
+              {
+                "variant": "indexed",
+                "ms": 52.935208
+              },
+              {
+                "variant": "indexed",
+                "ms": 46.650375
+              },
+              {
+                "variant": "baseline",
+                "ms": 88.528833
+              }
+            ]
+          ]
+        },
+        "summary": {
+          "blocks_median_ms": [
+            {
+              "baseline": 77.4996455,
+              "indexed": 44.412396
+            },
+            {
+              "baseline": 86.56114600000001,
+              "indexed": 49.1454375
+            },
+            {
+              "baseline": 83.0125,
+              "indexed": 48.9411665
+            }
+          ],
+          "between_block_drift": {
+            "baseline": 0.11692312192576426,
+            "indexed": 0.10657028051357553
+          },
+          "speedup": 1.6961692157460122
+        }
+      }
+    ]
+  },
+  "reference_16_end_to_end": {
+    "status": "passed",
+    "profile": "max-quality",
+    "seed": 42,
+    "input_images": [
+      {
+        "name": "ref-01.png",
+        "original_size_px": [
+          512,
+          512
+        ],
+        "sha256": "1da83442aa0738dd5cd9a45990256a190d542c400b2087339cb2b49786d1b776"
+      },
+      {
+        "name": "ref-02.png",
+        "original_size_px": [
+          512,
+          512
+        ],
+        "sha256": "5653b7d04357b29c89cf4e1c99013b8bacc76399dc9c36a3a45616c74622da6c"
+      },
+      {
+        "name": "ref-03.png",
+        "original_size_px": [
+          512,
+          512
+        ],
+        "sha256": "be22d85fbae01ad9f848f9ce8662758147b3f0b5346f66efbaa89a96b205ddad"
+      },
+      {
+        "name": "ref-04.png",
+        "original_size_px": [
+          512,
+          512
+        ],
+        "sha256": "74cf15ed13e11879337f2cd014f3906eac4553fde4aa894cc8fdd67f10be6ad6"
+      },
+      {
+        "name": "ref-05.png",
+        "original_size_px": [
+          512,
+          512
+        ],
+        "sha256": "4c6a9d5956f558f42adbb73be11f621ad714ccac899c2275b30f38666f999d0a"
+      },
+      {
+        "name": "ref-06.png",
+        "original_size_px": [
+          512,
+          512
+        ],
+        "sha256": "40d2c67226100f5b426b61cfce853b07dd05131968e49825a5b692f03cade306"
+      },
+      {
+        "name": "ref-07.png",
+        "original_size_px": [
+          512,
+          512
+        ],
+        "sha256": "25df460a0930347504c40e7234fdfc4ff0c20680640df31401459a17d40206dc"
+      },
+      {
+        "name": "ref-08.png",
+        "original_size_px": [
+          512,
+          512
+        ],
+        "sha256": "a1c33e95321ae0cd5619e32028cbf4d0acf823c21c2cb51e213d716bf0d252af"
+      },
+      {
+        "name": "ref-09.png",
+        "original_size_px": [
+          512,
+          512
+        ],
+        "sha256": "8386db33dffde364a67c5ddfaa81e5b25234a581d6b8058c9ccee49ced5bb2b5"
+      },
+      {
+        "name": "ref-10.png",
+        "original_size_px": [
+          512,
+          512
+        ],
+        "sha256": "5e1e1cbcf5c8b18151e1b3189177a9db542eee787924231a8eb327aad40f6158"
+      },
+      {
+        "name": "ref-11.png",
+        "original_size_px": [
+          512,
+          512
+        ],
+        "sha256": "a34c046933592a42525f76e9e9f38b33f55832605764c39f1ae80af4d24fd1c8"
+      },
+      {
+        "name": "ref-12.png",
+        "original_size_px": [
+          512,
+          512
+        ],
+        "sha256": "c89060e199e94a7c3a8e136abe27f49027bf57f1d661e769504f40521643b39f"
+      },
+      {
+        "name": "ref-13.png",
+        "original_size_px": [
+          512,
+          512
+        ],
+        "sha256": "e7660f9ec292a023959901047f0b033f37b8d172778606158fe67e368ccbc0fe"
+      },
+      {
+        "name": "ref-14.png",
+        "original_size_px": [
+          512,
+          512
+        ],
+        "sha256": "ca7fe334eee98ddfbfe5aa46d0aa672c82b525ef5c5d0daa8420cd488c63c15b"
+      },
+      {
+        "name": "ref-15.png",
+        "original_size_px": [
+          512,
+          512
+        ],
+        "sha256": "135e79e22e527f5036b50162ceb7edef04d35277fbd2fa758056558ca65065b0"
+      },
+      {
+        "name": "ref-16.png",
+        "original_size_px": [
+          512,
+          512
+        ],
+        "sha256": "0cef87fd4207a8cb438d4e22c14d181f4e579ef784269e615de59055a4782c5b"
+      }
+    ],
+    "prompt": "Create a four by four grid on white, placing the main object from each of <Picture 1> through <Picture 16> in order.",
+    "evaluation": "One real-weight A/B correctness anchor. The six sampling-step times are recorded separately from the shared modulation cache setup and will not be treated as a replicated end-to-end speed result.",
+    "runs": {
+      "baseline": {
+        "reference_count": 16,
+        "prompt_and_vision_tokens": 16534,
+        "stage_seconds": {
+          "references": 17.778060374999768,
+          "text": 31.3347278329893,
+          "dit": 536.677366709002,
+          "vae": 1.3390114170033485
+        },
+        "total_seconds": 587.1410029170074,
+        "denoise_step_seconds": [
+          87.489,
+          88.091,
+          89.044,
+          88.304,
+          89.805,
+          88.215
+        ],
+        "denoise_step_seconds_sum": 530.948,
+        "metal_allocated_gib_at_step_ends": [
+          19.71,
+          19.71,
+          19.71,
+          19.71,
+          19.71,
+          18.17
+        ],
+        "modulation_cache": "miss",
+        "modulation_setup_seconds": 4.010193,
+        "native_stage_memory": {
+          "dit": {
+            "sample_count": 263,
+            "peak_rss_bytes": 1264746496,
+            "peak_physical_footprint_bytes": 21712243040
+          },
+          "vae": {
+            "sample_count": 1,
+            "peak_rss_bytes": 1044037632,
+            "peak_physical_footprint_bytes": 1795737160
+          }
+        },
+        "png_sha256": "e2ff4e1eede9c0373b38cd21f711d7877f5634e4ab44929123b169179c678e90",
+        "png_artifact": ".build/ref16-validation/baseline.png"
+      },
+      "indexed": {
+        "reference_count": 16,
+        "prompt_and_vision_tokens": 16534,
+        "stage_seconds": {
+          "references": 17.711251375003485,
+          "text": 31.50646983300976,
+          "dit": 556.2502946669993,
+          "vae": 1.3510483330028364
+        },
+        "total_seconds": 606.8295668749925,
+        "denoise_step_seconds": [
+          93.9,
+          101.02,
+          101.016,
+          90.681,
+          84.064,
+          83.889
+        ],
+        "denoise_step_seconds_sum": 554.5699999999999,
+        "metal_allocated_gib_at_step_ends": [
+          15.93,
+          15.93,
+          15.59,
+          15.59,
+          15.59,
+          15.41
+        ],
+        "modulation_cache": "hit",
+        "modulation_setup_seconds": 0.042898,
+        "native_stage_memory": {
+          "text": {
+            "sample_count": 15,
+            "peak_rss_bytes": 2348285952,
+            "peak_physical_footprint_bytes": 9578826248
+          },
+          "dit": {
+            "sample_count": 277,
+            "peak_rss_bytes": 1277034496,
+            "peak_physical_footprint_bytes": 19701631280
+          }
+        },
+        "png_sha256": "e2ff4e1eede9c0373b38cd21f711d7877f5634e4ab44929123b169179c678e90",
+        "png_artifact": ".build/ref16-validation/indexed.png"
+      }
+    },
+    "native_binary_sha256": "4e35f88c6b2e9b2d041f6de27543cbf1d5cd181125c65ce850e4b41bbe5268cc",
+    "memory_method": "proc_pid_rusage RUSAGE_INFO_V4 lifetime peak physical footprint from each native child, polled about every two seconds",
+    "timing_isolation": {
+      "operator_abba": "Ran before the reference edit anchor with the separate 4K benchmark finished.",
+      "end_to_end_timing_valid": false,
+      "reason": "A separate native 1024x1024 DiT job was observed concurrently during the indexed DiT stage.",
+      "indexed_dit_elapsed_seconds_at_observation": 167.1,
+      "separate_dit_elapsed_seconds_at_observation": 46.9
+    },
+    "png_bitwise_equal": true,
+    "denoise_step_observed_ratio": 0.9574048361793823,
+    "dit_peak_footprint_bytes_delta": 2010611760
+  },
+  "promotion": {
+    "status": "not_promoted",
+    "reason": "The operator ABBA and correctness gates passed. Another native GPU job overlapped the indexed end-to-end run, so the end-to-end timing gate did not pass.",
+    "candidate_switch": "ONYX_DIT_INDEXED_MODULATION=1"
+  }
+}
