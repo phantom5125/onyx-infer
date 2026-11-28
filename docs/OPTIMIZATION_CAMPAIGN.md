@@ -129,6 +129,8 @@ Three interleaved teapot pairs per resolution used the H3 W4 pack, M5 Max 36 GiB
 
 The 4K DiT peak physical footprint fell in each pair by 0.43–0.70 GiB. The direction of 4K DiT timing varied across pairs. The observed physical footprint reduction determines the promotion. [Paired samples and verification](../benchmarks/results/m5-max-36gb-dit-indexed-rmsnorm-v1.json)
 
+After the AdaLN Metal gate merged, this campaign rebased onto it and decoupled the two dimensions: `ONYX_DIT_METAL_GATE` no longer forces the indexed gate, and `gate_mode` gains a `metal` value. A repeat paired campaign on that base (AB/BA/AB, same Release binary) measured 1024×1024 14.47 → 14.14 s DiT (−2.3%) and 4096×4096 197.78 → 191.32 s DiT (−3.3%), with the 4K DiT peak physical footprint 12.10 → 11.72 GiB. Latent and PNG hashes matched the v1 campaign and main at both sizes. [Rebase samples and verification](../benchmarks/results/m5-max-36gb-dit-indexed-rmsnorm-rebase-r2.json)
+
 ## Rejected experiments
 
 | Experiment | Result |

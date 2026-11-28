@@ -1,0 +1,611 @@
+{
+ "campaign": "dit-indexed-rmsnorm-rebase-r2",
+ "issue": 14,
+ "base_revision": "d525893 (main after #15)",
+ "machine": {
+  "model": "Mac17,14",
+  "chip": "Apple M5 Max",
+  "memory_bytes": 38654705664
+ },
+ "method": {
+  "native": "One image per run, W4, max-quality, seed 42, six PDD steps, warm modulation cache, VAE batch 25 (built-in), default prefetch, zero DiT cache. Same Release binary, AB/BA/AB. Timing uses the native DiT stage echo and the real launcher.",
+  "footprint": "DiT-stage lifetime rusage via /usr/bin/time -l, captured by a temporary env-gated launcher patch (ONYX_TMP_MEASURE_DIT), mirroring the v1 campaign."
+ },
+ "dispatch_controls": {
+  "1024": [
+   {
+    "sample": "control-1024-negative",
+    "arm": "negative",
+    "case": "teapot-1024",
+    "effective_dispatch": {
+     "norm_mode": "gathered",
+     "gate_mode": "gathered",
+     "metal_gate": false,
+     "indexed_modulation": false
+    },
+    "binary_sha256": "b87024b1143255132b6266d69aaf248749e329fa4dbc521cfa15e40bdcb8bc48",
+    "metallib_sha256": "3492ef99d0c58999aceff7ef98c706769530701db8862029485448c95498099a",
+    "dit_seconds": 15.012341,
+    "launcher_dit_seconds": 15.106038417026866,
+    "total_seconds": 18.828748582978733,
+    "dit_peak_footprint_bytes": 6925977784,
+    "dit_peak_rss_bytes": 1364148224,
+    "latent_sha256": "f3dba5584baa22d89d16b8400ddea049741fa098aa4130d47a20cfc66b047b03",
+    "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+    "modulation_cache": "hit",
+    "weight_cache": {
+     "budget": 0,
+     "bytes": 0,
+     "entries": 0,
+     "hits": 0,
+     "read_calls": 2646,
+     "read_bytes": 59514797120
+    },
+    "prefetch_wait_seconds": 0.00055,
+    "swap_before_bytes": 4624807362,
+    "swap_after_bytes": 4624807362,
+    "foreign_native_after": []
+   },
+   {
+    "sample": "control-1024-indexed",
+    "arm": "indexed",
+    "case": "teapot-1024",
+    "effective_dispatch": {
+     "norm_mode": "indexed",
+     "gate_mode": "gathered",
+     "metal_gate": false,
+     "indexed_modulation": false
+    },
+    "binary_sha256": "b87024b1143255132b6266d69aaf248749e329fa4dbc521cfa15e40bdcb8bc48",
+    "metallib_sha256": "3492ef99d0c58999aceff7ef98c706769530701db8862029485448c95498099a",
+    "dit_seconds": 14.044624,
+    "launcher_dit_seconds": 14.105595834029373,
+    "total_seconds": 17.865463124995586,
+    "dit_peak_footprint_bytes": 6884591848,
+    "dit_peak_rss_bytes": 1766293504,
+    "latent_sha256": "f3dba5584baa22d89d16b8400ddea049741fa098aa4130d47a20cfc66b047b03",
+    "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+    "modulation_cache": "hit",
+    "weight_cache": {
+     "budget": 0,
+     "bytes": 0,
+     "entries": 0,
+     "hits": 0,
+     "read_calls": 2646,
+     "read_bytes": 59514797120
+    },
+    "prefetch_wait_seconds": 0.000567,
+    "swap_before_bytes": 4624807362,
+    "swap_after_bytes": 4624807362,
+    "foreign_native_after": []
+   }
+  ]
+ },
+ "native": {
+  "1024": {
+   "runs": [
+    {
+     "sample": "1024-01-base",
+     "arm": "base",
+     "case": "teapot-1024",
+     "effective_dispatch": {
+      "norm_mode": "gathered",
+      "gate_mode": "gathered",
+      "metal_gate": false,
+      "indexed_modulation": false
+     },
+     "binary_sha256": "b87024b1143255132b6266d69aaf248749e329fa4dbc521cfa15e40bdcb8bc48",
+     "metallib_sha256": "3492ef99d0c58999aceff7ef98c706769530701db8862029485448c95498099a",
+     "dit_seconds": 14.310368,
+     "launcher_dit_seconds": 14.391503790975548,
+     "total_seconds": 18.225674291024916,
+     "dit_peak_footprint_bytes": 6919440664,
+     "dit_peak_rss_bytes": 1612840960,
+     "latent_sha256": "f3dba5584baa22d89d16b8400ddea049741fa098aa4130d47a20cfc66b047b03",
+     "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+     "modulation_cache": "hit",
+     "weight_cache": {
+      "budget": 0,
+      "bytes": 0,
+      "entries": 0,
+      "hits": 0,
+      "read_calls": 2646,
+      "read_bytes": 59514797120
+     },
+     "prefetch_wait_seconds": 0.000534,
+     "swap_before_bytes": 4624807362,
+     "swap_after_bytes": 4624807362,
+     "foreign_native_after": []
+    },
+    {
+     "sample": "1024-02-indexed",
+     "arm": "indexed",
+     "case": "teapot-1024",
+     "effective_dispatch": {
+      "norm_mode": "indexed",
+      "gate_mode": "gathered",
+      "metal_gate": false,
+      "indexed_modulation": false
+     },
+     "binary_sha256": "b87024b1143255132b6266d69aaf248749e329fa4dbc521cfa15e40bdcb8bc48",
+     "metallib_sha256": "3492ef99d0c58999aceff7ef98c706769530701db8862029485448c95498099a",
+     "dit_seconds": 14.135856,
+     "launcher_dit_seconds": 14.198020207986701,
+     "total_seconds": 17.9487539579859,
+     "dit_peak_footprint_bytes": 6865897608,
+     "dit_peak_rss_bytes": 1729298432,
+     "latent_sha256": "f3dba5584baa22d89d16b8400ddea049741fa098aa4130d47a20cfc66b047b03",
+     "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+     "modulation_cache": "hit",
+     "weight_cache": {
+      "budget": 0,
+      "bytes": 0,
+      "entries": 0,
+      "hits": 0,
+      "read_calls": 2646,
+      "read_bytes": 59514797120
+     },
+     "prefetch_wait_seconds": 0.000557,
+     "swap_before_bytes": 4624807362,
+     "swap_after_bytes": 4624807362,
+     "foreign_native_after": []
+    },
+    {
+     "sample": "1024-03-indexed",
+     "arm": "indexed",
+     "case": "teapot-1024",
+     "effective_dispatch": {
+      "norm_mode": "indexed",
+      "gate_mode": "gathered",
+      "metal_gate": false,
+      "indexed_modulation": false
+     },
+     "binary_sha256": "b87024b1143255132b6266d69aaf248749e329fa4dbc521cfa15e40bdcb8bc48",
+     "metallib_sha256": "3492ef99d0c58999aceff7ef98c706769530701db8862029485448c95498099a",
+     "dit_seconds": 14.154727,
+     "launcher_dit_seconds": 14.221713665989228,
+     "total_seconds": 17.992365541984327,
+     "dit_peak_footprint_bytes": 6870862200,
+     "dit_peak_rss_bytes": 1681014784,
+     "latent_sha256": "f3dba5584baa22d89d16b8400ddea049741fa098aa4130d47a20cfc66b047b03",
+     "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+     "modulation_cache": "hit",
+     "weight_cache": {
+      "budget": 0,
+      "bytes": 0,
+      "entries": 0,
+      "hits": 0,
+      "read_calls": 2646,
+      "read_bytes": 59514797120
+     },
+     "prefetch_wait_seconds": 0.000562,
+     "swap_before_bytes": 4624807362,
+     "swap_after_bytes": 4624807362,
+     "foreign_native_after": []
+    },
+    {
+     "sample": "1024-04-base",
+     "arm": "base",
+     "case": "teapot-1024",
+     "effective_dispatch": {
+      "norm_mode": "gathered",
+      "gate_mode": "gathered",
+      "metal_gate": false,
+      "indexed_modulation": false
+     },
+     "binary_sha256": "b87024b1143255132b6266d69aaf248749e329fa4dbc521cfa15e40bdcb8bc48",
+     "metallib_sha256": "3492ef99d0c58999aceff7ef98c706769530701db8862029485448c95498099a",
+     "dit_seconds": 14.471635,
+     "launcher_dit_seconds": 14.546232499997132,
+     "total_seconds": 18.454780542000663,
+     "dit_peak_footprint_bytes": 6950783232,
+     "dit_peak_rss_bytes": 1678114816,
+     "latent_sha256": "f3dba5584baa22d89d16b8400ddea049741fa098aa4130d47a20cfc66b047b03",
+     "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+     "modulation_cache": "hit",
+     "weight_cache": {
+      "budget": 0,
+      "bytes": 0,
+      "entries": 0,
+      "hits": 0,
+      "read_calls": 2646,
+      "read_bytes": 59514797120
+     },
+     "prefetch_wait_seconds": 0.000507,
+     "swap_before_bytes": 4624807362,
+     "swap_after_bytes": 4624807362,
+     "foreign_native_after": []
+    },
+    {
+     "sample": "1024-05-base",
+     "arm": "base",
+     "case": "teapot-1024",
+     "effective_dispatch": {
+      "norm_mode": "gathered",
+      "gate_mode": "gathered",
+      "metal_gate": false,
+      "indexed_modulation": false
+     },
+     "binary_sha256": "b87024b1143255132b6266d69aaf248749e329fa4dbc521cfa15e40bdcb8bc48",
+     "metallib_sha256": "3492ef99d0c58999aceff7ef98c706769530701db8862029485448c95498099a",
+     "dit_seconds": 14.73813,
+     "launcher_dit_seconds": 14.796948582981713,
+     "total_seconds": 18.557738208037335,
+     "dit_peak_footprint_bytes": 6907267376,
+     "dit_peak_rss_bytes": 1820606464,
+     "latent_sha256": "f3dba5584baa22d89d16b8400ddea049741fa098aa4130d47a20cfc66b047b03",
+     "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+     "modulation_cache": "hit",
+     "weight_cache": {
+      "budget": 0,
+      "bytes": 0,
+      "entries": 0,
+      "hits": 0,
+      "read_calls": 2646,
+      "read_bytes": 59514797120
+     },
+     "prefetch_wait_seconds": 0.000457,
+     "swap_before_bytes": 4624807362,
+     "swap_after_bytes": 4624807362,
+     "foreign_native_after": []
+    },
+    {
+     "sample": "1024-06-indexed",
+     "arm": "indexed",
+     "case": "teapot-1024",
+     "effective_dispatch": {
+      "norm_mode": "indexed",
+      "gate_mode": "gathered",
+      "metal_gate": false,
+      "indexed_modulation": false
+     },
+     "binary_sha256": "b87024b1143255132b6266d69aaf248749e329fa4dbc521cfa15e40bdcb8bc48",
+     "metallib_sha256": "3492ef99d0c58999aceff7ef98c706769530701db8862029485448c95498099a",
+     "dit_seconds": 13.954262,
+     "launcher_dit_seconds": 14.016015250002965,
+     "total_seconds": 17.774503708002158,
+     "dit_peak_footprint_bytes": 6861277536,
+     "dit_peak_rss_bytes": 1738506240,
+     "latent_sha256": "f3dba5584baa22d89d16b8400ddea049741fa098aa4130d47a20cfc66b047b03",
+     "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+     "modulation_cache": "hit",
+     "weight_cache": {
+      "budget": 0,
+      "bytes": 0,
+      "entries": 0,
+      "hits": 0,
+      "read_calls": 2646,
+      "read_bytes": 59514797120
+     },
+     "prefetch_wait_seconds": 0.000524,
+     "swap_before_bytes": 4624807362,
+     "swap_after_bytes": 4624807362,
+     "foreign_native_after": []
+    }
+   ],
+   "order": [
+    "base",
+    "indexed",
+    "indexed",
+    "base",
+    "base",
+    "indexed"
+   ]
+  },
+  "4096": {
+   "runs": [
+    {
+     "sample": "4096-01-base",
+     "arm": "base",
+     "case": "teapot-4096",
+     "effective_dispatch": {
+      "norm_mode": "gathered",
+      "gate_mode": "gathered",
+      "metal_gate": false,
+      "indexed_modulation": false
+     },
+     "binary_sha256": "b87024b1143255132b6266d69aaf248749e329fa4dbc521cfa15e40bdcb8bc48",
+     "metallib_sha256": "3492ef99d0c58999aceff7ef98c706769530701db8862029485448c95498099a",
+     "dit_seconds": 198.374645,
+     "launcher_dit_seconds": 198.55989379197126,
+     "total_seconds": 217.8172837080201,
+     "dit_peak_footprint_bytes": 12987467816,
+     "dit_peak_rss_bytes": 1719042048,
+     "latent_sha256": "2a9b84fd0a9e20767fb30a5f17e0efa41ebb0671aea7391391025189ca1838fd",
+     "png_sha256": "c68d8fbe635ade8748f2be69477bc5d26f5493a5322d9052428e07d3e59d0c43",
+     "modulation_cache": "hit",
+     "weight_cache": {
+      "budget": 0,
+      "bytes": 0,
+      "entries": 0,
+      "hits": 0,
+      "read_calls": 2646,
+      "read_bytes": 59514797120
+     },
+     "prefetch_wait_seconds": 0.00088,
+     "swap_before_bytes": 4624807362,
+     "swap_after_bytes": 4624807362,
+     "foreign_native_after": []
+    },
+    {
+     "sample": "4096-02-indexed",
+     "arm": "indexed",
+     "case": "teapot-4096",
+     "effective_dispatch": {
+      "norm_mode": "indexed",
+      "gate_mode": "gathered",
+      "metal_gate": false,
+      "indexed_modulation": false
+     },
+     "binary_sha256": "b87024b1143255132b6266d69aaf248749e329fa4dbc521cfa15e40bdcb8bc48",
+     "metallib_sha256": "3492ef99d0c58999aceff7ef98c706769530701db8862029485448c95498099a",
+     "dit_seconds": 191.682018,
+     "launcher_dit_seconds": 191.79043341701617,
+     "total_seconds": 210.8573792920215,
+     "dit_peak_footprint_bytes": 12584618048,
+     "dit_peak_rss_bytes": 1792196608,
+     "latent_sha256": "2a9b84fd0a9e20767fb30a5f17e0efa41ebb0671aea7391391025189ca1838fd",
+     "png_sha256": "c68d8fbe635ade8748f2be69477bc5d26f5493a5322d9052428e07d3e59d0c43",
+     "modulation_cache": "hit",
+     "weight_cache": {
+      "budget": 0,
+      "bytes": 0,
+      "entries": 0,
+      "hits": 0,
+      "read_calls": 2646,
+      "read_bytes": 59514797120
+     },
+     "prefetch_wait_seconds": 0.00103,
+     "swap_before_bytes": 4624807362,
+     "swap_after_bytes": 4624807362,
+     "foreign_native_after": []
+    },
+    {
+     "sample": "4096-03-indexed",
+     "arm": "indexed",
+     "case": "teapot-4096",
+     "effective_dispatch": {
+      "norm_mode": "indexed",
+      "gate_mode": "gathered",
+      "metal_gate": false,
+      "indexed_modulation": false
+     },
+     "binary_sha256": "b87024b1143255132b6266d69aaf248749e329fa4dbc521cfa15e40bdcb8bc48",
+     "metallib_sha256": "3492ef99d0c58999aceff7ef98c706769530701db8862029485448c95498099a",
+     "dit_seconds": 191.127955,
+     "launcher_dit_seconds": 191.2464069579728,
+     "total_seconds": 210.4567758340272,
+     "dit_peak_footprint_bytes": 12682201200,
+     "dit_peak_rss_bytes": 1720025088,
+     "latent_sha256": "2a9b84fd0a9e20767fb30a5f17e0efa41ebb0671aea7391391025189ca1838fd",
+     "png_sha256": "c68d8fbe635ade8748f2be69477bc5d26f5493a5322d9052428e07d3e59d0c43",
+     "modulation_cache": "hit",
+     "weight_cache": {
+      "budget": 0,
+      "bytes": 0,
+      "entries": 0,
+      "hits": 0,
+      "read_calls": 2646,
+      "read_bytes": 59514797120
+     },
+     "prefetch_wait_seconds": 0.00088,
+     "swap_before_bytes": 4624807362,
+     "swap_after_bytes": 4624807362,
+     "foreign_native_after": []
+    },
+    {
+     "sample": "4096-04-base",
+     "arm": "base",
+     "case": "teapot-4096",
+     "effective_dispatch": {
+      "norm_mode": "gathered",
+      "gate_mode": "gathered",
+      "metal_gate": false,
+      "indexed_modulation": false
+     },
+     "binary_sha256": "b87024b1143255132b6266d69aaf248749e329fa4dbc521cfa15e40bdcb8bc48",
+     "metallib_sha256": "3492ef99d0c58999aceff7ef98c706769530701db8862029485448c95498099a",
+     "dit_seconds": 197.458269,
+     "launcher_dit_seconds": 197.60972566704731,
+     "total_seconds": 216.68592187500326,
+     "dit_peak_footprint_bytes": 13052217408,
+     "dit_peak_rss_bytes": 1673838592,
+     "latent_sha256": "2a9b84fd0a9e20767fb30a5f17e0efa41ebb0671aea7391391025189ca1838fd",
+     "png_sha256": "c68d8fbe635ade8748f2be69477bc5d26f5493a5322d9052428e07d3e59d0c43",
+     "modulation_cache": "hit",
+     "weight_cache": {
+      "budget": 0,
+      "bytes": 0,
+      "entries": 0,
+      "hits": 0,
+      "read_calls": 2646,
+      "read_bytes": 59514797120
+     },
+     "prefetch_wait_seconds": 0.00103,
+     "swap_before_bytes": 4624807362,
+     "swap_after_bytes": 4374071869,
+     "foreign_native_after": []
+    },
+    {
+     "sample": "4096-05-base",
+     "arm": "base",
+     "case": "teapot-4096",
+     "effective_dispatch": {
+      "norm_mode": "gathered",
+      "gate_mode": "gathered",
+      "metal_gate": false,
+      "indexed_modulation": false
+     },
+     "binary_sha256": "b87024b1143255132b6266d69aaf248749e329fa4dbc521cfa15e40bdcb8bc48",
+     "metallib_sha256": "3492ef99d0c58999aceff7ef98c706769530701db8862029485448c95498099a",
+     "dit_seconds": 197.779763,
+     "launcher_dit_seconds": 197.93381491600303,
+     "total_seconds": 217.10991099994862,
+     "dit_peak_footprint_bytes": 12960761944,
+     "dit_peak_rss_bytes": 1664008192,
+     "latent_sha256": "2a9b84fd0a9e20767fb30a5f17e0efa41ebb0671aea7391391025189ca1838fd",
+     "png_sha256": "c68d8fbe635ade8748f2be69477bc5d26f5493a5322d9052428e07d3e59d0c43",
+     "modulation_cache": "hit",
+     "weight_cache": {
+      "budget": 0,
+      "bytes": 0,
+      "entries": 0,
+      "hits": 0,
+      "read_calls": 2646,
+      "read_bytes": 59514797120
+     },
+     "prefetch_wait_seconds": 0.001012,
+     "swap_before_bytes": 4374071869,
+     "swap_after_bytes": 4374071869,
+     "foreign_native_after": []
+    },
+    {
+     "sample": "4096-06-indexed",
+     "arm": "indexed",
+     "case": "teapot-4096",
+     "effective_dispatch": {
+      "norm_mode": "indexed",
+      "gate_mode": "gathered",
+      "metal_gate": false,
+      "indexed_modulation": false
+     },
+     "binary_sha256": "b87024b1143255132b6266d69aaf248749e329fa4dbc521cfa15e40bdcb8bc48",
+     "metallib_sha256": "3492ef99d0c58999aceff7ef98c706769530701db8862029485448c95498099a",
+     "dit_seconds": 191.323498,
+     "launcher_dit_seconds": 191.43468870903598,
+     "total_seconds": 210.7042169580236,
+     "dit_peak_footprint_bytes": 12443961432,
+     "dit_peak_rss_bytes": 1768210432,
+     "latent_sha256": "2a9b84fd0a9e20767fb30a5f17e0efa41ebb0671aea7391391025189ca1838fd",
+     "png_sha256": "c68d8fbe635ade8748f2be69477bc5d26f5493a5322d9052428e07d3e59d0c43",
+     "modulation_cache": "hit",
+     "weight_cache": {
+      "budget": 0,
+      "bytes": 0,
+      "entries": 0,
+      "hits": 0,
+      "read_calls": 2646,
+      "read_bytes": 59514797120
+     },
+     "prefetch_wait_seconds": 0.000997,
+     "swap_before_bytes": 4374071869,
+     "swap_after_bytes": 4374071869,
+     "foreign_native_after": []
+    }
+   ],
+   "order": [
+    "base",
+    "indexed",
+    "indexed",
+    "base",
+    "base",
+    "indexed"
+   ]
+  }
+ },
+ "summary": {
+  "1024": {
+   "base": {
+    "dit_seconds_median": 14.471635,
+    "total_seconds_median": 18.454780542000663,
+    "dit_peak_footprint_bytes_median": 6919440664,
+    "dit_peak_rss_bytes_median": 1678114816,
+    "dit_seconds_samples": [
+     14.310368,
+     14.471635,
+     14.73813
+    ],
+    "footprint_samples": [
+     6919440664,
+     6950783232,
+     6907267376
+    ],
+    "total_seconds_samples": [
+     18.225674291024916,
+     18.454780542000663,
+     18.557738208037335
+    ]
+   },
+   "indexed": {
+    "dit_seconds_median": 14.135856,
+    "total_seconds_median": 17.9487539579859,
+    "dit_peak_footprint_bytes_median": 6865897608,
+    "dit_peak_rss_bytes_median": 1729298432,
+    "dit_seconds_samples": [
+     14.135856,
+     14.154727,
+     13.954262
+    ],
+    "footprint_samples": [
+     6865897608,
+     6870862200,
+     6861277536
+    ],
+    "total_seconds_samples": [
+     17.9487539579859,
+     17.992365541984327,
+     17.774503708002158
+    ]
+   },
+   "outputs_identical_across_arms": true,
+   "latent_sha256": [
+    "f3dba5584baa22d89d16b8400ddea049741fa098aa4130d47a20cfc66b047b03"
+   ],
+   "png_sha256": [
+    "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac"
+   ]
+  },
+  "4096": {
+   "base": {
+    "dit_seconds_median": 197.779763,
+    "total_seconds_median": 217.10991099994862,
+    "dit_peak_footprint_bytes_median": 12987467816,
+    "dit_peak_rss_bytes_median": 1673838592,
+    "dit_seconds_samples": [
+     198.374645,
+     197.458269,
+     197.779763
+    ],
+    "footprint_samples": [
+     12987467816,
+     13052217408,
+     12960761944
+    ],
+    "total_seconds_samples": [
+     217.8172837080201,
+     216.68592187500326,
+     217.10991099994862
+    ]
+   },
+   "indexed": {
+    "dit_seconds_median": 191.323498,
+    "total_seconds_median": 210.7042169580236,
+    "dit_peak_footprint_bytes_median": 12584618048,
+    "dit_peak_rss_bytes_median": 1768210432,
+    "dit_seconds_samples": [
+     191.682018,
+     191.127955,
+     191.323498
+    ],
+    "footprint_samples": [
+     12584618048,
+     12682201200,
+     12443961432
+    ],
+    "total_seconds_samples": [
+     210.8573792920215,
+     210.4567758340272,
+     210.7042169580236
+    ]
+   },
+   "outputs_identical_across_arms": true,
+   "latent_sha256": [
+    "2a9b84fd0a9e20767fb30a5f17e0efa41ebb0671aea7391391025189ca1838fd"
+   ],
+   "png_sha256": [
+    "c68d8fbe635ade8748f2be69477bc5d26f5493a5322d9052428e07d3e59d0c43"
+   ]
+  }
+ },
+ "candidate_revision": "e2ba168 (rebased PR #16 on main after #15)"
+}
