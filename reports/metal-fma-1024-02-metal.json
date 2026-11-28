@@ -1,0 +1,77 @@
+{
+  "started_at": "2026-11-28T07:41:18.134966+00:00",
+  "build": "gate-final",
+  "binary_sha256": "dfb5f7ee4ae9930b1fde861a25e1f2f1c40e88b7cf4bafa014617f0b08c98281",
+  "metallib_sha256": "3492ef99d0c58999aceff7ef98c706769530701db8862029485448c95498099a",
+  "metal_gate_mode": "1",
+  "profiled": false,
+  "request_resolution": 1024,
+  "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+  "stage_measurements": {
+    "text": {
+      "wall_seconds": 2.215432624972891,
+      "peak_footprint_bytes": 3923593208,
+      "peak_rss_bytes": 1699020800
+    },
+    "dit": {
+      "wall_seconds": 12.420839875005186,
+      "peak_footprint_bytes": 6868617328,
+      "peak_rss_bytes": 1820868608,
+      "latent_sha256": "f3dba5584baa22d89d16b8400ddea049741fa098aa4130d47a20cfc66b047b03"
+    },
+    "vae": {
+      "wall_seconds": 1.3699507500277832,
+      "peak_footprint_bytes": 2468022384,
+      "peak_rss_bytes": 1699823616
+    }
+  },
+  "swap_before_bytes": 5718802432,
+  "swap_after_bytes": 5718802432,
+  "foreign_native_during": [],
+  "foreign_native_after": [],
+  "backend": "onyx-native-cpp-metal",
+  "profile": "max-quality",
+  "profile_knobs": {
+    "text_weights": "stream",
+    "dit_weights": "stream",
+    "vae_weights": "resident",
+    "vae_tiling": "tile16",
+    "dit_block_cache": "none",
+    "weight_prefetch": "next",
+    "q4_kernel": "mpsgraph"
+  },
+  "profile_registry_sha256": "a006d9a45081b1ca9319bb0d4453699ec1002de865a4cd2a1e55fa9e2942e7c9",
+  "dit_weight_cache_bytes": 0,
+  "weight_prefetch": {
+    "text": true,
+    "dit": true
+  },
+  "modulation_cache": {
+    "directory": "<checkout>/.build/adaln-evidence/modulation/dfb5f7ee4ae9930b1fde861a25e1f2f1c40e88b7cf4bafa014617f0b08c98281",
+    "status": "hit",
+    "pruned": []
+  },
+  "token_count": 69,
+  "reference_count": 0,
+  "stage_seconds": {
+    "text": 2.215461415995378,
+    "dit": 12.42109941598028,
+    "vae": 1.369987583020702
+  },
+  "stage_logs": {
+    "text": {
+      "stdout": "{\"stage\":\"text\",\"profile\":\"max-quality\",\"tokens\":69,\"seconds\":2.179441,\"output\":\"/var/folders/dl/z74jz9m52vn_js10hs9yyls80000gn/T/onyx-native-sqo0ozwf/embedding.safetensors\",\"vision_rows\":0,\"prefetch_weights\":true,\"prefetch_wait_seconds\":0.452049}\n",
+      "stderr": "Failed to import MPS module\nnative text layer 10/50\nnative text layer 20/50\nnative text layer 30/50\nnative text layer 40/50\nnative text layer 50/50\n        2.21 real         0.16 user         2.06 sys\n          1699020800  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n              840312  page reclaims\n                  18  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                 740  voluntary context switches\n               25318  involuntary context switches\n         18066603576  instructions retired\n          9603900546  cycles elapsed\n          3923593208  peak memory footprint\n"
+    },
+    "dit": {
+      "stdout": "{\"stage\":\"dit\",\"profile\":\"max-quality\",\"steps\":6,\"seconds\":12.368841,\"output\":\"/var/folders/dl/z74jz9m52vn_js10hs9yyls80000gn/T/onyx-native-sqo0ozwf/latent.safetensors\",\"reference_images\":0,\"indexed_modulation\":true,\"metal_gate\":true,\"modulation_cache\":\"hit\",\"modulation_seconds\":0.038492,\"lazy_modulation\":false,\"prefetch_weights\":true,\"prefetch_wait_seconds\":0.000389,\"weight_cache\":{\"budget\":0,\"bytes\":0,\"entries\":0,\"hits\":0,\"read_calls\":2646,\"read_bytes\":59514797120}}\n",
+      "stderr": "Failed to import MPS module\nFailed to import MPS module\nnative DiT step 1/6, 2.207 s, Metal allocated 8.06 GiB\nnative DiT step 2/6, 1.971 s, Metal allocated 8.06 GiB\nnative DiT step 3/6, 1.973 s, Metal allocated 8.06 GiB\nnative DiT step 4/6, 1.973 s, Metal allocated 8.06 GiB\nnative DiT step 5/6, 1.977 s, Metal allocated 8.06 GiB\nnative DiT step 6/6, 1.977 s, Metal allocated 7.88 GiB\n       12.41 real         0.55 user        10.53 sys\n          1820868608  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n             3644730  page reclaims\n                3586  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                 438  voluntary context switches\n               41923  involuntary context switches\n         73804714171  instructions retired\n         40980611852  cycles elapsed\n          6868617328  peak memory footprint\n"
+    },
+    "vae": {
+      "stdout": "{\"stage\":\"vae\",\"profile\":\"max-quality\",\"weights\":\"resident\",\"seconds\":1.344620,\"output\":\"/var/folders/dl/z74jz9m52vn_js10hs9yyls80000gn/T/onyx-native-sqo0ozwf/image.png\",\"tiles\":25,\"decode_batch\":25}\n",
+      "stderr": "Failed to import MPS module\n        1.36 real         0.13 user         0.51 sys\n          1699823616  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n              104109  page reclaims\n                  28  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                 151  voluntary context switches\n                3895  involuntary context switches\n          7960104311  instructions retired\n          2818523938  cycles elapsed\n          2468022384  peak memory footprint\n"
+    }
+  },
+  "total_seconds": 16.008789209008683,
+  "arm": "metal"
+}

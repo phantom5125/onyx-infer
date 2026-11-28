@@ -1,0 +1,120 @@
+{
+  "protocol": "onyx.ci.v1",
+  "suite": "h3",
+  "label": "pr-indexed-rmsnorm-1024",
+  "status": "pass",
+  "reason": null,
+  "started_at": "2026-11-28T07:45:12.900097+00:00",
+  "finished_at": "2026-11-28T07:45:33.518054+00:00",
+  "duration_ns": 20617609750,
+  "git": {
+    "revision": "3983d90b31c01f2553fa67762013c9f20a7ae4bc",
+    "dirty": false
+  },
+  "target": {
+    "target_id": "mac17-14-m5-max-36gb",
+    "chip": "Apple M5 Max",
+    "physical_memory_bytes": 38654705664,
+    "metal": "Metal 4",
+    "metal_compiler_version": "32023.921 (metalfe-32023.921.6)"
+  },
+  "checks": [
+    {
+      "name": "native-generation",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "benchmarks/run_native.py",
+        "--label",
+        "pr-indexed-rmsnorm-1024",
+        "--runs",
+        "1",
+        "--case",
+        "<checkout>/benchmarks/requests/teapot-1024.json",
+        "--plan-id",
+        "pr-indexed-rmsnorm-1024",
+        "--target",
+        "<checkout>/config/targets/m5-max-36gb.json"
+      ],
+      "status": "pass",
+      "returncode": 0,
+      "duration_ns": 20594323000,
+      "log_tail": "{\n  \"run_id\": \"22073103-8671-40b1-ad72-f3e9eb8e3072\",\n  \"return_code\": 0,\n  \"seconds\": 20.433181875,\n  \"peak_bytes\": 2001797120,\n  \"output\": \"<checkout>/artifacts/benchmarks/onyx-native-h3/h3-teapot-1024-seed42-v1/22073103-8671-40b1-ad72-f3e9eb8e3072/output.png\",\n  \"output_sha256\": \"6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac\",\n  \"run_record\": \"<checkout>/artifacts/benchmarks/onyx-native-h3/h3-teapot-1024-seed42-v1/22073103-8671-40b1-ad72-f3e9eb8e3072/run.pb\",\n  \"error\": null\n}\n{\n  \"label\": \"pr-indexed-rmsnorm-1024\",\n  \"plan_id\": \"pr-indexed-rmsnorm-1024\",\n  \"seconds_median\": 20.433181875,\n  \"peak_bytes_max\": 2001797120,\n  \"all_outputs_identical\": true\n}\n"
+    }
+  ],
+  "details": {
+    "native": {
+      "label": "pr-indexed-rmsnorm-1024",
+      "plan_id": "pr-indexed-rmsnorm-1024",
+      "runs": [
+        {
+          "run_id": "22073103-8671-40b1-ad72-f3e9eb8e3072",
+          "return_code": 0,
+          "seconds": 20.433181875,
+          "peak_bytes": 2001797120,
+          "output": "<checkout>/artifacts/benchmarks/onyx-native-h3/h3-teapot-1024-seed42-v1/22073103-8671-40b1-ad72-f3e9eb8e3072/output.png",
+          "output_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+          "run_record": "<checkout>/artifacts/benchmarks/onyx-native-h3/h3-teapot-1024-seed42-v1/22073103-8671-40b1-ad72-f3e9eb8e3072/run.pb",
+          "error": null,
+          "stage_seconds": {
+            "text": 2.167853917,
+            "dit": 16.707519,
+            "vae": 1.372576417
+          },
+          "backend": {
+            "backend": "onyx-native-cpp-metal",
+            "profile": "max-quality",
+            "profile_knobs": {
+              "text_weights": "stream",
+              "dit_weights": "stream",
+              "vae_weights": "resident",
+              "vae_tiling": "tile16",
+              "dit_block_cache": "none",
+              "weight_prefetch": "next",
+              "q4_kernel": "mpsgraph"
+            },
+            "profile_registry_sha256": "a006d9a45081b1ca9319bb0d4453699ec1002de865a4cd2a1e55fa9e2942e7c9",
+            "dit_weight_cache_bytes": 0,
+            "weight_prefetch": {
+              "text": true,
+              "dit": true
+            },
+            "modulation_cache": {
+              "directory": "<home>/Library/Caches/onyx-infer/modulation",
+              "status": "miss",
+              "pruned": [
+                "13f6f87f5e063003648f3375161598d874b50617eeb267340afef4a46ba4a12f.adaln"
+              ]
+            },
+            "token_count": 69,
+            "reference_count": 0,
+            "stage_seconds": {
+              "text": 2.1678539169952273,
+              "dit": 16.70751899998868,
+              "vae": 1.372576417052187
+            },
+            "stage_logs": {
+              "text": {
+                "stdout": "{\"stage\":\"text\",\"profile\":\"max-quality\",\"tokens\":69,\"seconds\":2.140669,\"output\":\"/var/folders/dl/z74jz9m52vn_js10hs9yyls80000gn/T/onyx-native-aw1n6x_6/embedding.safetensors\",\"vision_rows\":0,\"prefetch_weights\":true,\"prefetch_wait_seconds\":0.485355}\n",
+                "stderr": "Failed to import MPS module\nnative text layer 10/50\nnative text layer 20/50\nnative text layer 30/50\nnative text layer 40/50\nnative text layer 50/50\n"
+              },
+              "dit": {
+                "stdout": "{\"stage\":\"dit\",\"profile\":\"max-quality\",\"steps\":6,\"seconds\":16.656254,\"output\":\"/var/folders/dl/z74jz9m52vn_js10hs9yyls80000gn/T/onyx-native-aw1n6x_6/latent.safetensors\",\"reference_images\":0,\"indexed_modulation\":false,\"norm_mode\":\"indexed\",\"gate_mode\":\"gathered\",\"modulation_cache\":\"miss\",\"modulation_seconds\":3.805851,\"lazy_modulation\":false,\"prefetch_weights\":true,\"prefetch_wait_seconds\":3.257734,\"weight_cache\":{\"budget\":0,\"bytes\":0,\"entries\":0,\"hits\":0,\"read_calls\":2752,\"read_bytes\":85656876608}}\n",
+                "stderr": "Failed to import MPS module\nFailed to import MPS module\nnative DiT step 1/6, 2.253 s, Metal allocated 7.64 GiB\nnative DiT step 2/6, 2.107 s, Metal allocated 7.64 GiB\nnative DiT step 3/6, 2.045 s, Metal allocated 7.64 GiB\nnative DiT step 4/6, 2.056 s, Metal allocated 7.64 GiB\nnative DiT step 5/6, 2.060 s, Metal allocated 7.64 GiB\nnative DiT step 6/6, 2.063 s, Metal allocated 7.46 GiB\n"
+              },
+              "vae": {
+                "stdout": "{\"stage\":\"vae\",\"profile\":\"max-quality\",\"weights\":\"resident\",\"seconds\":1.345755,\"output\":\"/var/folders/dl/z74jz9m52vn_js10hs9yyls80000gn/T/onyx-native-aw1n6x_6/image.png\",\"tiles\":25,\"decode_batch\":25}\n",
+                "stderr": "Failed to import MPS module\n"
+              }
+            },
+            "total_seconds": 20.264524541969877
+          }
+        }
+      ],
+      "seconds_median": 20.433181875,
+      "peak_bytes_max": 2001797120,
+      "all_outputs_identical": true
+    }
+  }
+}

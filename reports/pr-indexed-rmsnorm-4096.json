@@ -1,0 +1,118 @@
+{
+  "protocol": "onyx.ci.v1",
+  "suite": "h3",
+  "label": "pr-indexed-rmsnorm-4096",
+  "status": "pass",
+  "reason": null,
+  "started_at": "2026-11-28T07:45:33.560070+00:00",
+  "finished_at": "2026-11-28T07:48:55.566066+00:00",
+  "duration_ns": 202004548667,
+  "git": {
+    "revision": "3983d90b31c01f2553fa67762013c9f20a7ae4bc",
+    "dirty": false
+  },
+  "target": {
+    "target_id": "mac17-14-m5-max-36gb",
+    "chip": "Apple M5 Max",
+    "physical_memory_bytes": 38654705664,
+    "metal": "Metal 4",
+    "metal_compiler_version": "32023.921 (metalfe-32023.921.6)"
+  },
+  "checks": [
+    {
+      "name": "native-generation",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "benchmarks/run_native.py",
+        "--label",
+        "pr-indexed-rmsnorm-4096",
+        "--runs",
+        "1",
+        "--case",
+        "<checkout>/benchmarks/requests/teapot-4096.json",
+        "--plan-id",
+        "pr-indexed-rmsnorm-4096",
+        "--target",
+        "<checkout>/config/targets/m5-max-36gb.json"
+      ],
+      "status": "pass",
+      "returncode": 0,
+      "duration_ns": 201977114917,
+      "log_tail": "{\n  \"run_id\": \"bee8c1f7-369b-41e9-945a-03d8e460f159\",\n  \"return_code\": 0,\n  \"seconds\": 201.816877333,\n  \"peak_bytes\": 1967915008,\n  \"output\": \"<checkout>/artifacts/benchmarks/onyx-native-h3/h3-teapot-4096-seed42-v1/bee8c1f7-369b-41e9-945a-03d8e460f159/output.png\",\n  \"output_sha256\": \"c68d8fbe635ade8748f2be69477bc5d26f5493a5322d9052428e07d3e59d0c43\",\n  \"run_record\": \"<checkout>/artifacts/benchmarks/onyx-native-h3/h3-teapot-4096-seed42-v1/bee8c1f7-369b-41e9-945a-03d8e460f159/run.pb\",\n  \"error\": null\n}\n{\n  \"label\": \"pr-indexed-rmsnorm-4096\",\n  \"plan_id\": \"pr-indexed-rmsnorm-4096\",\n  \"seconds_median\": 201.816877333,\n  \"peak_bytes_max\": 1967915008,\n  \"all_outputs_identical\": true\n}\n"
+    }
+  ],
+  "details": {
+    "native": {
+      "label": "pr-indexed-rmsnorm-4096",
+      "plan_id": "pr-indexed-rmsnorm-4096",
+      "runs": [
+        {
+          "run_id": "bee8c1f7-369b-41e9-945a-03d8e460f159",
+          "return_code": 0,
+          "seconds": 201.816877333,
+          "peak_bytes": 1967915008,
+          "output": "<checkout>/artifacts/benchmarks/onyx-native-h3/h3-teapot-4096-seed42-v1/bee8c1f7-369b-41e9-945a-03d8e460f159/output.png",
+          "output_sha256": "c68d8fbe635ade8748f2be69477bc5d26f5493a5322d9052428e07d3e59d0c43",
+          "run_record": "<checkout>/artifacts/benchmarks/onyx-native-h3/h3-teapot-4096-seed42-v1/bee8c1f7-369b-41e9-945a-03d8e460f159/run.pb",
+          "error": null,
+          "stage_seconds": {
+            "text": 2.20968325,
+            "dit": 183.193941,
+            "vae": 16.252953042
+          },
+          "backend": {
+            "backend": "onyx-native-cpp-metal",
+            "profile": "max-quality",
+            "profile_knobs": {
+              "text_weights": "stream",
+              "dit_weights": "stream",
+              "vae_weights": "resident",
+              "vae_tiling": "tile16",
+              "dit_block_cache": "none",
+              "weight_prefetch": "next",
+              "q4_kernel": "mpsgraph"
+            },
+            "profile_registry_sha256": "a006d9a45081b1ca9319bb0d4453699ec1002de865a4cd2a1e55fa9e2942e7c9",
+            "dit_weight_cache_bytes": 0,
+            "weight_prefetch": {
+              "text": true,
+              "dit": true
+            },
+            "modulation_cache": {
+              "directory": "<home>/Library/Caches/onyx-infer/modulation",
+              "status": "hit",
+              "pruned": []
+            },
+            "token_count": 69,
+            "reference_count": 0,
+            "stage_seconds": {
+              "text": 2.209683249995578,
+              "dit": 183.1939409999759,
+              "vae": 16.252953041985165
+            },
+            "stage_logs": {
+              "text": {
+                "stdout": "{\"stage\":\"text\",\"profile\":\"max-quality\",\"tokens\":69,\"seconds\":2.181429,\"output\":\"/var/folders/dl/z74jz9m52vn_js10hs9yyls80000gn/T/onyx-native-yox7zhdf/embedding.safetensors\",\"vision_rows\":0,\"prefetch_weights\":true,\"prefetch_wait_seconds\":0.500076}\n",
+                "stderr": "Failed to import MPS module\nnative text layer 10/50\nnative text layer 20/50\nnative text layer 30/50\nnative text layer 40/50\nnative text layer 50/50\n"
+              },
+              "dit": {
+                "stdout": "{\"stage\":\"dit\",\"profile\":\"max-quality\",\"steps\":6,\"seconds\":183.132344,\"output\":\"/var/folders/dl/z74jz9m52vn_js10hs9yyls80000gn/T/onyx-native-yox7zhdf/latent.safetensors\",\"reference_images\":0,\"indexed_modulation\":false,\"norm_mode\":\"indexed\",\"gate_mode\":\"gathered\",\"modulation_cache\":\"hit\",\"modulation_seconds\":0.039855,\"lazy_modulation\":false,\"prefetch_weights\":true,\"prefetch_wait_seconds\":0.000740,\"weight_cache\":{\"budget\":0,\"bytes\":0,\"entries\":0,\"hits\":0,\"read_calls\":2646,\"read_bytes\":59514797120}}\n",
+                "stderr": "Failed to import MPS module\nFailed to import MPS module\nnative DiT step 1/6, 30.944 s, Metal allocated 11.80 GiB\nnative DiT step 2/6, 30.360 s, Metal allocated 11.80 GiB\nnative DiT step 3/6, 30.425 s, Metal allocated 11.14 GiB\nnative DiT step 4/6, 30.319 s, Metal allocated 11.14 GiB\nnative DiT step 5/6, 30.364 s, Metal allocated 11.14 GiB\nnative DiT step 6/6, 30.403 s, Metal allocated 10.96 GiB\n"
+              },
+              "vae": {
+                "stdout": "{\"stage\":\"vae\",\"profile\":\"max-quality\",\"weights\":\"resident\",\"seconds\":16.225767,\"output\":\"/var/folders/dl/z74jz9m52vn_js10hs9yyls80000gn/T/onyx-native-yox7zhdf/image.png\",\"tiles\":441,\"decode_batch\":25}\n",
+                "stderr": "Failed to import MPS module\nFailed to import MPS module\n"
+              }
+            },
+            "total_seconds": 201.6715787500143
+          }
+        }
+      ],
+      "seconds_median": 201.816877333,
+      "peak_bytes_max": 1967915008,
+      "all_outputs_identical": true
+    }
+  }
+}
