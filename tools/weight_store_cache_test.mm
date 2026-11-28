@@ -100,6 +100,25 @@ int main(int argc, char** argv) {
         }
       }
 
+      const auto names = streaming.names();
+      const auto compare_shared = [&](uint64_t shared_budget, bool expect_resident) {
+        onyx::WeightStore shared(pack, false, shared_budget);
+        shared.plan_shared_cache({names}, {});
+        for (int pass = 0; pass < 2; ++pass) {
+          shared.prefetch("", names);
+          for (const auto& name : names) {
+            if (sha256_hex(shared.tensor(name)) != streaming_hashes.at(name)) return false;
+            if (shared.dtype(name).starts_with("Q4") &&
+                sha256_hex(shared.scale(name)) != pipeline_hashes.at(name + "/scale")) return false;
+          }
+        }
+        shared.finish_prefetch();
+        if (shared.peak_shared_bytes() > shared_budget) return false;
+        if (expect_resident) return shared.cache_hits() > 0 && shared.peak_prefetch_bytes() > 0;
+        return shared.cache_bytes() == 0 && shared.skipped_prefetch_requests() > 0;
+      };
+      const bool shared_ok = compare_shared(3 * streaming.bytes_read(), true) && compare_shared(1, false);
+
       onyx::WeightStore lru(pack, false, budget);
       const auto lru_hashes = read_all(lru, nullptr);
 
@@ -120,17 +139,17 @@ int main(int argc, char** argv) {
       // Oversized tensors are ineligible. A populated cache should get hits on the second pass.
       const bool hits_ok = lru.cache_entries() == 0 || lru.cache_hits() > 0;
       const bool cached_ok = resident_hashes.size() > 0;
-      const bool ok = pipeline_ok && budget_ok && hits_ok && cached_ok && profile_ok;
+      const bool ok = pipeline_ok && budget_ok && hits_ok && cached_ok && profile_ok && shared_ok;
       std::printf("{\"test\":\"onyx_weight_store_cache\",\"status\":\"%s\",\"tensors\":%zu,\"budget\":%llu,"
                   "\"cache_bytes\":%llu,\"entries\":%llu,\"hits\":%llu,\"prefetch_pipeline\":\"%s\","
-                  "\"foreground_read_profile\":\"%s\"}\n",
+                  "\"foreground_read_profile\":\"%s\",\"shared_budget\":\"%s\"}\n",
                   ok ? "pass" : "fail",
                   resident_hashes.size(),
                   static_cast<unsigned long long>(lru.cache_budget()),
                   static_cast<unsigned long long>(lru.cache_bytes()),
                   static_cast<unsigned long long>(lru.cache_entries()),
                   static_cast<unsigned long long>(lru.cache_hits()),
-                  pipeline_ok ? "pass" : "fail", profile_ok ? "pass" : "fail");
+                  pipeline_ok ? "pass" : "fail", profile_ok ? "pass" : "fail", shared_ok ? "pass" : "fail");
       return ok ? 0 : 1;
     } catch (const std::exception& error) {
       std::fprintf(stderr, "onyx-weight-store-cache-test: %s\n", error.what());

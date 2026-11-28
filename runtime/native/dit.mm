@@ -375,7 +375,10 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
                      const std::string& references_path) {
   if (width % 32 || height % 32) throw std::runtime_error("H3 dimensions must be multiples of 32");
   require_streaming_weights(options, "dit", "W4 DiT pack 37.47 GB exceeds physical memory");
-  if (options.prefetch_weights && options.cache_bytes != 0) {
+  if (options.shared_weight_budget && (!options.prefetch_weights || options.cache_bytes == 0)) {
+    throw std::runtime_error("Shared DiT weight budget requires positive --cache-bytes and prefetch");
+  }
+  if (options.prefetch_weights && options.cache_bytes != 0 && !options.shared_weight_budget) {
     throw std::runtime_error("DiT prefetch requires --cache-bytes 0");
   }
   const auto began = std::chrono::steady_clock::now();
@@ -383,6 +386,16 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
   GraphSession session(device);
   if (std::getenv("ONYX_PROFILE")) session.enable_profiling(true);
   WeightStore store(model, false, options.cache_bytes);
+  if (options.shared_weight_budget) {
+    std::vector<std::vector<std::string>> blocks(kDiTBlocks);
+    for (uint32_t layer = 0; layer < kDiTBlocks; ++layer) {
+      const std::string prefix = "blocks." + std::to_string(layer) + ".";
+      for (const auto& suffix : kBlockTensors) blocks[layer].push_back(prefix + suffix);
+    }
+    std::vector<std::string> step_boundary;
+    for (const auto& suffix : kLinearSuffixes) step_boundary.push_back("video_patch_proj" + suffix);
+    store.plan_shared_cache(blocks, step_boundary);
+  }
   const char* weight_profile_env = std::getenv("ONYX_DIT_WEIGHT_PROFILE");
   const bool profile_weight_reads = weight_profile_env && std::string_view(weight_profile_env) == "1";
   if (profile_weight_reads) store.enable_foreground_read_profiling();
@@ -530,7 +543,9 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
   std::printf("{\"stage\":\"dit\",\"profile\":\"%s\",\"steps\":6,\"seconds\":%.6f,\"output\":\"%s\","
               "\"reference_images\":%zu,\"indexed_modulation\":%s,\"modulation_cache\":\"%s\",\"modulation_seconds\":%.6f,\"lazy_modulation\":%s,"
               "\"prefetch_weights\":%s,\"prefetch_wait_seconds\":%.6f,"
-              "\"weight_cache\":{\"budget\":%llu,\"bytes\":%llu,\"entries\":%llu,\"hits\":%llu,\"read_calls\":%llu,\"read_bytes\":%llu}}\n",
+              "\"weight_cache\":{\"budget\":%llu,\"bytes\":%llu,\"entries\":%llu,\"hits\":%llu,\"read_calls\":%llu,\"read_bytes\":%llu,"
+              "\"scale_bytes\":%llu,\"shared\":%s,\"planned_resident_bytes\":%llu,\"planned_resident_blocks\":%llu,"
+              "\"peak_prefetch_bytes\":%llu,\"peak_shared_bytes\":%llu,\"skipped_prefetch_requests\":%llu}}\n",
               options.profile.c_str(), seconds, output.c_str(), reference_images, indexed_modulation ? "true" : "false",
               modulation_cache_status, modulation_seconds,
               lazy_modulation ? "true" : "false",
@@ -540,7 +555,13 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
               static_cast<unsigned long long>(store.cache_entries()),
               static_cast<unsigned long long>(store.cache_hits()),
               static_cast<unsigned long long>(store.read_calls()),
-              static_cast<unsigned long long>(store.bytes_read()));
+              static_cast<unsigned long long>(store.bytes_read()),
+              static_cast<unsigned long long>(store.scale_cache_bytes()), options.shared_weight_budget ? "true" : "false",
+              static_cast<unsigned long long>(store.shared_resident_plan_bytes()),
+              static_cast<unsigned long long>(store.shared_resident_blocks()),
+              static_cast<unsigned long long>(store.peak_prefetch_bytes()),
+              static_cast<unsigned long long>(store.peak_shared_bytes()),
+              static_cast<unsigned long long>(store.skipped_prefetch_requests()));
   if (profile_weight_reads) {
     std::printf("{\"foreground_weight_reads\":%s}\n", store.foreground_read_profile_json().c_str());
   }

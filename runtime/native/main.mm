@@ -65,6 +65,7 @@ int main(int argc, char** argv) {
           copy.cache_bytes = optional_bytes(argc, argv, "--cache-bytes");
           copy.modulation_cache_dir = argument(argc, argv, "--modulation-cache", false);
           copy.prefetch_weights = weight_prefetch(argc, argv);
+          copy.shared_weight_budget = flag(argc, argv, "--shared-weight-budget");
           return copy;
         }();
         onyx::denoise_image(

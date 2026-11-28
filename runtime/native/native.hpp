@@ -28,9 +28,10 @@ namespace onyx {
 struct StageOptions {
   std::string profile;
   std::string weights;  // "resident" | "stream"
-  uint64_t cache_bytes = 0;  // DiT LRU budget in bytes. Zero selects streaming.
+  uint64_t cache_bytes = 0;  // DiT weight budget in bytes. Zero selects streaming.
   std::string modulation_cache_dir;
   bool prefetch_weights = false;
+  bool shared_weight_budget = false;
 };
 
 StageOptions parse_stage_options(int argc, char** argv);
@@ -63,10 +64,12 @@ class WeightStore {
   Tensor embedding(const std::string& name, const std::vector<int32_t>& ids);
   std::string file_identity() const;
   // Queue background reads for the tensors stored as prefix + suffix, with the scales of a
-  // quantized tensor read right after it. Streaming only. tensor() and scale() take the
+  // quantized tensor read right after it. tensor() and scale() take the
   // results and wait for a read that is still in flight.
   void prefetch(const std::string& prefix, const std::vector<std::string>& suffixes);
   void finish_prefetch();
+  void plan_shared_cache(const std::vector<std::vector<std::string>>& blocks,
+                         const std::vector<std::string>& step_boundary);
   void enable_foreground_read_profiling() { profile_foreground_reads_ = true; }
   std::string foreground_read_profile_json() const;
   double prefetch_wait_seconds() const { return prefetch_wait_ns_ / 1e9; }
@@ -75,8 +78,14 @@ class WeightStore {
   double read_seconds() const { return read_ns_ / 1e9; }
   uint64_t cache_budget() const { return cache_budget_; }
   uint64_t cache_bytes() const { return cache_bytes_; }
-  uint64_t cache_entries() const { return lru_bytes_.size(); }
+  uint64_t cache_entries() const { return shared_cache_ ? cache_.size() : lru_bytes_.size(); }
   uint64_t cache_hits() const { return cache_hits_; }
+  uint64_t scale_cache_bytes() const { return scale_cache_bytes_; }
+  uint64_t shared_resident_plan_bytes() const { return shared_resident_plan_bytes_; }
+  uint64_t shared_resident_blocks() const { return shared_resident_blocks_; }
+  uint64_t peak_prefetch_bytes() const { return peak_prefetch_bytes_; }
+  uint64_t peak_shared_bytes() const { return peak_shared_bytes_; }
+  uint64_t skipped_prefetch_requests() const { return skipped_prefetch_requests_; }
   const std::map<std::string, uint64_t>& read_bytes_by_name() const { return read_bytes_by_name_; }
 
  private:
@@ -94,6 +103,16 @@ class WeightStore {
   std::map<std::string, Tensor> cache_;
   void admit(const std::string& name, const Tensor& value);
   void touch(const std::string& name);
+  bool shared_cache_ = false;
+  uint64_t scale_cache_bytes_ = 0;
+  uint64_t shared_resident_plan_bytes_ = 0;
+  uint64_t shared_resident_blocks_ = 0;
+  uint64_t pending_prefetch_bytes_ = 0;
+  uint64_t peak_prefetch_bytes_ = 0;
+  uint64_t peak_shared_bytes_ = 0;
+  uint64_t skipped_prefetch_requests_ = 0;
+  std::map<std::string, uint64_t> planned_residents_;
+  void retain_shared(const std::string& key, const Tensor& value, bool scales);
   uint64_t bytes_read_ = 0;
   uint64_t read_calls_ = 0;
   uint64_t read_ns_ = 0;
@@ -123,13 +142,14 @@ class WeightStore {
   std::condition_variable work_available_;
   std::condition_variable result_ready_;
   std::deque<Request> prefetch_queue_;
-  std::set<std::string> prefetch_pending_;  // Queued, in flight, or ready and not yet taken
+  std::map<std::string, uint64_t> prefetch_pending_;  // Reserved bytes until the caller takes the result.
   std::map<std::string, Tensor> prefetched_;
   std::map<std::string, std::exception_ptr> prefetch_errors_;
   size_t prefetch_active_ = 0;
   bool prefetch_stop_ = false;
   std::vector<std::thread> prefetch_readers_;
   uint64_t prefetch_wait_ns_ = 0;
+  std::pair<uint64_t, uint64_t> read_range(const std::string& name, const std::string& field) const;
   Tensor read(const std::string& name, const std::string& field, bool scales, bool background = false);
 };
 

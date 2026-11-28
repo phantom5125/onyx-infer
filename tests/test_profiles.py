@@ -261,6 +261,12 @@ def test_weight_cache_budget_replaces_dit_prefetch(capsys):
     assert exit.value.code == 2
     assert "requires a zero DiT weight-cache budget" in capsys.readouterr().err
 
+    with pytest.raises(SystemExit) as exit:
+        native_main(["--models", "fixture", "--prompt", "test", "--output", "fixture.png",
+                     "--dit-cache-mib", "0", "--dit-prefetch", "--dit-shared-budget"])
+    assert exit.value.code == 2
+    assert "requires --dit-prefetch and a positive DiT cache budget" in capsys.readouterr().err
+
 
 def test_dit_cache_bytes_resolution():
     registry = load_registry()

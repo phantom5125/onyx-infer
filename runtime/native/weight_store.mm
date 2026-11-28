@@ -205,6 +205,69 @@ std::vector<std::string> WeightStore::names() const {
   return names_;
 }
 
+void WeightStore::plan_shared_cache(const std::vector<std::vector<std::string>>& blocks,
+                                    const std::vector<std::string>& step_boundary) {
+  if (!cache_budget_ || resident_ || shared_cache_ || !cache_.empty() || !prefetch_readers_.empty()) {
+    throw std::logic_error("Shared weight budget requires a fresh streaming store with a positive budget");
+  }
+  const auto allocations = [&](const std::vector<std::string>& names) {
+    std::map<std::string, uint64_t> entries;
+    uint64_t bytes = 0;
+    for (const std::string& name : names) {
+      if (!has(name)) continue;
+      const uint64_t weight = read_range(name, "data_offsets").second;
+      if (entries.emplace(name, weight).second) bytes += weight;
+      if (dtype(name).starts_with("Q4")) {
+        const uint64_t scale = read_range(name, "scale_offsets").second;
+        if (entries.emplace(name + "/scale", scale).second) bytes += scale;
+      }
+    }
+    return std::pair{std::move(entries), bytes};
+  };
+  std::vector<std::map<std::string, uint64_t>> block_allocations;
+  uint64_t largest_block = 0;
+  for (const auto& names : blocks) {
+    auto [entries, bytes] = allocations(names);
+    largest_block = std::max(largest_block, bytes);
+    block_allocations.push_back(std::move(entries));
+  }
+  // A request can queue the next block before consuming all weights of the current one.
+  const uint64_t prefetch_room = 2 * largest_block + allocations(step_boundary).second;
+  const uint64_t resident_cap = cache_budget_ - std::min(cache_budget_, prefetch_room);
+  const auto plan = [&](const std::string& key, uint64_t bytes) {
+    if (planned_residents_.emplace(key, bytes).second) shared_resident_plan_bytes_ += bytes;
+  };
+  // Keep the small, repeatedly used scales ahead of full blocks.
+  for (const auto& entries : block_allocations) {
+    for (const auto& [key, bytes] : entries) {
+      if (key.ends_with("/scale") && bytes <= resident_cap - shared_resident_plan_bytes_) plan(key, bytes);
+    }
+  }
+  for (const auto& entries : block_allocations) {
+    uint64_t additional = 0;
+    for (const auto& [key, bytes] : entries) {
+      if (!planned_residents_.contains(key)) additional += bytes;
+    }
+    if (entries.empty() || additional > resident_cap - shared_resident_plan_bytes_) continue;
+    for (const auto& [key, bytes] : entries) plan(key, bytes);
+    ++shared_resident_blocks_;
+  }
+  shared_cache_ = true;
+}
+
+void WeightStore::retain_shared(const std::string& key, const Tensor& value, bool scales) {
+  const auto plan = planned_residents_.find(key);
+  if (plan == planned_residents_.end()) return;
+  const uint64_t bytes = value.buffer.length;
+  if (bytes != plan->second || bytes > cache_budget_ - cache_bytes_ - pending_prefetch_bytes_) {
+    throw std::logic_error("Shared weight store exceeded its resident plan");
+  }
+  cache_.emplace(key, value);
+  cache_bytes_ += bytes;
+  if (scales) scale_cache_bytes_ += bytes;
+  peak_shared_bytes_ = std::max(peak_shared_bytes_, cache_bytes_ + pending_prefetch_bytes_);
+}
+
 void WeightStore::touch(const std::string& name) {
   auto position = lru_order_.begin();
   // Move an existing block to the MRU end. The list is bounded by the number of cached blocks.
@@ -232,7 +295,10 @@ void WeightStore::admit(const std::string& name, const Tensor& value) {
 }
 
 Tensor WeightStore::tensor(const std::string& name) {
-  if (Tensor value = take_prefetched(name); value.buffer) return value;
+  if (Tensor value = take_prefetched(name); value.buffer) {
+    if (shared_cache_) retain_shared(name, value, false);
+    return value;
+  }
   if (std::getenv("ONYX_PREFETCH_TRACE")) {
     std::fprintf(stderr, "prefetch trace: synchronous read of %s\n", name.c_str());
   }
@@ -240,13 +306,15 @@ Tensor WeightStore::tensor(const std::string& name) {
   if (found != cache_.end()) {
     if (!resident_) {
       ++cache_hits_;
-      touch(name);
+      if (!shared_cache_) touch(name);
     }
     return found->second;
   }
   Tensor result = read(name, "data_offsets", false);
   if (resident_) {
     cache_[name] = result;
+  } else if (shared_cache_) {
+    retain_shared(name, result, false);
   } else if (cache_budget_ > 0) {
     admit(name, result);
   }
@@ -254,7 +322,7 @@ Tensor WeightStore::tensor(const std::string& name) {
 }
 
 void WeightStore::prefetch(const std::string& prefix, const std::vector<std::string>& suffixes) {
-  if (cache_budget_ != 0) throw std::logic_error("Weight prefetch requires streaming weights");
+  if (cache_budget_ != 0 && !shared_cache_) throw std::logic_error("Weight prefetch requires streaming weights");
   const std::lock_guard lock(prefetch_mutex_);
   // Only the listed tensors are read. A block prefix also covers weights that another phase
   // owns, and reading those would hold memory and delay the tensors in use.
@@ -266,8 +334,19 @@ void WeightStore::prefetch(const std::string& prefix, const std::vector<std::str
       if (scales && !quantized) continue;
       const std::string key = scales ? name + "/scale" : name;
       if (cache_.count(key) || prefetch_pending_.count(key)) continue;
+      uint64_t bytes = 0;
+      if (shared_cache_) {
+        bytes = read_range(name, scales ? "scale_offsets" : "data_offsets").second;
+        if (bytes > cache_budget_ - shared_resident_plan_bytes_ - pending_prefetch_bytes_) {
+          ++skipped_prefetch_requests_;
+          continue;
+        }
+        pending_prefetch_bytes_ += bytes;
+        peak_prefetch_bytes_ = std::max(peak_prefetch_bytes_, pending_prefetch_bytes_);
+        peak_shared_bytes_ = std::max(peak_shared_bytes_, cache_bytes_ + pending_prefetch_bytes_);
+      }
       prefetch_queue_.push_back({name, scales});
-      prefetch_pending_.insert(key);
+      prefetch_pending_.emplace(key, bytes);
     }
   }
   if (prefetch_queue_.empty()) return;
@@ -294,7 +373,8 @@ void WeightStore::finish_prefetch() {
 
 Tensor WeightStore::take_prefetched(const std::string& key) {
   std::unique_lock lock(prefetch_mutex_);
-  if (!prefetch_pending_.count(key)) return {};
+  const auto pending = prefetch_pending_.find(key);
+  if (pending == prefetch_pending_.end()) return {};
   const auto began = std::chrono::steady_clock::now();
   const auto ready = [&] {
     return prefetch_stop_ || prefetched_.count(key) || prefetch_errors_.count(key);
@@ -309,7 +389,8 @@ Tensor WeightStore::take_prefetched(const std::string& key) {
     ++read.blocked_calls;
     read.blocked_ns += wait_ns;
   }
-  prefetch_pending_.erase(key);
+  pending_prefetch_bytes_ -= pending->second;
+  prefetch_pending_.erase(pending);
   if (auto found = prefetched_.find(key); found != prefetched_.end()) {
     Tensor value = found->second;
     prefetched_.erase(found);
@@ -363,14 +444,19 @@ std::vector<int64_t> WeightStore::shape(const std::string& name) const {
   return shape_of(spec[@"shape"]);
 }
 
-Tensor WeightStore::read(const std::string& name, const std::string& field, bool scales, bool background) {
+std::pair<uint64_t, uint64_t> WeightStore::read_range(const std::string& name, const std::string& field) const {
   NSDictionary* spec = specs_[[NSString stringWithUTF8String:name.c_str()]];
   if (!spec) throw std::runtime_error("Unknown tensor: " + name);
   NSArray* offsets = spec[[NSString stringWithUTF8String:field.c_str()]];
   if (!offsets) throw std::runtime_error("Missing tensor offsets: " + name);
   const uint64_t begin = [offsets[0] unsignedLongLongValue];
   const uint64_t end = [offsets[1] unsignedLongLongValue];
-  const uint64_t length = end - begin;
+  if (end < begin) throw std::runtime_error("Invalid tensor offsets: " + name);
+  return {begin, end - begin};
+}
+
+Tensor WeightStore::read(const std::string& name, const std::string& field, bool scales, bool background) {
+  const auto [begin, length] = read_range(name, field);
   const auto read_start = std::chrono::steady_clock::now();
   id<MTLBuffer> buffer = [device_ newBufferWithLength:length options:resource_options];
   if (!buffer) throw std::runtime_error("Metal weight allocation failed: " + name);
@@ -404,14 +490,19 @@ Tensor WeightStore::read(const std::string& name, const std::string& field, bool
 Tensor WeightStore::scale(const std::string& name) {
   const std::string key = name + "/scale";
   auto found = cache_.find(key);
-  if (found != cache_.end()) return found->second;
-  if (Tensor value = take_prefetched(key); value.buffer) {
-    // Scales stay resident regardless of the weight budget.
-    cache_[key] = value;
-    return value;
+  if (found != cache_.end()) {
+    if (shared_cache_) ++cache_hits_;
+    return found->second;
   }
-  Tensor result = read_scale(name);
-  cache_[key] = result;
+  Tensor result = take_prefetched(key);
+  if (!result.buffer) result = read_scale(name);
+  if (shared_cache_) {
+    retain_shared(key, result, true);
+  } else {
+    // Legacy streaming and LRU retain scales outside their optional data-cache budget.
+    cache_[key] = result;
+    scale_cache_bytes_ += result.buffer.length;
+  }
   return result;
 }
 

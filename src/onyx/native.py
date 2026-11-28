@@ -91,6 +91,8 @@ def main(argv=None):
     parser.add_argument("--dit-cache-mib", type=int, help="Override the DiT weight-cache budget in MiB")
     parser.add_argument("--dit-prefetch", action=argparse.BooleanOptionalAction, default=None,
                         help="Override weight prefetch for the DiT stage only")
+    parser.add_argument("--dit-shared-budget", action="store_true",
+                        help="Share the positive DiT cache budget between static residency and prefetch")
     parser.add_argument("--prefetch-weights", action=argparse.BooleanOptionalAction, default=None,
                         help="Prefetch weights in the text and DiT stages (default: the profile's weight_prefetch knob)")
     args = parser.parse_args(argv)
@@ -118,7 +120,9 @@ def main(argv=None):
         dit_weight_cache_bytes = args.dit_cache_mib * 2**20
     dit_prefetch = resolve_dit_prefetch(text_prefetch, args.prefetch_weights, args.dit_prefetch, dit_weight_cache_bytes)
     prefetch = {"text": text_prefetch, "dit": dit_prefetch}
-    if dit_prefetch and dit_weight_cache_bytes:
+    if args.dit_shared_budget and (not dit_prefetch or not dit_weight_cache_bytes):
+        parser.error("--dit-shared-budget requires --dit-prefetch and a positive DiT cache budget")
+    if dit_prefetch and dit_weight_cache_bytes and not args.dit_shared_budget:
         parser.error("DiT weight prefetch requires a zero DiT weight-cache budget")
     modulation_cache = resolve_modulation_cache(args.modulation_cache, args.no_modulation_cache)
     environment = os.environ.copy()
@@ -183,6 +187,8 @@ def main(argv=None):
                 command.extend(["--cache-bytes", str(declared_cache)])
                 if modulation_cache is not None:
                     command.extend(["--modulation-cache", str(modulation_cache.resolve())])
+                if args.dit_shared_budget:
+                    command.append("--shared-weight-budget")
             if name in prefetch:
                 command.append("--prefetch-weights" if prefetch[name] else "--no-prefetch-weights")
             if name == "dit" and args.measure_dit:
@@ -202,6 +208,8 @@ def main(argv=None):
                 if details.get("reference_images", 0) != len(args.reference):
                     raise RuntimeError("The native DiT stage did not consume the requested references. Rebuild onyx-native.")
                 modulation_cache_status = details.get("modulation_cache")
+                if details["weight_cache"].get("shared", False) != args.dit_shared_budget:
+                    raise RuntimeError("The native DiT stage did not use the requested weight budget policy")
                 if args.measure_dit:
                     dit_measurements = dit_memory_measurements(result.stderr)
         args.output.parent.mkdir(parents=True, exist_ok=True)
