@@ -18,6 +18,8 @@ The modulation cache keys entries by the model file identity, PDD schedule, nati
 
 Start with the default streaming budget. On the 36 GB M5 Max, a 10 GiB DiT weight cache increased 1024×1024 median wall time from 18.70 to 21.88 s and peak RSS from 1.80 to 6.35 GiB compared with the default prefetch path. An earlier 4096×4096 run with the same budget added about 853 MiB of swap. When tuning another workload, compare end-to-end latency, peak memory, and swap. [Prefetch comparison](../benchmarks/results/campaign-20261123/final-comparison.json) · [4K stress run](OPTIMIZATION_CAMPAIGN.md#cache-the-repeated-dit-weights)
 
+A matched 4 GiB comparison on M5 Max tested default prefetch, fixed LRU, and static residency with bounded prefetch. At 1024², static residency reduced reads from 59.51 GB to 46.99 GB while end-to-end median increased from 17.31 to 17.97 s and peak DiT physical footprint increased from 6.44 to 8.81 GiB. The default remains the M5 Max baseline. [Measured 1024² and 4K comparisons](../benchmarks/results/m5-max-36gb-dit-shared-weight-budget-v1.json)
+
 ## Check the two caches locally
 
 Run this from the repository root after [staging the model pack](VALIDATION.md#model-preparation). The first run creates a new table, the second reuses it, and the third also enables the 10 GiB weight budget. All three use the same prompt and seed.
