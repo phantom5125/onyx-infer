@@ -2,6 +2,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import shutil
 import stat
 import subprocess
@@ -15,6 +16,7 @@ import numpy as np
 from safetensors.numpy import save_file
 from tokenizers import Tokenizer
 
+from onyx.artifacts import sha256_file
 from onyx.profiles import ProfileError, dit_cache_bytes, load_registry, registry_digest, resolve_profile, stage_weights
 
 
@@ -57,6 +59,17 @@ def prune_modulation_cache(directory: Path, keep: int = MODULATION_CACHE_KEEP) -
     return removed
 
 
+def dit_memory_measurements(stderr: str) -> dict[str, int]:
+    measurements = {}
+    for label, key in (("peak memory footprint", "peak_footprint_bytes"),
+                       ("maximum resident set size", "peak_rss_bytes")):
+        match = re.search(rf"(?m)^[ \t]*(\d+)[ \t]+{label}[ \t]*$", stderr)
+        if match is None or int(match[1]) == 0:
+            raise RuntimeError(f"macOS time -l did not report a positive DiT {label}")
+        measurements[key] = int(match[1])
+    return measurements
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="onyx native-generate")
     parser.add_argument("--models", type=Path, required=True)
@@ -69,6 +82,8 @@ def main(argv=None):
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--native-bin", type=Path, default=ROOT / ".build/onyx-native")
     parser.add_argument("--profile", default="max-quality", help="Execution profile from config/profiles/profiles.v1.json")
+    parser.add_argument("--measure-dit", action="store_true",
+                        help="Record the DiT latent SHA-256 and lifetime process memory from macOS time -l")
     parser.add_argument("--modulation-cache", type=Path,
                         help="Directory for reusable DiT timestep modulation tables (default: ~/Library/Caches/onyx-infer/modulation)")
     parser.add_argument("--no-modulation-cache", action="store_true",
@@ -79,6 +94,8 @@ def main(argv=None):
     parser.add_argument("--prefetch-weights", action=argparse.BooleanOptionalAction, default=None,
                         help="Prefetch weights in the text and DiT stages (default: the profile's weight_prefetch knob)")
     args = parser.parse_args(argv)
+    if args.measure_dit and sys.platform != "darwin":
+        parser.error("--measure-dit requires macOS time -l")
     if len(args.reference) > 16:
         parser.error("H3 accepts up to 16 reference images")
     if args.reference:
@@ -117,6 +134,7 @@ def main(argv=None):
     began = time.monotonic()
     timings = {}
     stage_logs = {}
+    dit_measurements = {}
     modulation_cache_status = None
     pruned = []
     with tempfile.TemporaryDirectory(prefix="onyx-native-") as temporary:
@@ -140,6 +158,7 @@ def main(argv=None):
             (work / "tokens.json").write_text(json.dumps({"ids": ids, "count": len(ids)}))
         noise = np.random.default_rng(args.seed).standard_normal((24, args.height // 16, args.width // 16), dtype=np.float32)
         save_file({"latent": noise}, str(work / "noise.safetensors"))
+        latent = work / "latent.safetensors"
         stages = [
             ("text", [
                 "--model", str(models / "text_encoder.onxpack"),
@@ -148,10 +167,10 @@ def main(argv=None):
             ("dit", [
                 "--model", str(models / "transformer.onxpack"), "--embedding", str(work / "embedding.safetensors"),
                 "--noise", str(work / "noise.safetensors"), "--pdd", str(models / "pdd_fused_heads.safetensors"),
-                "--output", str(work / "latent.safetensors"), "--width", str(args.width), "--height", str(args.height),
+                "--output", str(latent), "--width", str(args.width), "--height", str(args.height),
             ]),
             ("vae", [
-                "--model", str(models / "vae/diffusion_pytorch_model.safetensors"), "--latent", str(work / "latent.safetensors"),
+                "--model", str(models / "vae/diffusion_pytorch_model.safetensors"), "--latent", str(latent),
                 "--config", str(models / "vae/config.json"), "--output", str(work / "image.png"),
             ]),
         ]
@@ -166,6 +185,8 @@ def main(argv=None):
                     command.extend(["--modulation-cache", str(modulation_cache.resolve())])
             if name in prefetch:
                 command.append("--prefetch-weights" if prefetch[name] else "--no-prefetch-weights")
+            if name == "dit" and args.measure_dit:
+                command = ["/usr/bin/time", "-l", *command]
             start = time.monotonic()
             result = subprocess.run(command, capture_output=True, text=True, env=environment)
             timings[name] = time.monotonic() - start
@@ -181,10 +202,14 @@ def main(argv=None):
                 if details.get("reference_images", 0) != len(args.reference):
                     raise RuntimeError("The native DiT stage did not consume the requested references. Rebuild onyx-native.")
                 modulation_cache_status = details.get("modulation_cache")
+                if args.measure_dit:
+                    dit_measurements = dit_memory_measurements(result.stderr)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         partial = args.output.with_suffix(args.output.suffix + ".part")
         shutil.copyfile(work / "image.png", partial)
         os.replace(partial, args.output)
+        if args.measure_dit:
+            dit_measurements["latent_sha256"] = sha256_file(latent)
     if modulation_cache_status == "miss" and modulation_cache is not None and args.modulation_cache is None:
         try:
             pruned = prune_modulation_cache(modulation_cache)
@@ -204,6 +229,7 @@ def main(argv=None):
         "stage_seconds": timings,
         "stage_logs": stage_logs,
         "total_seconds": time.monotonic() - began,
+        **({"dit_measurements": dit_measurements} if args.measure_dit else {}),
     }))
 
 
