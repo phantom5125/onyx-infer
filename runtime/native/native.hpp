@@ -67,6 +67,8 @@ class WeightStore {
   // results and wait for a read that is still in flight.
   void prefetch(const std::string& prefix, const std::vector<std::string>& suffixes);
   void finish_prefetch();
+  void enable_foreground_read_profiling() { profile_foreground_reads_ = true; }
+  std::string foreground_read_profile_json() const;
   double prefetch_wait_seconds() const { return prefetch_wait_ns_ / 1e9; }
   uint64_t bytes_read() const { return bytes_read_; }
   uint64_t read_calls() const { return read_calls_; }
@@ -97,13 +99,24 @@ class WeightStore {
   uint64_t read_ns_ = 0;
   std::map<std::string, uint64_t> read_bytes_by_name_;
   std::mutex read_stats_mutex_;
+  struct ForegroundRead {
+    uint64_t direct_calls = 0;
+    uint64_t direct_bytes = 0;
+    uint64_t direct_ns = 0;
+    uint64_t blocked_calls = 0;
+    uint64_t blocked_ns = 0;
+  };
+  bool profile_foreground_reads_ = false;
+  uint64_t prefetch_drain_ns_ = 0;
+  std::map<std::string, ForegroundRead> foreground_reads_;
+  ForegroundRead& foreground_read(const std::string& name);
   // Reader pipeline. The reader threads share only the queue, the in-flight count, the
   // results, and the errors. The caches above stay on the calling thread.
   struct Request {
     std::string name;
     bool scales = false;
   };
-  Tensor read_scale(const std::string& name);
+  Tensor read_scale(const std::string& name, bool background = false);
   Tensor take_prefetched(const std::string& key);
   void read_loop();
   std::mutex prefetch_mutex_;
@@ -117,7 +130,7 @@ class WeightStore {
   bool prefetch_stop_ = false;
   std::vector<std::thread> prefetch_readers_;
   uint64_t prefetch_wait_ns_ = 0;
-  Tensor read(const std::string& name, const std::string& field, bool scales);
+  Tensor read(const std::string& name, const std::string& field, bool scales, bool background = false);
 };
 
 MPSDataType data_type(const std::string& name);

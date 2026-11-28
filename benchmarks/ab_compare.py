@@ -28,6 +28,8 @@ from pathlib import Path
 
 import psutil
 
+from onyx.artifacts import sha256_file
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -107,6 +109,38 @@ def wait_for_idle(timeout):
     return time.monotonic() - began
 
 
+def macos_device():
+    def read(*command):
+        return subprocess.check_output(command, text=True).strip()
+
+    settings = {}
+    for line in read("pmset", "-g").splitlines():
+        key, _, value = line.strip().partition(" ")
+        if key in {"powermode", "lowpowermode"}:
+            settings[key] = value.strip()
+    return {
+        "model_identifier": read("sysctl", "-n", "hw.model"),
+        "chip": read("sysctl", "-n", "machdep.cpu.brand_string"),
+        "physical_memory_bytes": int(read("sysctl", "-n", "hw.memsize")),
+        "macos_version": read("sw_vers", "-productVersion"),
+        "macos_build": read("sw_vers", "-buildVersion"),
+        "power_source": read("pmset", "-g", "batt").splitlines()[0],
+        "power_settings": settings,
+    }
+
+
+def arm_build_identity(arm):
+    binary = Path(arm["binary"])
+    metallib = binary.with_name("onyx_q4.metallib")
+    checkout = arm.get("root", ROOT)
+    return {
+        "binary_sha256": sha256_file(binary),
+        "sibling_metallib_sha256": sha256_file(metallib) if metallib.is_file() else None,
+        "launcher_revision": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=checkout, text=True).strip(),
+        "launcher_dirty": bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=checkout, text=True)),
+    }
+
+
 def run_arm(arm, common, request, output, work):
     # An arm bound to another checkout runs that checkout's launcher, so a baseline is the
     # whole engine as shipped there: launcher, profile registry, and binary.
@@ -114,6 +148,8 @@ def run_arm(arm, common, request, output, work):
                "--output", str(output), "--width", str(request["size"]["width"]),
                "--height", str(request["size"]["height"]), "--seed", str(request["seed"]),
                "--profile", common.profile, "--native-bin", arm["binary"], *arm["args"], *common.args]
+    if common.measure_dit:
+        command.append("--measure-dit")
     for cache in common.cache_dirs:
         Path(cache).mkdir(parents=True, exist_ok=True)
     environment = os.environ.copy()
@@ -123,6 +159,7 @@ def run_arm(arm, common, request, output, work):
     psutil.cpu_percent(interval=None)  # Prime the per-process counters.
     idle_wait = wait_for_idle(common.idle_timeout)
     before = load_snapshot()
+    swap_before = psutil.swap_memory().used if common.measure_dit else None
     began = time.monotonic()
     process = subprocess.Popen(command, cwd=arm.get("cwd", ROOT), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=environment)
     sampler = PeakSampler(process.pid)
@@ -130,6 +167,7 @@ def run_arm(arm, common, request, output, work):
     stdout, stderr = process.communicate()
     peak = sampler.finish()
     wall = time.monotonic() - began
+    swap_after = psutil.swap_memory().used if common.measure_dit else None
     foreign_after = native_stage_pids(exclude=(process.pid,))
     if process.returncode:
         raise RuntimeError(f"{arm['name']} failed:\n{stderr[-4000:]}")
@@ -149,15 +187,22 @@ def run_arm(arm, common, request, output, work):
                 elif "profile" in item:
                     details["profile_ops"] = item["profile"]
                     details["weight_read"] = item.get("weight_read")
+                elif "foreground_weight_reads" in item:
+                    details["foreground_weight_reads"] = item["foreground_weight_reads"]
         details.pop("output", None)
         details["stderr_tail"] = log["stderr"][-2000:]
         stages[name] = details
     digest = hashlib.sha256(Path(output).read_bytes()).hexdigest()
+    measured = {}
+    if common.measure_dit:
+        measured = {"dit_measurements": record["dit_measurements"],
+                    "swap_before_bytes": swap_before, "swap_after_bytes": swap_after,
+                    "swap_delta_bytes": swap_after - swap_before}
     return {"arm": arm["name"], "wall_seconds": wall, "total_seconds": record["total_seconds"],
             "stage_seconds": record["stage_seconds"], "token_count": record["token_count"],
             "peak_rss_bytes": peak, "png_sha256": digest, "png_bytes": Path(output).stat().st_size,
             "stages": stages, "idle_wait_seconds": round(idle_wait, 1),
-            "foreign_native_after": foreign_after, "load_before": before, "load_after": load_snapshot()}
+            "foreign_native_after": foreign_after, "load_before": before, "load_after": load_snapshot(), **measured}
 
 
 def main():
@@ -179,9 +224,21 @@ def main():
                         help="Directory to create before each run, for modulation caches")
     parser.add_argument("--output", type=Path, default=ROOT / "artifacts/benchmarks/ab")
     parser.add_argument("--keep-outputs", type=Path, help="Directory to copy each measured PNG into, named by arm and round")
+    parser.add_argument("--measure-dit", action="store_true",
+                        help="Record DiT latent hashes, lifetime process memory, system swap, and benchmark provenance")
+    parser.add_argument("--target", type=Path, help="Verify the Mac model, chip, and memory against a target JSON")
     parser.add_argument("--idle-timeout", type=int, default=1800,
                         help="Seconds to wait for other native stage processes before running a sample anyway")
     args = parser.parse_args()
+    if (args.measure_dit or args.target) and sys.platform != "darwin":
+        parser.error("--measure-dit and --target require macOS")
+    device = macos_device() if args.measure_dit or args.target else None
+    if args.target:
+        target = json.loads(args.target.read_text())
+        for field in ("model_identifier", "chip", "physical_memory_bytes"):
+            if device[field] != target[field]:
+                parser.error(f"{target['target_id']} requires {field}={target[field]!r}, observed {device[field]!r}")
+        device["target_id"] = target["target_id"]
 
     arms = []
     for items in args.arm:
@@ -208,7 +265,10 @@ def main():
         arms[names.index(target)].update(root=str(root), python=str(root / ".venv/bin/python"), cwd=str(root))
     request = case_request(args.case)
     common = argparse.Namespace(models=str(Path(args.models).resolve()), profile=args.profile, args=args.native_arg,
-                                cache_dirs=args.cache_dir, idle_timeout=args.idle_timeout)
+                                cache_dirs=args.cache_dir, idle_timeout=args.idle_timeout, measure_dit=args.measure_dit)
+    if args.measure_dit:
+        for arm in arms:
+            arm["build_identity"] = arm_build_identity(arm)
 
     runs = []
     with tempfile.TemporaryDirectory(prefix="onyx-ab-") as temporary:
@@ -242,6 +302,12 @@ def main():
                  "binary": arm["binary"], "args": arm["args"], "env": arm["env"], "launcher_root": arm.get("root"),
                  "output_sha256": sorted({record["png_sha256"] for record in samples})}
         entry["all_outputs_identical"] = len(entry["output_sha256"]) == 1
+        if args.measure_dit:
+            entry["build_identity"] = arm["build_identity"]
+            entry["latent_sha256"] = sorted({record["dit_measurements"]["latent_sha256"] for record in samples})
+            entry["dit_peak_footprint_bytes_median"] = statistics.median(
+                record["dit_measurements"]["peak_footprint_bytes"] for record in samples)
+            entry["all_outputs_identical"] &= len(entry["latent_sha256"]) == 1
         summary[arm["name"]] = entry
     reference = summary[names[0]]["seconds_median"]
     for name in names[1:]:
@@ -253,6 +319,19 @@ def main():
               "warmups_per_arm": args.warmup, "rounds": args.rounds, "common_args": args.native_arg,
               "profile_enabled": os.environ.get("ONYX_PROFILE") is not None,
               "summary": summary, "runs": runs}
+    if device:
+        report["device"] = device
+    if args.measure_dit:
+        model = Path(common.models)
+        manifest = model / "manifest.pb"
+        package_report = model / "package-report.json"
+        report["model"] = {
+            "manifest_sha256": sha256_file(manifest) if manifest.is_file() else None,
+            "package_report": json.loads(package_report.read_text()) if package_report.is_file() else None,
+        }
+        report["outputs_identical_across_arms"] = len({
+            (record["png_sha256"], record["dit_measurements"]["latent_sha256"]) for record in runs
+        }) == 1
     args.output.mkdir(parents=True, exist_ok=True)
     path = args.output / f"{args.label}.json"
     path.write_text(json.dumps(report, indent=2) + "\n")

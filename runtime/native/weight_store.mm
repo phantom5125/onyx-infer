@@ -162,6 +162,27 @@ WeightStore::~WeightStore() {
   if (fd_ >= 0) close(fd_);
 }
 
+WeightStore::ForegroundRead& WeightStore::foreground_read(const std::string& name) {
+  if (name.starts_with("blocks.")) {
+    return foreground_reads_[name.substr(0, name.find('.', sizeof("blocks.") - 1))];
+  }
+  return foreground_reads_["other"];
+}
+
+std::string WeightStore::foreground_read_profile_json() const {
+  NSMutableDictionary* blocks = [NSMutableDictionary new];
+  for (const auto& [name, read] : foreground_reads_) {
+    blocks[[NSString stringWithUTF8String:name.c_str()]] = @{
+        @"direct_calls": @(read.direct_calls), @"direct_bytes": @(read.direct_bytes),
+        @"direct_ns": @(read.direct_ns), @"blocked_prefetch_calls": @(read.blocked_calls),
+        @"blocked_prefetch_ns": @(read.blocked_ns)};
+  }
+  NSDictionary* profile = @{@"groups": blocks, @"prefetch_drain_ns": @(prefetch_drain_ns_)};
+  NSData* data = [NSJSONSerialization dataWithJSONObject:profile options:NSJSONWritingSortedKeys error:nil];
+  if (!data) throw std::runtime_error("Could not encode foreground weight reads");
+  return std::string(static_cast<const char*>(data.bytes), data.length);
+}
+
 std::string WeightStore::file_identity() const {
   struct stat info {};
   if (fstat(fd_, &info) != 0) return {};
@@ -260,8 +281,10 @@ void WeightStore::finish_prefetch() {
   const auto began = std::chrono::steady_clock::now();
   std::unique_lock lock(prefetch_mutex_);
   result_ready_.wait(lock, [this] { return prefetch_queue_.empty() && prefetch_active_ == 0; });
-  prefetch_wait_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(
+  const auto wait_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::steady_clock::now() - began).count();
+  prefetch_wait_ns_ += wait_ns;
+  if (profile_foreground_reads_) prefetch_drain_ns_ += wait_ns;
   if (!prefetch_errors_.empty()) {
     std::exception_ptr error = prefetch_errors_.begin()->second;
     prefetch_errors_.erase(prefetch_errors_.begin());
@@ -273,11 +296,19 @@ Tensor WeightStore::take_prefetched(const std::string& key) {
   std::unique_lock lock(prefetch_mutex_);
   if (!prefetch_pending_.count(key)) return {};
   const auto began = std::chrono::steady_clock::now();
-  result_ready_.wait(lock, [&] {
+  const auto ready = [&] {
     return prefetch_stop_ || prefetched_.count(key) || prefetch_errors_.count(key);
-  });
-  prefetch_wait_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(
+  };
+  const bool blocked = profile_foreground_reads_ && !ready();
+  result_ready_.wait(lock, ready);
+  const auto wait_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::steady_clock::now() - began).count();
+  prefetch_wait_ns_ += wait_ns;
+  if (blocked) {
+    auto& read = foreground_read(key);
+    ++read.blocked_calls;
+    read.blocked_ns += wait_ns;
+  }
   prefetch_pending_.erase(key);
   if (auto found = prefetched_.find(key); found != prefetched_.end()) {
     Tensor value = found->second;
@@ -307,7 +338,7 @@ void WeightStore::read_loop() {
     Tensor value{};
     @autoreleasepool {
       try {
-        value = request.scales ? read_scale(request.name) : read(request.name, "data_offsets", false);
+        value = request.scales ? read_scale(request.name, true) : read(request.name, "data_offsets", false, true);
       } catch (...) {
         error = std::current_exception();
       }
@@ -332,7 +363,7 @@ std::vector<int64_t> WeightStore::shape(const std::string& name) const {
   return shape_of(spec[@"shape"]);
 }
 
-Tensor WeightStore::read(const std::string& name, const std::string& field, bool scales) {
+Tensor WeightStore::read(const std::string& name, const std::string& field, bool scales, bool background) {
   NSDictionary* spec = specs_[[NSString stringWithUTF8String:name.c_str()]];
   if (!spec) throw std::runtime_error("Unknown tensor: " + name);
   NSArray* offsets = spec[[NSString stringWithUTF8String:field.c_str()]];
@@ -350,13 +381,21 @@ Tensor WeightStore::read(const std::string& name, const std::string& field, bool
     if (result == 0) throw std::runtime_error("Unexpected end of model file: " + name);
     completed += result;
   }
+  uint64_t elapsed_ns;
   {
     const std::lock_guard lock(read_stats_mutex_);
     bytes_read_ += length;
     read_bytes_by_name_[name] += length;
     ++read_calls_;
-    read_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(
+    elapsed_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
         std::chrono::steady_clock::now() - read_start).count();
+    read_ns_ += elapsed_ns;
+  }
+  if (!background && profile_foreground_reads_) {
+    auto& profile = foreground_read(name);
+    ++profile.direct_calls;
+    profile.direct_bytes += length;
+    profile.direct_ns += elapsed_ns;
   }
   const std::string type = scales ? "F32" : dtype(name);
   return Tensor{buffer, shape(name), data_type(type)};
@@ -376,8 +415,8 @@ Tensor WeightStore::scale(const std::string& name) {
   return result;
 }
 
-Tensor WeightStore::read_scale(const std::string& name) {
-  Tensor result = read(name, "scale_offsets", true);
+Tensor WeightStore::read_scale(const std::string& name, bool background) {
+  Tensor result = read(name, "scale_offsets", true, background);
   const uint64_t group = std::stoull(dtype(name).substr(3));
   result.shape = {result.shape[0], result.shape[1] / static_cast<int64_t>(group)};
   return result;

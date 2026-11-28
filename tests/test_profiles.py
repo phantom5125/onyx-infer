@@ -228,9 +228,23 @@ def test_native_dit_prefetch_override_and_failed_cache_cleanup(tmp_path, monkeyp
     native_main(["--models", str(tmp_path), "--prompt", "test", "--output", str(output),
                  "--native-bin", str(binary), "--no-dit-prefetch"])
 
-    assert json.loads(capsys.readouterr().out)["modulation_cache"]["status"] == "miss"
+    record = json.loads(capsys.readouterr().out)
+    assert record["modulation_cache"]["status"] == "miss"
+    assert "dit_measurements" not in record
     assert output.read_bytes() == b"image"
     assert "Could not prune modulation cache" in caplog.text
+
+
+def test_dit_lifetime_memory_keeps_footprint_and_rss_separate():
+    stderr = ("  1836544000  maximum resident set size\n"
+              "        6204  page reclaims\n"
+              " 13213419632  peak memory footprint\n")
+    assert native.dit_memory_measurements(stderr) == {
+        "peak_footprint_bytes": 13213419632,
+        "peak_rss_bytes": 1836544000,
+    }
+    with pytest.raises(RuntimeError, match="peak memory footprint"):
+        native.dit_memory_measurements(stderr.splitlines()[0])
 
 
 def test_weight_cache_budget_replaces_dit_prefetch(capsys):

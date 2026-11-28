@@ -383,6 +383,9 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
   GraphSession session(device);
   if (std::getenv("ONYX_PROFILE")) session.enable_profiling(true);
   WeightStore store(model, false, options.cache_bytes);
+  const char* weight_profile_env = std::getenv("ONYX_DIT_WEIGHT_PROFILE");
+  const bool profile_weight_reads = weight_profile_env && std::string_view(weight_profile_env) == "1";
+  if (profile_weight_reads) store.enable_foreground_read_profiling();
   WeightStore pdd(pdd_path);
   const auto sigmas = read_sigmas(model);
   std::vector<float> modulation_sigmas(sigmas.begin(), sigmas.begin() + kSamplingSteps);
@@ -538,6 +541,9 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
               static_cast<unsigned long long>(store.cache_hits()),
               static_cast<unsigned long long>(store.read_calls()),
               static_cast<unsigned long long>(store.bytes_read()));
+  if (profile_weight_reads) {
+    std::printf("{\"foreground_weight_reads\":%s}\n", store.foreground_read_profile_json().c_str());
+  }
   if (std::getenv("ONYX_PROFILE")) {
     std::printf("{\"profile\":%s,\"weight_read\":{\"bytes\":%llu,\"calls\":%llu,\"seconds\":%.6f}}\n",
                 session.profile_json().c_str(), store.bytes_read(), store.read_calls(), store.read_seconds());
