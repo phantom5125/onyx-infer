@@ -129,6 +129,7 @@ uint16_t float_to_bf16(float value);
 float bf16_to_float(uint16_t value);
 uint16_t float_to_fp16_bits(float value);
 float fp16_bits_to_float(uint16_t bits);
+bool supports_metal_gated_residual(id<MTLDevice> device);
 
 class GraphSession {
  public:

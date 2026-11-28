@@ -70,3 +70,7 @@ uv run python benchmarks/ab_compare.py --label adaln-gate-4096 \
 ```
 
 [Measured runs and hashes](../benchmarks/results/m5-max-36gb-adaln-metal-gate-v1.json)
+
+## GitHub runner compatibility (2026-11-27)
+
+The macOS 26 ARM64 runner returned the once-rounded product-plus-residual for two deterministic probe cells where the explicit BF16 intermediate gives different bytes. The M5 Max macOS 27.2.1 result uses the explicit intermediate. Restrict experimental dispatch to Apple GPU family 10 on macOS 27 or later and retain the incumbent dispatch elsewhere. The probe checks the two-rounding kernel against a CPU reference on every runner and retains the MPSGraph bitwise requirement where dispatch is enabled.

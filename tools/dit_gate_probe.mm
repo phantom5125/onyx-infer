@@ -41,6 +41,23 @@ void require_equal(const Tensor& reference, const Tensor& actual, const char* co
   throw std::runtime_error("DiT gate probe failed bitwise check");
 }
 
+void update_cpu(Tensor& residual, const Tensor& value, const Tensor& table, const Tensor& indices,
+                uint32_t gate_part) {
+  auto* result = static_cast<uint16_t*>(residual.data());
+  const auto* updates = static_cast<const uint16_t*>(value.data());
+  const auto* gates = static_cast<const uint16_t*>(table.data());
+  const auto* modalities = static_cast<const int32_t*>(indices.data());
+  for (int64_t row = 0; row < residual.shape[0]; ++row) {
+    const auto* gate = gates + (modalities[row] * 6 + gate_part) * kHidden;
+    for (int64_t column = 0; column < kHidden; ++column) {
+      const auto cell = row * kHidden + column;
+      const float product = onyx::bf16_to_float(updates[cell]) * onyx::bf16_to_float(gate[column]);
+      const float rounded = onyx::bf16_to_float(onyx::float_to_bf16(product));
+      result[cell] = onyx::float_to_bf16(onyx::bf16_to_float(result[cell]) + rounded);
+    }
+  }
+}
+
 }  // namespace
 
 int main(int argc, char* argv[]) {
@@ -60,9 +77,14 @@ int main(int argc, char* argv[]) {
       if (rows < 1) throw std::runtime_error("Gate probe row count must be positive");
       id<MTLDevice> device = MTLCreateSystemDefaultDevice();
       if (!device) throw std::runtime_error("Metal device unavailable");
+      const bool supported = onyx::supports_metal_gated_residual(device);
+      if (!supported && !verify_only) {
+        throw std::runtime_error("Metal AdaLN requires macOS 27 and Apple GPU family 10 or newer");
+      }
       onyx::GraphSession session(device);
       Tensor baseline = make_bf16(device, {rows, kHidden}, 1);
       Tensor metal = make_bf16(device, {rows, kHidden}, 1);
+      Tensor cpu = make_bf16(device, {rows, kHidden}, 1);
       const Tensor value = make_bf16(device, {rows, kHidden}, 2);
       // The DiT table is a view into a reusable cache buffer.
       const Tensor table = make_bf16(device, {references ? 18 : 12, kHidden}, 3, 256);
@@ -96,8 +118,10 @@ int main(int argc, char* argv[]) {
           const Tensor indexed_gate = session.indexed_gated_residual(baseline, value, table, indices, gate);
           baseline = session.gated_residual(baseline, value, expanded[i]);
           session.metal_gated_residual(metal, value, table, indices, gate);
+          update_cpu(cpu, value, table, indices, gate);
           require_equal(baseline, indexed_gate, "Expanded vs. indexed MPSGraph gate");
-          require_equal(baseline, metal, "Expanded MPSGraph vs. Metal gate");
+          require_equal(cpu, metal, "CPU vs. Metal gate");
+          if (supported) require_equal(baseline, metal, "Expanded MPSGraph vs. Metal gate");
         }
       }
 
@@ -110,8 +134,9 @@ int main(int argc, char* argv[]) {
           }
         }
       };
-      std::printf("{\"rows\":%lld,\"width\":%lld,\"table_offset\":%llu,\"bitwise_equal\":true,\"timings_ms\":[",
-                  rows, kHidden, table.byte_offset);
+      std::printf("{\"rows\":%lld,\"width\":%lld,\"table_offset\":%llu,\"bitwise_equal\":true,"
+                  "\"mpsgraph_bitwise_equal\":%s,\"timings_ms\":[",
+                  rows, kHidden, table.byte_offset, supported ? "true" : "null");
       if (!verify_only) {
         for (size_t warmup = 0; warmup < 16; ++warmup) {
           step(false, warmup % 2);

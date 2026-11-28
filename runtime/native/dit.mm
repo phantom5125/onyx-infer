@@ -418,7 +418,8 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
   const int64_t sequence_count = target_start + image_count;
   const size_t reference_images = references.grids.size();
   const char* metal_gate_env = std::getenv("ONYX_DIT_METAL_GATE");
-  const bool metal_gate = metal_gate_env && std::string_view(metal_gate_env) == "1";
+  const bool metal_gate_requested = metal_gate_env && std::string_view(metal_gate_env) == "1";
+  const bool metal_gate = metal_gate_requested && supports_metal_gated_residual(device);
   const char* indexed_modulation_env = std::getenv("ONYX_DIT_INDEXED_MODULATION");
   const bool indexed_modulation = metal_gate || (reference_images && indexed_modulation_env &&
       std::string_view(indexed_modulation_env) == "1");
@@ -531,10 +532,12 @@ Tensor denoise_image(const std::string& model, const std::string& embedding_path
   save_tensor(output, "latent", latent);
   const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - began).count();
   std::printf("{\"stage\":\"dit\",\"profile\":\"%s\",\"steps\":6,\"seconds\":%.6f,\"output\":\"%s\","
-              "\"reference_images\":%zu,\"indexed_modulation\":%s,\"modulation_cache\":\"%s\",\"modulation_seconds\":%.6f,\"lazy_modulation\":%s,"
+              "\"reference_images\":%zu,\"indexed_modulation\":%s,\"metal_gate_requested\":%s,\"metal_gate\":%s,"
+              "\"modulation_cache\":\"%s\",\"modulation_seconds\":%.6f,\"lazy_modulation\":%s,"
               "\"prefetch_weights\":%s,\"prefetch_wait_seconds\":%.6f,"
               "\"weight_cache\":{\"budget\":%llu,\"bytes\":%llu,\"entries\":%llu,\"hits\":%llu,\"read_calls\":%llu,\"read_bytes\":%llu}}\n",
               options.profile.c_str(), seconds, output.c_str(), reference_images, indexed_modulation ? "true" : "false",
+              metal_gate_requested ? "true" : "false", metal_gate ? "true" : "false",
               modulation_cache_status, modulation_seconds,
               lazy_modulation ? "true" : "false",
               options.prefetch_weights ? "true" : "false", store.prefetch_wait_seconds(),
