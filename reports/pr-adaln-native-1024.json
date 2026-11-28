@@ -1,0 +1,120 @@
+{
+  "protocol": "onyx.ci.v1",
+  "suite": "h3",
+  "label": "pr-adaln-native-1024",
+  "status": "pass",
+  "reason": null,
+  "started_at": "2026-11-28T06:49:02.574865+00:00",
+  "finished_at": "2026-11-28T06:49:36.110119+00:00",
+  "duration_ns": 33534979792,
+  "git": {
+    "revision": "8a39605530723534448120654d07923fac9e534f",
+    "dirty": false
+  },
+  "target": {
+    "target_id": "mac17-14-m5-max-36gb",
+    "chip": "Apple M5 Max",
+    "physical_memory_bytes": 38654705664,
+    "metal": "Metal 4",
+    "metal_compiler_version": "32023.921 (metalfe-32023.921.6)"
+  },
+  "checks": [
+    {
+      "name": "native-generation",
+      "command": [
+        "uv",
+        "run",
+        "python",
+        "benchmarks/run_native.py",
+        "--label",
+        "pr-adaln-native-1024",
+        "--runs",
+        "1",
+        "--case",
+        "<checkout>/benchmarks/requests/teapot-1024.json",
+        "--plan-id",
+        "pr-adaln-native-1024",
+        "--target",
+        "<checkout>/config/targets/m5-max-36gb.json"
+      ],
+      "status": "pass",
+      "returncode": 0,
+      "duration_ns": 33513824709,
+      "log_tail": "{\n  \"run_id\": \"f2ae84dd-a503-4f8a-bd65-e0820d9b703e\",\n  \"return_code\": 0,\n  \"seconds\": 33.337279791,\n  \"peak_bytes\": 1716453376,\n  \"output\": \"<checkout>/artifacts/benchmarks/onyx-native-h3/h3-teapot-1024-seed42-v1/f2ae84dd-a503-4f8a-bd65-e0820d9b703e/output.png\",\n  \"output_sha256\": \"6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac\",\n  \"run_record\": \"<checkout>/artifacts/benchmarks/onyx-native-h3/h3-teapot-1024-seed42-v1/f2ae84dd-a503-4f8a-bd65-e0820d9b703e/run.pb\",\n  \"error\": null\n}\n{\n  \"label\": \"pr-adaln-native-1024\",\n  \"plan_id\": \"pr-adaln-native-1024\",\n  \"seconds_median\": 33.337279791,\n  \"peak_bytes_max\": 1716453376,\n  \"all_outputs_identical\": true\n}\n"
+    }
+  ],
+  "details": {
+    "native": {
+      "label": "pr-adaln-native-1024",
+      "plan_id": "pr-adaln-native-1024",
+      "runs": [
+        {
+          "run_id": "f2ae84dd-a503-4f8a-bd65-e0820d9b703e",
+          "return_code": 0,
+          "seconds": 33.337279791,
+          "peak_bytes": 1716453376,
+          "output": "<checkout>/artifacts/benchmarks/onyx-native-h3/h3-teapot-1024-seed42-v1/f2ae84dd-a503-4f8a-bd65-e0820d9b703e/output.png",
+          "output_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac",
+          "run_record": "<checkout>/artifacts/benchmarks/onyx-native-h3/h3-teapot-1024-seed42-v1/f2ae84dd-a503-4f8a-bd65-e0820d9b703e/run.pb",
+          "error": null,
+          "stage_seconds": {
+            "text": 3.814298792,
+            "dit": 27.642141542,
+            "vae": 1.685523125
+          },
+          "backend": {
+            "backend": "onyx-native-cpp-metal",
+            "profile": "max-quality",
+            "profile_knobs": {
+              "text_weights": "stream",
+              "dit_weights": "stream",
+              "vae_weights": "resident",
+              "vae_tiling": "tile16",
+              "dit_block_cache": "none",
+              "weight_prefetch": "next",
+              "q4_kernel": "mpsgraph"
+            },
+            "profile_registry_sha256": "a006d9a45081b1ca9319bb0d4453699ec1002de865a4cd2a1e55fa9e2942e7c9",
+            "dit_weight_cache_bytes": 0,
+            "weight_prefetch": {
+              "text": true,
+              "dit": true
+            },
+            "modulation_cache": {
+              "directory": "<home>/Library/Caches/onyx-infer/modulation",
+              "status": "miss",
+              "pruned": [
+                "0194778ba33d1dd47fe9e41f3c7f0e424c52811608d63af862dbd74e18ea4002.adaln"
+              ]
+            },
+            "token_count": 69,
+            "reference_count": 0,
+            "stage_seconds": {
+              "text": 3.814298791985493,
+              "dit": 27.642141542048194,
+              "vae": 1.6855231249937788
+            },
+            "stage_logs": {
+              "text": {
+                "stdout": "{\"stage\":\"text\",\"profile\":\"max-quality\",\"tokens\":69,\"seconds\":3.279674,\"output\":\"/var/folders/dl/z74jz9m52vn_js10hs9yyls80000gn/T/onyx-native-2rdktcnp/embedding.safetensors\",\"vision_rows\":0,\"prefetch_weights\":true,\"prefetch_wait_seconds\":0.000210}\n",
+                "stderr": "Failed to import MPS module\nnative text layer 10/50\nnative text layer 20/50\nnative text layer 30/50\nnative text layer 40/50\nnative text layer 50/50\n"
+              },
+              "dit": {
+                "stdout": "{\"stage\":\"dit\",\"profile\":\"max-quality\",\"steps\":6,\"seconds\":27.445772,\"output\":\"/var/folders/dl/z74jz9m52vn_js10hs9yyls80000gn/T/onyx-native-2rdktcnp/latent.safetensors\",\"reference_images\":0,\"indexed_modulation\":true,\"modulation_cache\":\"miss\",\"modulation_seconds\":3.841551,\"lazy_modulation\":false,\"prefetch_weights\":true,\"prefetch_wait_seconds\":2.757635,\"weight_cache\":{\"budget\":0,\"bytes\":0,\"entries\":0,\"hits\":0,\"read_calls\":2752,\"read_bytes\":85656876608}}\n",
+                "stderr": "Failed to import MPS module\nFailed to import MPS module\nnative DiT step 1/6, 4.295 s, Metal allocated 7.45 GiB\nnative DiT step 2/6, 4.028 s, Metal allocated 7.45 GiB\nnative DiT step 3/6, 4.414 s, Metal allocated 6.84 GiB\nnative DiT step 4/6, 3.192 s, Metal allocated 7.43 GiB\nnative DiT step 5/6, 4.609 s, Metal allocated 6.84 GiB\nnative DiT step 6/6, 2.664 s, Metal allocated 8.43 GiB\n"
+              },
+              "vae": {
+                "stdout": "{\"stage\":\"vae\",\"profile\":\"max-quality\",\"weights\":\"resident\",\"seconds\":1.618380,\"output\":\"/var/folders/dl/z74jz9m52vn_js10hs9yyls80000gn/T/onyx-native-2rdktcnp/image.png\",\"tiles\":25,\"decode_batch\":25}\n",
+                "stderr": "Failed to import MPS module\n"
+              }
+            },
+            "total_seconds": 33.15573087503435
+          }
+        }
+      ],
+      "seconds_median": 33.337279791,
+      "peak_bytes_max": 1716453376,
+      "all_outputs_identical": true
+    }
+  }
+}

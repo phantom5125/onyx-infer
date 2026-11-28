@@ -1,0 +1,132 @@
+{
+  "protocol": "onyx.ci.v1",
+  "suite": "metal",
+  "label": "pr-adaln-metal",
+  "status": "pass",
+  "reason": null,
+  "started_at": "2026-11-28T06:48:49.579980+00:00",
+  "finished_at": "2026-11-28T06:49:02.534413+00:00",
+  "duration_ns": 12954263042,
+  "git": {
+    "revision": "8a39605530723534448120654d07923fac9e534f",
+    "dirty": false
+  },
+  "target": {
+    "target_id": "mac17-14-m5-max-36gb",
+    "chip": "Apple M5 Max",
+    "physical_memory_bytes": 38654705664,
+    "metal": "Metal 4",
+    "metal_compiler_version": "32023.921 (metalfe-32023.921.6)"
+  },
+  "checks": [
+    {
+      "name": "metal-ctest",
+      "command": [
+        "uvx",
+        "--from",
+        "cmake==4.4.5",
+        "ctest",
+        "--test-dir",
+        ".build",
+        "--output-on-failure"
+      ],
+      "status": "pass",
+      "returncode": 0,
+      "duration_ns": 10810525791,
+      "log_tail": "Test project <checkout>/.build\n      Start  1: onyx_dit_modulation_single\n 1/23 Test  #1: onyx_dit_modulation_single .......   Passed    0.09 sec\n      Start  2: onyx_dit_modulation_ragged\n 2/23 Test  #2: onyx_dit_modulation_ragged .......   Passed    0.09 sec\n      Start  3: onyx_dit_metal_gate_single\n 3/23 Test  #3: onyx_dit_metal_gate_single .......   Passed    0.09 sec\n      Start  4: onyx_dit_metal_gate_ragged\n 4/23 Test  #4: onyx_dit_metal_gate_ragged .......   Passed    0.10 sec\n      Start  5: onyx_mpsgraph_bf16\n 5/23 Test  #5: onyx_mpsgraph_bf16 ...............   Passed    0.06 sec\n      Start  6: onyx_mpsgraph_q4\n 6/23 Test  #6: onyx_mpsgraph_q4 .................   Passed    0.04 sec\n      Start  7: onyx_q4_gemm_small\n 7/23 Test  #7: onyx_q4_gemm_small ...............   Passed    0.04 sec\n      Start  8: onyx_q4_gemm_tile32\n 8/23 Test  #8: onyx_q4_gemm_tile32 ..............   Passed    0.04 sec\n      Start  9: onyx_q4_gemm_simd\n 9/23 Test  #9: onyx_q4_gemm_simd ................   Passed    0.04 sec\n      Start 10: onyx_q4_gemm_steel\n10/23 Test #10: onyx_q4_gemm_steel ...............   Passed    0.04 sec\n      Start 11: onyx_q4_gemm_mma_small\n11/23 Test #11: onyx_q4_gemm_mma_small ...........   Passed    0.04 sec\n      Start 12: onyx_q4_gemm_mma_ungrouped\n12/23 Test #12: onyx_q4_gemm_mma_ungrouped .......   Passed    0.04 sec\n      Start 13: onyx_q4_gemm_ragged\n13/23 Test #13: onyx_q4_gemm_ragged ..............   Passed    0.04 sec\n      Start 14: onyx_q4_gemm_ragged_mma\n14/23 Test #14: onyx_q4_gemm_ragged_mma ..........   Passed    0.03 sec\n      Start 15: onyx_q4_gemm_ragged_mma64\n15/23 Test #15: onyx_q4_gemm_ragged_mma64 ........   Passed    0.04 sec\n      Start 16: onyx_q4_gemm_ragged_splitk\n16/23 Test #16: onyx_q4_gemm_ragged_splitk .......   Passed    0.04 sec\n      Start 17: onyx_q4_gemm_splitk_multitile\n17/23 Test #17: onyx_q4_gemm_splitk_multitile ....   Passed    0.04 sec\n      Start 18: onyx_q4_linear_mpsgraph\n18/23 Test #18: onyx_q4_linear_mpsgraph ..........   Passed    0.58 sec\n      Start 19: onyx_q4_linear_dispatch\n19/23 Test #19: onyx_q4_linear_dispatch ..........   Passed    0.62 sec\n      Start 20: onyx_q4_linear_nax\n20/23 Test #20: onyx_q4_linear_nax ...............   Passed    0.54 sec\n      Start 21: onyx_weight_store_cache\n21/23 Test #21: onyx_weight_store_cache ..........   Passed    0.09 sec\n      Start 22: onyx_steel_real_data\n22/23 Test #22: onyx_steel_real_data .............   Passed    0.77 sec\n      Start 23: onyx_linear_steel_probe\n23/23 Test #23: onyx_linear_steel_probe ..........   Passed    7.22 sec\n\n100% tests passed out of 23\n\nTotal Test time (real) =  10.74 sec\n"
+    },
+    {
+      "name": "kernel-tile16",
+      "command": [
+        "<checkout>/.build/onyx-metal-bench",
+        "--m",
+        "1024",
+        "--n",
+        "21504",
+        "--k",
+        "5376",
+        "--group",
+        "64",
+        "--iterations",
+        "10",
+        "--variant",
+        "tile16",
+        "--output",
+        "<checkout>/artifacts/ci/kernel-result.json"
+      ],
+      "status": "pass",
+      "returncode": 0,
+      "duration_ns": 2120416125,
+      "log_tail": "{\n  \"operator\": \"onyx.q4_gemm.v1\",\n  \"variant\": \"tile16\",\n  \"device\": \"Apple M5 Max\",\n  \"shape\": {\"m\": 1024, \"n\": 21504, \"k\": 5376, \"group_size\": 64},\n  \"correct\": true,\n  \"checked_outputs\": 32,\n  \"max_abs_error\": 0.00146913528,\n  \"max_relative_error\": 0.000441954617,\n  \"iterations\": 10,\n  \"gpu_median_ms\": 123.720208,\n  \"gpu_p95_ms\": 124.847625,\n  \"wall_median_ms\": 123.880917,\n  \"wall_p95_ms\": 124.982583,\n  \"effective_tflops\": 1.913673,\n  \"effective_bandwidth_gb_per_s\": 0.970564,\n  \"metal_allocated_bytes\": 120537088,\n  \"recommended_working_set_bytes\": 30150672384,\n  \"max_buffer_bytes\": 22613000192\n,\n  \"gpu_samples_ms\": [124.362,122.469,124.848,124.717,123.72,121.554,123.715,124.733,121.986,123.707],\n  \"wall_samples_ms\": [124.587,122.634,124.983,124.89,123.853,121.742,123.874,124.874,122.103,123.881],\n  \"arguments\": [\"<checkout>/.build/onyx-metal-bench\",\"--m\",\"1024\",\"--n\",\"21504\",\"--k\",\"5376\",\"--group\",\"64\",\"--iterations\",\"10\",\"--variant\",\"tile16\",\"--output\",\"<checkout>/artifacts/ci/kernel-result.json\"],\n  \"metallib\": \"<checkout>/.build/onyx_q4.metallib\"\n}\n"
+    }
+  ],
+  "details": {
+    "kernel": {
+      "operator": "onyx.q4_gemm.v1",
+      "variant": "tile16",
+      "device": "Apple M5 Max",
+      "shape": {
+        "m": 1024,
+        "n": 21504,
+        "k": 5376,
+        "group_size": 64
+      },
+      "correct": true,
+      "checked_outputs": 32,
+      "max_abs_error": 0.00146913528,
+      "max_relative_error": 0.000441954617,
+      "iterations": 10,
+      "gpu_median_ms": 123.720208,
+      "gpu_p95_ms": 124.847625,
+      "wall_median_ms": 123.880917,
+      "wall_p95_ms": 124.982583,
+      "effective_tflops": 1.913673,
+      "effective_bandwidth_gb_per_s": 0.970564,
+      "metal_allocated_bytes": 120537088,
+      "recommended_working_set_bytes": 30150672384,
+      "max_buffer_bytes": 22613000192,
+      "gpu_samples_ms": [
+        124.362,
+        122.469,
+        124.848,
+        124.717,
+        123.72,
+        121.554,
+        123.715,
+        124.733,
+        121.986,
+        123.707
+      ],
+      "wall_samples_ms": [
+        124.587,
+        122.634,
+        124.983,
+        124.89,
+        123.853,
+        121.742,
+        123.874,
+        124.874,
+        122.103,
+        123.881
+      ],
+      "arguments": [
+        "<checkout>/.build/onyx-metal-bench",
+        "--m",
+        "1024",
+        "--n",
+        "21504",
+        "--k",
+        "5376",
+        "--group",
+        "64",
+        "--iterations",
+        "10",
+        "--variant",
+        "tile16",
+        "--output",
+        "<checkout>/artifacts/ci/kernel-result.json"
+      ],
+      "metallib": "<checkout>/.build/onyx_q4.metallib"
+    }
+  }
+}
