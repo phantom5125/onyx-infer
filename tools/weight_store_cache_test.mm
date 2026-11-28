@@ -40,6 +40,20 @@ std::map<std::string, std::string> read_all(onyx::WeightStore& store, uint64_t* 
   return hashes;
 }
 
+bool direct_profile_matches(const onyx::WeightStore& store, uint64_t calls, uint64_t bytes) {
+  const auto json = store.foreground_read_profile_json();
+  NSData* data = [NSData dataWithBytes:json.data() length:json.size()];
+  NSDictionary* profile = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+  if (!profile || !profile[@"groups"]) return false;
+  uint64_t observed_calls = 0;
+  uint64_t observed_bytes = 0;
+  for (NSDictionary* group in [profile[@"groups"] allValues]) {
+    observed_calls += [group[@"direct_calls"] unsignedLongLongValue];
+    observed_bytes += [group[@"direct_bytes"] unsignedLongLongValue];
+  }
+  return observed_calls == calls && observed_bytes == bytes;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -58,13 +72,16 @@ int main(int argc, char** argv) {
     const uint64_t budget = argc > 2 ? std::stoull(argv[2]) : (64ull << 20);
     try {
       onyx::WeightStore streaming(pack, false, 0);
+      streaming.enable_foreground_read_profiling();
       const auto streaming_hashes = read_all(streaming, nullptr);
+      bool profile_ok = direct_profile_matches(streaming, streaming.read_calls(), streaming.bytes_read());
 
       // Queue each tensor one name at a time and take it right away, so the reader pipeline
       // hands back the same bytes as the synchronous path.
       std::map<std::string, std::string> pipeline_hashes;
       {
         onyx::WeightStore pipeline(pack, false, 0);
+        pipeline.enable_foreground_read_profiling();
         for (const std::string& name : pipeline.names()) {
           pipeline.prefetch("", {name});
           pipeline_hashes[name] = sha256_hex(pipeline.tensor(name));
@@ -73,6 +90,7 @@ int main(int argc, char** argv) {
           }
         }
         pipeline.finish_prefetch();
+        profile_ok = profile_ok && direct_profile_matches(pipeline, 0, 0);
       }
       bool pipeline_ok = pipeline_hashes.size() >= streaming_hashes.size();
       for (const auto& [name, digest] : streaming_hashes) {
@@ -102,16 +120,17 @@ int main(int argc, char** argv) {
       // Oversized tensors are ineligible. A populated cache should get hits on the second pass.
       const bool hits_ok = lru.cache_entries() == 0 || lru.cache_hits() > 0;
       const bool cached_ok = resident_hashes.size() > 0;
-      const bool ok = pipeline_ok && budget_ok && hits_ok && cached_ok;
+      const bool ok = pipeline_ok && budget_ok && hits_ok && cached_ok && profile_ok;
       std::printf("{\"test\":\"onyx_weight_store_cache\",\"status\":\"%s\",\"tensors\":%zu,\"budget\":%llu,"
-                  "\"cache_bytes\":%llu,\"entries\":%llu,\"hits\":%llu,\"prefetch_pipeline\":\"%s\"}\n",
+                  "\"cache_bytes\":%llu,\"entries\":%llu,\"hits\":%llu,\"prefetch_pipeline\":\"%s\","
+                  "\"foreground_read_profile\":\"%s\"}\n",
                   ok ? "pass" : "fail",
                   resident_hashes.size(),
                   static_cast<unsigned long long>(lru.cache_budget()),
                   static_cast<unsigned long long>(lru.cache_bytes()),
                   static_cast<unsigned long long>(lru.cache_entries()),
                   static_cast<unsigned long long>(lru.cache_hits()),
-                  pipeline_ok ? "pass" : "fail");
+                  pipeline_ok ? "pass" : "fail", profile_ok ? "pass" : "fail");
       return ok ? 0 : 1;
     } catch (const std::exception& error) {
       std::fprintf(stderr, "onyx-weight-store-cache-test: %s\n", error.what());

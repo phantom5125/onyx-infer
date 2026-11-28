@@ -1,0 +1,152 @@
+{
+  "campaign": "dit-weight-read-profile-v1",
+  "issue": 10,
+  "status": "diagnostic_validated",
+  "base_revision": "a82f0cf907648e9dabf1457cf35efbbfccd28f4d",
+  "device": {
+    "model": "Mac17,14",
+    "memory_bytes": 38654705664,
+    "os": "27.2.1",
+    "build": "26B131"
+  },
+  "binary_sha256": "92d1913f6913dc5e8301c80efd664cf7447f319070df94ef8e7e41a298a7fd35",
+  "model": {
+    "protocol": "onyx.model-package.v1",
+    "model_id": "minimax-h3-image",
+    "source_revision": "df334556f585a596a710cf4f7ce3a567c0738ee5",
+    "source_semantic_digest": "80cb756c7e8ed3b2b7208dc117ed348f9901ac2ddc71660d50294da21a3f8ec8",
+    "semantic_digest": "022bcc74ac63f481b951e958626eaa1bf4b14e6d709712f1e0155112ccdd67bf",
+    "quantization_profile": "onyx-w4s64-linear-v1",
+    "transformer_pack": {
+      "path": "artifacts/models/h3-w4/transformer.onxpack",
+      "bytes": 37474155919,
+      "sha256": "428478d790cf3189a1f051a3e33c9e4a49e1304b0ae96f01eca8dbeb1c4288b3"
+    },
+    "text_encoder_pack": {
+      "path": "artifacts/models/h3-w4/text_encoder.onxpack",
+      "bytes": 21857052455,
+      "sha256": "763b8d09c260a8bcbe664edb53a67322a74c1a61839d527c69225f0f18ea0792"
+    },
+    "quality_status": "pending-end-to-end-validation"
+  },
+  "source_sha256": {
+    "runtime/native/weight_store.mm": "83422d4e220966cf92c74a4e9a631f41b25acd9f106a9973828ed1751c805c59",
+    "runtime/native/native.hpp": "d6057f18889b0f3449593503ce665ca4fdf66e9aa8f848651bcad724dd7f25d6",
+    "runtime/native/dit.mm": "bd2f1f46fba6eb7b3f8bd708b11f3f7e6296ccbd10a8ada1cdb7e38daf23799f",
+    "benchmarks/ab_compare.py": "2c2f090b0a860ba946935da2d09138d12d5ce74d3b69bc607ffa1c9705d04d8d"
+  },
+  "profile": "max-quality",
+  "method": "Release build, ONYX_DIT_WEIGHT_PROFILE=1, warm AdaLN cache, H3 W4, six steps, zero DiT weight cache with default prefetch. These samples verify profiling and track exposed reads.",
+  "native_1024": {
+    "case": {
+      "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+      "size": {
+        "width": 1024,
+        "height": 1024
+      },
+      "seed": "42"
+    },
+    "runs": [
+      {
+        "round": 0,
+        "read_bytes": 59514797120,
+        "prefetch_wait_seconds": 0.000415,
+        "groups": {
+          "other": {
+            "blocked_prefetch_calls": 1,
+            "blocked_prefetch_ns": 180125,
+            "direct_bytes": 488700992,
+            "direct_calls": 34,
+            "direct_ns": 71937917
+          }
+        },
+        "prefetch_drain_ns": 42,
+        "direct_ns": 71937917,
+        "blocked_prefetch_ns": 180125,
+        "blocks_with_exposed_reads": [],
+        "dit_seconds": 13.133449,
+        "total_seconds": 16.747665207949467,
+        "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac"
+      },
+      {
+        "round": 1,
+        "read_bytes": 59514797120,
+        "prefetch_wait_seconds": 0.000342,
+        "groups": {
+          "other": {
+            "blocked_prefetch_calls": 1,
+            "blocked_prefetch_ns": 171417,
+            "direct_bytes": 488700992,
+            "direct_calls": 34,
+            "direct_ns": 72548208
+          }
+        },
+        "prefetch_drain_ns": 42,
+        "direct_ns": 72548208,
+        "blocked_prefetch_ns": 171417,
+        "blocks_with_exposed_reads": [],
+        "dit_seconds": 13.027385,
+        "total_seconds": 16.651387042016722,
+        "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac"
+      },
+      {
+        "round": 2,
+        "read_bytes": 59514797120,
+        "prefetch_wait_seconds": 0.00057,
+        "groups": {
+          "other": {
+            "blocked_prefetch_calls": 1,
+            "blocked_prefetch_ns": 179625,
+            "direct_bytes": 488700992,
+            "direct_calls": 34,
+            "direct_ns": 73551417
+          }
+        },
+        "prefetch_drain_ns": 125,
+        "direct_ns": 73551417,
+        "blocked_prefetch_ns": 179625,
+        "blocks_with_exposed_reads": [],
+        "dit_seconds": 13.141031,
+        "total_seconds": 16.8950124590192,
+        "png_sha256": "6fa24b90ed429f699f8ff39b6f46361bb0a6ddba0a68bdc72ccde0f37efbf3ac"
+      }
+    ],
+    "direct_ms_median": 72.548208,
+    "blocked_prefetch_ms_median": 0.179625
+  },
+  "native_4096": {
+    "case": {
+      "prompt": "A close-up product photograph of one bright yellow enamel teapot with a black arched handle and a round lid, standing on a blue wooden table. One small white ceramic cup sits immediately to its right. The background is plain warm beige. Soft morning window light falls from the left. Realistic enamel, clear silhouettes, no text.",
+      "size": {
+        "width": 4096,
+        "height": 4096
+      },
+      "seed": "42"
+    },
+    "runs": [
+      {
+        "round": 0,
+        "read_bytes": 59514797120,
+        "prefetch_wait_seconds": 0.000879,
+        "groups": {
+          "other": {
+            "blocked_prefetch_calls": 1,
+            "blocked_prefetch_ns": 181875,
+            "direct_bytes": 488700992,
+            "direct_calls": 34,
+            "direct_ns": 74435789
+          }
+        },
+        "prefetch_drain_ns": 0,
+        "direct_ns": 74435789,
+        "blocked_prefetch_ns": 181875,
+        "blocks_with_exposed_reads": [],
+        "dit_seconds": 184.599766,
+        "total_seconds": 203.00759979197755,
+        "png_sha256": "c68d8fbe635ade8748f2be69477bc5d26f5493a5322d9052428e07d3e59d0c43"
+      }
+    ],
+    "direct_ms_median": 74.435789,
+    "blocked_prefetch_ms_median": 0.181875
+  }
+}

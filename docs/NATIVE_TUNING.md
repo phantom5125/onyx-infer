@@ -44,6 +44,19 @@ shasum -a 256 "$trial"/{first,warm,resident}.png
 
 Compare the three PNG hashes. In each JSON record, inspect `total_seconds`, `dit_weight_cache_bytes`, and the first line of `stage_logs.dit.stdout`. That line is a JSON object with `modulation_cache` and the `weight_cache.hits` and `weight_cache.read_bytes` counters. The expected cache sequence is `miss`, `hit`, `hit`. The `resident` run should show weight hits and fewer bytes read. For timing claims, warm up first and repeat each arm in alternating orders. [Validation workflow](VALIDATION.md)
 
+## Measure foreground DiT weight reads
+
+Run this separate diagnostic on the memory class you want to tune. Warm the modulation cache, keep the default prefetch policy, and run both request sizes on the same model and profile. On laptops, keep the power source and power mode fixed.
+
+```bash
+uv run python benchmarks/ab_compare.py --label dit-weight-waits-1024 \
+  --case benchmarks/requests/teapot-1024.json --rounds 3 --warmup 1 \
+  --arm 'default .build/onyx-native' \
+  --env default=ONYX_DIT_WEIGHT_PROFILE=1
+```
+
+In each run, `stages.dit.foreground_weight_reads` groups synchronous reads and blocked prefetch lookups by DiT block. Keys outside the block weights appear under `other`. The `direct_ns` counter covers allocation and synchronous reads, and `blocked_prefetch_ns` records time waiting for in-flight weights. `prefetch_drain_ns` measures the wait at the final queue drain. A missing group had no recorded foreground reads or blocked lookups. Compare these diagnostics with `weight_cache.read_bytes` to see how much of the streamed traffic was exposed on the foreground path. Use profiling-disabled runs for end-to-end performance comparisons.
+
 ## DiT modulation for reference edits
 
 Prefix `onyx native-generate` with `ONYX_DIT_INDEXED_MODULATION=1` to try the experimental path. It reads each token's modulation values from a compact table inside the normalization and residual graphs. A 16-reference, 1024×1024 output on the M5 Max measured a DiT child-process peak of 18.35 GiB with the option enabled and 20.22 GiB with the default path. Both outputs had the same PNG SHA-256. At 33,942 tokens the operator ABBA measured 79.25 ms on the default path and 45.39 ms with the option enabled. Another GPU job overlapped the candidate's complete generation, so the report excludes those end-to-end timings from speed comparisons. [Usage](QUICKSTART.md#edit-with-reference-images) · [Measurements](../benchmarks/results/m5-max-36gb-h3-ref16-adaln-v1.json)

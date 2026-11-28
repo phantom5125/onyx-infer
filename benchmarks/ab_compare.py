@@ -149,6 +149,8 @@ def run_arm(arm, common, request, output, work):
                 elif "profile" in item:
                     details["profile_ops"] = item["profile"]
                     details["weight_read"] = item.get("weight_read")
+                elif "foreground_weight_reads" in item:
+                    details["foreground_weight_reads"] = item["foreground_weight_reads"]
         details.pop("output", None)
         details["stderr_tail"] = log["stderr"][-2000:]
         stages[name] = details
