@@ -17,7 +17,6 @@ kernel void onyx_adaln_gate(
   const uint cell = position.y * params.vectors_per_row + position.x;
   const uint gate_row = uint(modality[position.y]) * 6 + params.gate_part;
   const uint gate = gate_row * params.vectors_per_row + position.x;
-  // MPSGraph rounds the product to BF16 before adding it to the residual.
-  const bfloat4 scaled = bfloat4(float4(update[cell]) * float4(table[gate]));
-  residual[cell] = bfloat4(float4(residual[cell]) + float4(scaled));
+  // Match the incumbent MPSGraph's FP32 multiply-add and BF16 output rounding.
+  residual[cell] = bfloat4(fma(float4(update[cell]), float4(table[gate]), float4(residual[cell])));
 }

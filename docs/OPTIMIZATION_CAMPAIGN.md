@@ -92,7 +92,7 @@ uv run python benchmarks/run_native.py --case benchmarks/requests/teapot-1024.js
 
 ## OnyxAdaLN in-place gated residual
 
-Set `ONYX_DIT_METAL_GATE=1` to use the experimental path on macOS 27 or later with Apple GPU family 10. The DiT stage reports the effective mode as `metal_gate`. Other systems use the incumbent gate. The Metal kernel updates the DiT residual in place with two explicit BF16 rounding points and reads the gate from the per-modality table. The existing indexed MPSGraph RMSNorm reads shift and scale from the same table and skips the standalone six-output gather.
+Set `ONYX_DIT_METAL_GATE=1` to use the experimental path. The DiT stage reports the effective mode as `metal_gate`. The Metal kernel reads the gate from the per-modality table, evaluates an FP32 fused multiply-add, and writes the BF16 residual in place. The existing indexed MPSGraph RMSNorm reads shift and scale from the same table and skips the standalone six-output gather.
 
 Three interleaved teapot pairs per resolution used one Release build on `a82f0cf`, an M5 Max with 36 GiB, the W4 pack, the `max-quality` profile, a warm modulation cache, prefetch and VAE batch 25.
 

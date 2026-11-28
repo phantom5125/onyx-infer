@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <stdexcept>
@@ -51,9 +52,9 @@ void update_cpu(Tensor& residual, const Tensor& value, const Tensor& table, cons
     const auto* gate = gates + (modalities[row] * 6 + gate_part) * kHidden;
     for (int64_t column = 0; column < kHidden; ++column) {
       const auto cell = row * kHidden + column;
-      const float product = onyx::bf16_to_float(updates[cell]) * onyx::bf16_to_float(gate[column]);
-      const float rounded = onyx::bf16_to_float(onyx::float_to_bf16(product));
-      result[cell] = onyx::float_to_bf16(onyx::bf16_to_float(result[cell]) + rounded);
+      const float updated = std::fma(onyx::bf16_to_float(updates[cell]), onyx::bf16_to_float(gate[column]),
+                                     onyx::bf16_to_float(result[cell]));
+      result[cell] = onyx::float_to_bf16(updated);
     }
   }
 }
@@ -77,10 +78,6 @@ int main(int argc, char* argv[]) {
       if (rows < 1) throw std::runtime_error("Gate probe row count must be positive");
       id<MTLDevice> device = MTLCreateSystemDefaultDevice();
       if (!device) throw std::runtime_error("Metal device unavailable");
-      const bool supported = onyx::supports_metal_gated_residual(device);
-      if (!supported && !verify_only) {
-        throw std::runtime_error("Metal AdaLN requires macOS 27 and Apple GPU family 10 or newer");
-      }
       onyx::GraphSession session(device);
       Tensor baseline = make_bf16(device, {rows, kHidden}, 1);
       Tensor metal = make_bf16(device, {rows, kHidden}, 1);
@@ -121,7 +118,7 @@ int main(int argc, char* argv[]) {
           update_cpu(cpu, value, table, indices, gate);
           require_equal(baseline, indexed_gate, "Expanded vs. indexed MPSGraph gate");
           require_equal(cpu, metal, "CPU vs. Metal gate");
-          if (supported) require_equal(baseline, metal, "Expanded MPSGraph vs. Metal gate");
+          require_equal(baseline, metal, "Expanded MPSGraph vs. Metal gate");
         }
       }
 
@@ -135,8 +132,7 @@ int main(int argc, char* argv[]) {
         }
       };
       std::printf("{\"rows\":%lld,\"width\":%lld,\"table_offset\":%llu,\"bitwise_equal\":true,"
-                  "\"mpsgraph_bitwise_equal\":%s,\"timings_ms\":[",
-                  rows, kHidden, table.byte_offset, supported ? "true" : "null");
+                  "\"cpu_bitwise_equal\":true,\"timings_ms\":[", rows, kHidden, table.byte_offset);
       if (!verify_only) {
         for (size_t warmup = 0; warmup < 16; ++warmup) {
           step(false, warmup % 2);

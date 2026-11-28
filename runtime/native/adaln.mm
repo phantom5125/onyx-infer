@@ -32,15 +32,6 @@ id<MTLComputePipelineState> load_gate(id<MTLDevice> device) {
 
 }  // namespace
 
-bool supports_metal_gated_residual(id<MTLDevice> device) {
-  // On macOS 26 MPSGraph can fuse the multiply and add without the BF16 intermediate.
-  // The two-rounding kernel was validated against MPSGraph on Apple GPU family 10.
-  if (@available(macOS 27.0, *)) {
-    return [device supportsFamily:MTLGPUFamilyApple10];
-  }
-  return false;
-}
-
 void GraphSession::metal_gated_residual(Tensor& residual, const Tensor& value, const Tensor& table,
                                       const Tensor& indices, uint32_t gate_part) {
   if (!residual.buffer || !value.buffer || !table.buffer || !indices.buffer ||

@@ -71,6 +71,6 @@ uv run python benchmarks/ab_compare.py --label adaln-gate-4096 \
 
 [Measured runs and hashes](../benchmarks/results/m5-max-36gb-adaln-metal-gate-v1.json)
 
-## GitHub runner compatibility (2026-11-27)
+## Metal compiler compatibility (2026-11-27)
 
-The macOS 26 ARM64 runner returned the once-rounded product-plus-residual for two deterministic probe cells where the explicit BF16 intermediate gives different bytes. The M5 Max macOS 27.2.1 result uses the explicit intermediate. Restrict experimental dispatch to Apple GPU family 10 on macOS 27 or later and retain the incumbent dispatch elsewhere. The probe checks the two-rounding kernel against a CPU reference on every runner and retains the MPSGraph bitwise requirement where dispatch is enabled.
+The macOS 26 ARM64 runner's MPSGraph output matched a once-rounded product-plus-residual at both failing probe cells. An independent CPU check found that the original Metal kernel also produced the once-rounded bytes locally, where it matched the incumbent across the campaign. The original Metal source expressed a BF16 intermediate, so the compiled behavior differed across the two environments. The final kernel now expresses FP32 fused multiply-add followed by BF16 output conversion. The probe checks both gate slots against the independent CPU FMA reference and both MPSGraph paths on every runner. This check supersedes the earlier interpretation of the two conversion points in the Metal source.
